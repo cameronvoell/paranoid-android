@@ -6,12 +6,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-
 import com.example.cameron.ethereumtest1.util.EthereumConstants;
-
 import org.ethereum.geth.Context;
-import org.ethereum.geth.Enode;
-import org.ethereum.geth.Enodes;
 import org.ethereum.geth.EthereumClient;
 import org.ethereum.geth.Geth;
 import org.ethereum.geth.Header;
@@ -24,12 +20,13 @@ import org.ethereum.geth.PeerInfos;
 import org.ethereum.geth.SyncProgress;
 
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.NO_SUITABLE_PEERS_ERROR;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.RINKEBY_GENESIS;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.RINKEBY_NETWORK_ID;
+import static com.example.cameron.ethereumtest1.util.EthereumConstants.getRinkebyGenesis;
 
 public class MainActivity extends AppCompatActivity {
 
     private TextView mTextBox;
+    private TextView mText2;
     private EthereumClient mEthereumClient;
     private Context mContext;
     private Node mNode;
@@ -42,13 +39,14 @@ public class MainActivity extends AppCompatActivity {
 
         setTitle("Android In-Process Node");
         mTextBox = (TextView) findViewById(R.id.textbox);
+        mText2 = (TextView) findViewById(R.id.text2);
         mTextBox.append("Connecting to peers...");
         mContext = new Context();
 
         try {
             final NodeConfig config = new NodeConfig();
             config.setEthereumEnabled(true);
-            config.setEthereumGenesis(RINKEBY_GENESIS);
+            config.setEthereumGenesis(getRinkebyGenesis(getBaseContext()));
             config.setEthereumNetworkID(RINKEBY_NETWORK_ID);
             config.setBootstrapNodes(EthereumConstants.getRinkebyBootNodes());
             if (mNode == null)
@@ -104,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
             MainActivity.this.runOnUiThread(new Runnable() {
                 public void run() {
                     //ec.sendTransaction(ctx, new Transaction(""));
-                    mTextBox.append("#" + header.getNumber() + ": " + header.getHash().getHex().substring(0, 10) + "...\n");
+                    mTextBox.setText("#" + header.getNumber() + ": " + header.getHash().getHex().substring(0, 10) + "...\n");
                 }
             });
         }
@@ -131,17 +129,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    public void fetchBlockNumber(View view) {
-//        try {
-//            SyncProgress sync = mEthereumClient.syncProgress(mContext);
-//            long highest = sync.getHighestBlock();
-//            mTextBox.append("starting: " + sync.getStartingBlock()
-//                    + ", current: " + sync.getCurrentBlock()
-//                    + ", highest:" + highest);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
+    public void fetchBlockNumber(View view) {
+        try {
+            SyncProgress sync = mEthereumClient.syncProgress(mContext);
+            long highest = sync.getHighestBlock();
+            mText2.setText("starting: " + sync.getStartingBlock()
+                    + ", current: " + sync.getCurrentBlock()
+                    + ", highest:" + highest);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void onDestroy() {

@@ -14,6 +14,9 @@ import java.io.InputStreamReader;
 
 public class EthereumConstants {
 
+    public static final String SLUSH_PILE_RINKEBY_ADDRESS = "0x835bfb6291ef8ee95c6deaea9ad58b49c4c4cbec";
+    public static final String SLUSH_PILE_ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"pileSize\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"fetchFromPile\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"slushAddress\",\"type\":\"string\"}],\"name\":\"addToPile\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"type\":\"constructor\"}]";
+
     public static String getRinkebyGenesis(Context ctx) {
         return readRawTextFile(ctx, R.raw.rinkeby);
     }

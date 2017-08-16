@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.cameron.ethereumtest1.MainActivity">
+    tools:context="com.example.cameron.ethereumtest1.activities.MainActivity">
 
     <ScrollView
         android:id="@+id/scroll"
@@ -27,7 +27,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/scroll"
-        android:text="check progress"
+        android:text="fetchData"
         android:onClick="fetchBlockNumber"/>
     <TextView
         android:id="@+id/text2"

@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/scroll"
         android:text="fetchData"
-        android:onClick="fetchBlockNumber"/>
+        android:onClick="fetchFromPile"/>
     <TextView
         android:id="@+id/text2"
         android:layout_width="match_parent"

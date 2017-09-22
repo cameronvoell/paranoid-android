@@ -8,6 +8,9 @@ import android.view.View;
 import android.widget.TextView;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.util.EthereumConstants;
+
+import org.ethereum.geth.Account;
+import org.ethereum.geth.Accounts;
 import org.ethereum.geth.Address;
 import org.ethereum.geth.BigInt;
 import org.ethereum.geth.BoundContract;
@@ -18,6 +21,7 @@ import org.ethereum.geth.Geth;
 import org.ethereum.geth.Header;
 import org.ethereum.geth.Interface;
 import org.ethereum.geth.Interfaces;
+import org.ethereum.geth.KeyStore;
 import org.ethereum.geth.NewHeadHandler;
 import org.ethereum.geth.Node;
 import org.ethereum.geth.NodeConfig;
@@ -108,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
         public void onNewHead(final Header header) {
             MainActivity.this.runOnUiThread(new Runnable() {
                 public void run() {
-                    //ec.sendTransaction(ctx, new Transaction(""));
                     mTextBox.setText("#" + header.getNumber() + ": " + header.getHash().getHex().substring(0, 10) + "...\n");
                 }
             });
@@ -136,23 +139,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void fetchBlockNumber(View view) {
+    public void fetchFromPile(View view) {
         try {
-//            SyncProgress sync = mEthereumClient.syncProgress(mContext);
-//            long highest = sync.getHighestBlock();
-//            mText2.setText("starting: " + sync.getStartingBlock()
-//                    + ", current: " + sync.getCurrentBlock()
-//                    + ", highest:" + highest);
-
-//            CallMsg callMessage = new CallMsg();
-//            callMessage.setTo(new Address(""));
-//            Transaction transaction = new Transaction();
             Address address = new Address(SLUSH_PILE_RINKEBY_ADDRESS);
             BoundContract contract = Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient);
 
             CallOpts callOpts = Geth.newCallOpts();
             callOpts.setContext(mContext);
-            //callOpts.setGasLimit(3000000);
 
             Interfaces params = Geth.newInterfaces(1);
             Interfaces params2 = Geth.newInterfaces(1);
@@ -162,16 +155,11 @@ public class MainActivity extends AppCompatActivity {
             param2.setBigInt(new BigInt(1));
             params.set(0, param);
             params2.set(0, param2);
-//            Interfaces results = Geth.newInterfaces(1);
-//            Interface result = Geth.newInterface();
-//            result.setBigInt(new BigInt(7));
-//            results.set(0, result);
 
             String response = contract.callForString(callOpts, "fetchFromPile", params);
             String response2 = contract.callForString(callOpts, "fetchFromPile", params2);
             mText2.setText(response + "\n" + response2);
 
-            //mEthereumClient.callContract(mContext, new CallMsg(), 1);
         } catch (Exception e) {
             e.printStackTrace();
         }

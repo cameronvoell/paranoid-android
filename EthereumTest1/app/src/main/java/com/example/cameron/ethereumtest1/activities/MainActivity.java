@@ -253,6 +253,10 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                         }
                     } else {
                         mSynchInfoTextView.setText("Block: " + header.getNumber());
+//                        if (!mLoadedSlush && header.getNumber() > 723887 && ) {
+//                            mLoadedSlush = true;
+//                            fetchFromPile();
+//                        }
                     }
 
                 }
@@ -299,13 +303,13 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                     CallOpts callOpts = Geth.newCallOpts();
                     callOpts.setContext(mContext);
 
-                    Interfaces paramsPileSizaCallData = Geth.newInterfaces(0);
+                    Interfaces paramsPileSizeCallData = Geth.newInterfaces(0);
                     Interfaces paramsPileSizeReturnData = Geth.newInterfaces(1); //return size
                     Interface paramPileSizeReturnParameter = Geth.newInterface();
                     paramPileSizeReturnParameter.setDefaultBigInt();
                     paramsPileSizeReturnData.set(0, paramPileSizeReturnParameter);
 
-                    contract.call(callOpts, paramsPileSizeReturnData, "pileSize", paramsPileSizaCallData);
+                    contract.call(callOpts, paramsPileSizeReturnData, "pileSize", paramsPileSizeCallData);
                     long response2 = paramsPileSizeReturnData.get(0).getBigInt().getInt64();
 
                     Interfaces paramsFetchReturnData = Geth.newInterfaces(1);
@@ -313,6 +317,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                     paramFetchReturnParameter.setDefaultString();
                     paramsFetchReturnData.set(0, paramFetchReturnParameter);
                     Interfaces paramsFetchCallData = Geth.newInterfaces(1);
+                    mContent.clear();
                     for (int i = (int)(response2 - 1); i >= 0 && i > response2 - 10; i--) {
                         Interface paramFetchCallParameter = Geth.newInterface();
                         paramFetchCallParameter.setBigInt(new BigInt(i));

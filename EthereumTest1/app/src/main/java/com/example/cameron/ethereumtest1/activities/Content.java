@@ -29,18 +29,8 @@ public class Content {
         ITEMS.add(item);
         ITEM_MAP.put(item.id, item);
     }
-
-    private static ContentItem createDummyItem(int position) {
-        return new ContentItem(String.valueOf(position), "Item " + position);
-    }
-
-    private static String makeDetails(int position) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Details about Item: ").append(position);
-        for (int i = 0; i < position; i++) {
-            builder.append("\nMore details information here.");
-        }
-        return builder.toString();
+    public static void clear() {
+        ITEMS.clear();
     }
 
     /**
@@ -48,16 +38,16 @@ public class Content {
      */
     public static class ContentItem {
         public final String id;
-        public final String content;
+        public final String title;
 
-        public ContentItem(String id, String content) {
+        public ContentItem(String id, String title) {
             this.id = id;
-            this.content = content;
+            this.title = title;
         }
 
         @Override
         public String toString() {
-            return content;
+            return title;
         }
     }
 }

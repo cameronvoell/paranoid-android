@@ -88,8 +88,13 @@
 
     </RelativeLayout>
 
-    <TextView
+    <!--<TextView
         android:id="@+id/fetchResponse"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/statusBar"/>-->
+    <fragment android:name="com.example.cameron.ethereumtest1.activities.ContentListFragment"
+        android:id="@+id/fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/statusBar"/>

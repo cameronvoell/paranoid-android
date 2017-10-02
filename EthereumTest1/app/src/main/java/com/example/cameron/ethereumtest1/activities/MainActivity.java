@@ -1,23 +1,25 @@
 package com.example.cameron.ethereumtest1.activities;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewStub;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.util.EthereumConstants;
 
 import org.ethereum.geth.Account;
-import org.ethereum.geth.Accounts;
 import org.ethereum.geth.Address;
 import org.ethereum.geth.BigInt;
 import org.ethereum.geth.BoundContract;
@@ -33,7 +35,6 @@ import org.ethereum.geth.NewHeadHandler;
 import org.ethereum.geth.Node;
 import org.ethereum.geth.NodeConfig;
 import org.ethereum.geth.NodeInfo;
-import org.ethereum.geth.Nonce;
 import org.ethereum.geth.PeerInfo;
 import org.ethereum.geth.PeerInfos;
 import org.ethereum.geth.Signer;
@@ -41,7 +42,10 @@ import org.ethereum.geth.TransactOpts;
 import org.ethereum.geth.Transaction;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+
+import io.ipfs.kotlin.IPFS;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.NO_SUITABLE_PEERS_ERROR;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.RINKEBY_NETWORK_ID;
@@ -49,7 +53,7 @@ import static com.example.cameron.ethereumtest1.util.EthereumConstants.SLUSH_PIL
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.SLUSH_PILE_RINKEBY_ADDRESS;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.getRinkebyGenesis;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ContentListFragment.OnListFragmentInteractionListener {
 
     private final static String KEY_STORE = "/geth_keystore3";
     private final static String SHARED_PREFS = "prefs3";
@@ -59,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView mSynchLogTextView;
     private TextView mAccountTextView;
     private TextView mAccountListTextView;
+    private ContentListFragment mContentListFragment;
 
     private LinearLayout mNetworkSynchView;
     private RelativeLayout mAccountPageView;
@@ -75,26 +80,98 @@ public class MainActivity extends AppCompatActivity {
     private boolean mLoadedSlush = false;
     private long mLastUpdated = 0;
 
+    private IPFSDaemon mIpfsDaemon = new IPFSDaemon(this);
+
+    private Content mContent;
+    private MyContentItemRecyclerViewAdapter mMyContentItemAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         mSynchLogTextView = (TextView) findViewById(R.id.synchLog);
-        mFetchResponseTextView = (TextView) findViewById(R.id.fetchResponse);
+//        mFetchResponseTextView = (TextView) findViewById(R.id.fetchResponse);
         mSynchInfoTextView = (TextView) findViewById(R.id.synchInfo);
         mAccountTextView = (TextView) findViewById(R.id.accountInfo);
         mAccountListTextView = (TextView) findViewById(R.id.accountList);
 
         mNetworkSynchView = (LinearLayout) findViewById(R.id.networkSynch);
         mAccountPageView = (RelativeLayout) findViewById(R.id.accountPage);
+        mContentListFragment = (ContentListFragment) getSupportFragmentManager().findFragmentById(R.id.fragment);
 
         mKeyStore = new KeyStore(getFilesDir() + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
         mSynchLogTextView.append("Connecting to peers...");
         mContext = new Context();
+        //final String multihash = new IPFS().getAdd().string("test-string").getHash();
+
         openAccountInfo(null);
         openNetworkSynch(null);
+        if (!mIpfsDaemon.isReady()) {
+            mIpfsDaemon.download(this, new Function0<Unit>() {
+                @Override
+                public Unit invoke() {
+                    startService(new Intent(MainActivity.this, IPFSDaemonService.class));
+
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            IPFS ipfs = new IPFS();
+                            String version = null;
+                            while (version == null) {
+                                try {
+                                    version = ipfs.getInfo().version().getVersion();
+                                } catch (Exception e) {
+                                    try {
+                                        Thread.sleep(100);
+                                    } catch (InterruptedException e1) {
+                                        Log.e("AHHHH", e1.getMessage());
+                                    }
+                                    //Log.e("AHHHH", e.getMessage());
+                                }
+                            }
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), "woah", Toast.LENGTH_SHORT).show();
+                                    Log.e("AHHHH", "GOOD");
+                                }
+                            });
+                        }
+                    } ).start();
+                    return null;
+                }
+            });
+        } else {
+            startService(new Intent(MainActivity.this, IPFSDaemonService.class));
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    IPFS ipfs = new IPFS();
+                    String version = null;
+                    while (version == null) {
+                        try {
+                            version = ipfs.getInfo().version().getVersion();
+                        } catch (Exception e) {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e1) {
+                                Log.e("AHHHH", e1.getMessage());
+                            }
+                        }
+                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "woah", Toast.LENGTH_SHORT).show();
+                            Log.e("AHHHH", "GOOD");
+                        }
+                    });
+                }
+            } ).start();
+        }
 
         try {
             final NodeConfig config = new NodeConfig();
@@ -209,42 +286,60 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void fetchFromPile() {
-        try {
-            Address address = new Address(SLUSH_PILE_RINKEBY_ADDRESS);
-            BoundContract contract = Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient);
+        mContent = new Content();
+        new Thread(new Runnable() {
 
-            CallOpts callOpts = Geth.newCallOpts();
-            callOpts.setContext(mContext);
+            @Override
+            public void run() {
 
-            Interfaces paramsPileSizaCallData = Geth.newInterfaces(0);
-            Interfaces paramsPileSizeReturnData = Geth.newInterfaces(1); //return size
-            Interface paramPileSizeReturnParameter = Geth.newInterface();
-            paramPileSizeReturnParameter.setDefaultBigInt();
-            paramsPileSizeReturnData.set(0, paramPileSizeReturnParameter);
+                try {
+                    Address address = new Address(SLUSH_PILE_RINKEBY_ADDRESS);
+                    BoundContract contract = Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient);
 
-            contract.call(callOpts, paramsPileSizeReturnData, "pileSize", paramsPileSizaCallData);
-            long response2 = paramsPileSizeReturnData.get(0).getBigInt().getInt64();
+                    CallOpts callOpts = Geth.newCallOpts();
+                    callOpts.setContext(mContext);
 
-            Interfaces paramsFetchReturnData = Geth.newInterfaces(1);
-            Interface paramFetchReturnParameter = Geth.newInterface();
-            paramFetchReturnParameter.setDefaultString();
-            paramsFetchReturnData.set(0, paramFetchReturnParameter);
-            Interfaces paramsFetchCallData = Geth.newInterfaces(1);
-            for (int i = (int)(response2 - 1); i >= 0 && i > response2 - 10; i--) {
-                Interface paramFetchCallParameter = Geth.newInterface();
-                paramFetchCallParameter.setBigInt(new BigInt(i));
-                paramsFetchCallData.set(0, paramFetchCallParameter);
-                contract.call(callOpts, paramsFetchReturnData, "fetchFromPile", paramsFetchCallData);
-                String response = paramsFetchReturnData.get(0).getString();
-                mFetchResponseTextView.append(response + "\n");
+                    Interfaces paramsPileSizaCallData = Geth.newInterfaces(0);
+                    Interfaces paramsPileSizeReturnData = Geth.newInterfaces(1); //return size
+                    Interface paramPileSizeReturnParameter = Geth.newInterface();
+                    paramPileSizeReturnParameter.setDefaultBigInt();
+                    paramsPileSizeReturnData.set(0, paramPileSizeReturnParameter);
+
+                    contract.call(callOpts, paramsPileSizeReturnData, "pileSize", paramsPileSizaCallData);
+                    long response2 = paramsPileSizeReturnData.get(0).getBigInt().getInt64();
+
+                    Interfaces paramsFetchReturnData = Geth.newInterfaces(1);
+                    Interface paramFetchReturnParameter = Geth.newInterface();
+                    paramFetchReturnParameter.setDefaultString();
+                    paramsFetchReturnData.set(0, paramFetchReturnParameter);
+                    Interfaces paramsFetchCallData = Geth.newInterfaces(1);
+                    for (int i = (int)(response2 - 1); i >= 0 && i > response2 - 10; i--) {
+                        Interface paramFetchCallParameter = Geth.newInterface();
+                        paramFetchCallParameter.setBigInt(new BigInt(i));
+                        paramsFetchCallData.set(0, paramFetchCallParameter);
+                        contract.call(callOpts, paramsFetchReturnData, "fetchFromPile", paramsFetchCallData);
+                        final String response = paramsFetchReturnData.get(0).getString();
+                        final String content = new IPFS().getGet().cat(response);
+                        mContent.addItem(new Content.ContentItem(i + "", content));
+                    }
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMyContentItemAdapter = new MyContentItemRecyclerViewAdapter(mContent.ITEMS, MainActivity.this);
+                            mContentListFragment.setAdapter(mMyContentItemAdapter);
+                        }
+                    });
+
+                    //mFetchResponseTextView.append(response2 + "");
+                    mLoadedSlush = true;
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    mLoadedSlush = true;
+                }
             }
-            //mFetchResponseTextView.append(response2 + "");
-            mLoadedSlush = true;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            mLoadedSlush = true;
-        }
+        }).start();
     }
 
     @Override
@@ -321,6 +416,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void postToSlushPile(View view) {
+
+
+
         // custom dialog
         final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_post_to_slush);
@@ -331,38 +429,50 @@ public class MainActivity extends AppCompatActivity {
         dialogButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String message = text.getText().toString();
-                Address address = new Address(SLUSH_PILE_RINKEBY_ADDRESS);
-                try {
-                    BoundContract contract = Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient);
-                    TransactOpts tOpts = new TransactOpts();
-                    tOpts.setContext(mContext);
-                    tOpts.setFrom(mAccounts.get(1).getAddress());
-                    tOpts.setSigner(new Signer() {
-                        @Override
-                        public Transaction sign(Address address, Transaction transaction) throws Exception {
-                            Account account = mKeyStore.importKey(getSharedPreferences(SHARED_PREFS, MODE_PRIVATE).getString("account" + 1, "").getBytes(), "Export", "Import");
-                            mKeyStore.unlock(account, "Import");
-                            Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
-                            mKeyStore.lock(account.getAddress());
-                            return signed;
-                        }
-                    });
-                    tOpts.setValue(new BigInt(0));
-                    long noncePending  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(1).getAddress());
-                    long nonce = mEthereumClient.getNonceAt(mContext, mAccounts.get(1).getAddress(), 0);
-                    tOpts.setNonce(Math.max(nonce, noncePending));
-                    Interfaces params = Geth.newInterfaces(1);
-                    Interface param = Geth.newInterface();
-                    param.setString(message);
-                    params.set(0, param);
+                final String message = text.getText().toString();
 
-                    Transaction tx = contract.transact(tOpts, "addToPile", params);
-                    mEthereumClient.sendTransaction(mContext, tx);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                dialog.dismiss();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        final String multihash = new IPFS().getAdd().string(message).getHash();
+                        Address address = new Address(SLUSH_PILE_RINKEBY_ADDRESS);
+                        try {
+                            BoundContract contract = Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient);
+                            TransactOpts tOpts = new TransactOpts();
+                            tOpts.setContext(mContext);
+                            tOpts.setFrom(mAccounts.get(1).getAddress());
+                            tOpts.setSigner(new Signer() {
+                                @Override
+                                public Transaction sign(Address address, Transaction transaction) throws Exception {
+                                    Account account = mKeyStore.importKey(getSharedPreferences(SHARED_PREFS, MODE_PRIVATE).getString("account" + 1, "").getBytes(), "Export", "Import");
+                                    mKeyStore.unlock(account, "Import");
+                                    Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
+                                    mKeyStore.lock(account.getAddress());
+                                    return signed;
+                                }
+                            });
+                            tOpts.setValue(new BigInt(0));
+                            long noncePending  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(1).getAddress());
+                            long nonce = mEthereumClient.getNonceAt(mContext, mAccounts.get(1).getAddress(), 0);
+                            tOpts.setNonce(Math.max(nonce, noncePending));
+                            Interfaces params = Geth.newInterfaces(1);
+                            Interface param = Geth.newInterface();
+                            param.setString(multihash);
+                            params.set(0, param);
+
+                            Transaction tx = contract.transact(tOpts, "addToPile", params);
+                            mEthereumClient.sendTransaction(mContext, tx);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                } ).start();
             }
         });
 
@@ -370,7 +480,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void reloadFeed(View view) {
-        mFetchResponseTextView.setText("reloading...\n");
+        //mFetchResponseTextView.setText("reloading...\n");
         fetchFromPile();
+    }
+
+    @Override
+    public void onListFragmentInteraction(Content.ContentItem item) {
+
     }
 }

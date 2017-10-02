@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 24
@@ -19,15 +21,24 @@ android {
     }
 }
 
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile project(':geth')
     compile 'com.android.support:appcompat-v7:24.2.1'
     compile 'com.android.support:design:24.2.1'
     compile 'com.android.support:support-v4:24.2.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile 'com.github.ligi:ipfs-api-kotlin:0.11'
+    compile 'com.chibatching.kotpref:kotpref:2.1.1'
+    compile 'com.chibatching.kotpref:initializer:2.1.1'
+    compile 'com.android.support:recyclerview-v7:24.2.1'
     testCompile 'junit:junit:4.12'
-    compile project(':geth')
 }

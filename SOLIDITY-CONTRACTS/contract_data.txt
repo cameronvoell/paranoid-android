@@ -1,0 +1,187 @@
+rinkeby address:
+0xdaea84818397f2cf00ecfe0fa587fba7674b3d5b
+
+abi:
+[{
+    constant: true,
+    inputs: [{
+        name: "",
+        type: "uint256"
+    }],
+    name: "localContentContracts",
+    outputs: [{
+        name: "name",
+        type: "string"
+    }, {
+        name: "description",
+        type: "string"
+    }, {
+        name: "contentListSize",
+        type: "uint256"
+    }, {
+        name: "admin",
+        type: "address"
+    }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+}, {
+    constant: false,
+    inputs: [{
+        name: "name",
+        type: "string"
+    }, {
+        name: "description",
+        type: "string"
+    }],
+    name: "registerLocalContentContract",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+}, {
+    constant: false,
+    inputs: [{
+        name: "contractAddress",
+        type: "address"
+    }],
+    name: "registerRemoteContentContract",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+}, {
+    constant: false,
+    inputs: [{
+        name: "name",
+        type: "string"
+    }, {
+        name: "newDescription",
+        type: "string"
+    }],
+    name: "updateContentContractDescription",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+}, {
+    constant: true,
+    inputs: [],
+    name: "registerAdmin",
+    outputs: [{
+        name: "",
+        type: "address"
+    }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+}, {
+    constant: false,
+    inputs: [{
+        name: "name",
+        type: "string"
+    }],
+    name: "getLocalContentListSize",
+    outputs: [{
+        name: "",
+        type: "uint256"
+    }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+}, {
+    constant: true,
+    inputs: [],
+    name: "numRegistered",
+    outputs: [{
+        name: "",
+        type: "uint256"
+    }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+}, {
+    constant: false,
+    inputs: [{
+        name: "registerIndex",
+        type: "uint256"
+    }, {
+        name: "visible",
+        type: "bool"
+    }],
+    name: "updateVisibility",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+}, {
+    constant: false,
+    inputs: [{
+        name: "name",
+        type: "string"
+    }, {
+        name: "index",
+        type: "uint256"
+    }],
+    name: "getLocalContent",
+    outputs: [{
+        name: "",
+        type: "string"
+    }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+}, {
+    constant: false,
+    inputs: [{
+        name: "name",
+        type: "string"
+    }],
+    name: "getContentIndex",
+    outputs: [{
+        name: "",
+        type: "uint256"
+    }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+}, {
+    constant: false,
+    inputs: [{
+        name: "name",
+        type: "string"
+    }, {
+        name: "contentHash",
+        type: "string"
+    }],
+    name: "registerLocalContent",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+}, {
+    constant: true,
+    inputs: [{
+        name: "",
+        type: "uint256"
+    }],
+    name: "register",
+    outputs: [{
+        name: "isRemote",
+        type: "bool"
+    }, {
+        name: "remoteAddress",
+        type: "address"
+    }, {
+        name: "visible",
+        type: "bool"
+    }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+}, {
+    inputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "constructor"
+}]

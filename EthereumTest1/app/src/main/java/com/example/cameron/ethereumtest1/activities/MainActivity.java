@@ -2,13 +2,12 @@ package com.example.cameron.ethereumtest1.activities;
 
 import android.app.Dialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewStub;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -40,7 +39,6 @@ import org.ethereum.geth.PeerInfos;
 import org.ethereum.geth.Signer;
 import org.ethereum.geth.TransactOpts;
 import org.ethereum.geth.Transaction;
-
 import java.util.ArrayList;
 
 import io.ipfs.kotlin.IPFS;
@@ -55,11 +53,9 @@ import static com.example.cameron.ethereumtest1.util.EthereumConstants.getRinkeb
 
 public class MainActivity extends AppCompatActivity implements ContentListFragment.OnListFragmentInteractionListener {
 
-    private final static String KEY_STORE = "/geth_keystore3";
-    private final static String SHARED_PREFS = "prefs3";
+    private final static String KEY_STORE = "/geth_keystore";
 
     private TextView mSynchInfoTextView;
-    private TextView mFetchResponseTextView;
     private TextView mSynchLogTextView;
     private TextView mAccountTextView;
     private TextView mAccountListTextView;
@@ -91,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         setContentView(R.layout.activity_main);
 
         mSynchLogTextView = (TextView) findViewById(R.id.synchLog);
-//        mFetchResponseTextView = (TextView) findViewById(R.id.fetchResponse);
         mSynchInfoTextView = (TextView) findViewById(R.id.synchInfo);
         mAccountTextView = (TextView) findViewById(R.id.accountInfo);
         mAccountListTextView = (TextView) findViewById(R.id.accountList);
@@ -100,11 +95,10 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         mAccountPageView = (RelativeLayout) findViewById(R.id.accountPage);
         mContentListFragment = (ContentListFragment) getSupportFragmentManager().findFragmentById(R.id.fragment);
 
-        mKeyStore = new KeyStore(getFilesDir() + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
+        mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
         mSynchLogTextView.append("Connecting to peers...");
         mContext = new Context();
-        //final String multihash = new IPFS().getAdd().string("test-string").getHash();
 
         openAccountInfo(null);
         openNetworkSynch(null);
@@ -128,7 +122,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                                     } catch (InterruptedException e1) {
                                         Log.e("AHHHH", e1.getMessage());
                                     }
-                                    //Log.e("AHHHH", e.getMessage());
                                 }
                             }
                             runOnUiThread(new Runnable() {
@@ -253,10 +246,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                         }
                     } else {
                         mSynchInfoTextView.setText("Block: " + header.getNumber());
-//                        if (!mLoadedSlush && header.getNumber() > 723887 && ) {
-//                            mLoadedSlush = true;
-//                            fetchFromPile();
-//                        }
                     }
 
                 }
@@ -335,8 +324,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                             mContentListFragment.setAdapter(mMyContentItemAdapter);
                         }
                     });
-
-                    //mFetchResponseTextView.append(response2 + "");
                     mLoadedSlush = true;
 
                 } catch (Exception e) {
@@ -372,14 +359,16 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         closeNetworkSynch(null);
         mAccountPageView.setVisibility(View.VISIBLE);
         mAccountListTextView.setText("");
-        SharedPreferences sp = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
-        int numAccounts = sp.getInt("NUM_ACCOUNTS", 0);
+//        SharedPreferences sp = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+//        int numAccounts = sp.getInt("NUM_ACCOUNTS", 0);
+        long numAccounts = mKeyStore.getAccounts().size();
         if (numAccounts > 0) {
             mAccounts = new ArrayList<>();
             for (int i = 0; i < numAccounts; i++) {
-                byte[] jsonAcc = sp.getString("account" + i, "").getBytes();
+//                byte[] jsonAcc = sp.getString("account" + i, "").getBytes();
                 try {
-                    Account account = mKeyStore.importKey(jsonAcc, "Export", "Import");
+                    Account account = mKeyStore.getAccounts().get(i);
+//                    Account account = mKeyStore.importKey(jsonAcc, "Export", "Import");
                     mAccounts.add(account);
                     String accountString = account.getAddress().getHex();
                     mAccountListTextView.append("Account: " + accountString + "\n");
@@ -405,31 +394,45 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     }
 
     public void createAccount(View view) {
-        try {
-            Account newAcc = mKeyStore.newAccount("insecure");
-            byte[] jsonAcc = mKeyStore.exportKey(newAcc, "insecure", "Export");
-            SharedPreferences pref = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
-            int numAccounts = pref.getInt("NUM_ACCOUNTS", 0);
-            pref.edit().putString("account" + numAccounts, new String(jsonAcc, "UTF-8")).commit();
-            pref.edit().putInt("NUM_ACCOUNTS", ++numAccounts).commit();
-            String account = newAcc.getAddress().getHex();
-            mAccountTextView.setText(account.substring(0,4) + "..." + account.substring(account.length() -5,account.length() - 1));
-            openAccountInfo(null);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
+        // custom dialog
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_new_account);
+        dialog.setTitle("Enter New Account Password");
+
+        final EditText text = (EditText) dialog.findViewById(R.id.editMessage);
+        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonDone);
+        dialogButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                try {
+                    Account newAcc = mKeyStore.newAccount(text.getText().toString());
+//                    final byte[] jsonAcc = mKeyStore.exportKey(newAcc, text.getText().toString(), text.getText().toString());
+//                    SharedPreferences pref = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+//                    int numAccounts = pref.getInt("NUM_ACCOUNTS", 0);
+//                    pref.edit().putString("account" + numAccounts, new String(jsonAcc, "UTF-8")).commit();
+//                    pref.edit().putInt("NUM_ACCOUNTS", ++numAccounts).commit();
+                    String account = newAcc.getAddress().getHex();
+                    mAccountTextView.setText(account.substring(0,4) + "..." + account.substring(account.length() -5,account.length() - 1));
+                    openAccountInfo(null);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
     }
 
     public void postToSlushPile(View view) {
-
-
-
         // custom dialog
         final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_post_to_slush);
         dialog.setTitle("Post Message");
 
         final EditText text = (EditText) dialog.findViewById(R.id.editMessage);
+        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
         Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
         dialogButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -445,20 +448,21 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                             BoundContract contract = Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient);
                             TransactOpts tOpts = new TransactOpts();
                             tOpts.setContext(mContext);
-                            tOpts.setFrom(mAccounts.get(1).getAddress());
+                            tOpts.setFrom(mAccounts.get(0).getAddress());
                             tOpts.setSigner(new Signer() {
                                 @Override
                                 public Transaction sign(Address address, Transaction transaction) throws Exception {
-                                    Account account = mKeyStore.importKey(getSharedPreferences(SHARED_PREFS, MODE_PRIVATE).getString("account" + 1, "").getBytes(), "Export", "Import");
-                                    mKeyStore.unlock(account, "Import");
+//                                    Account account = mKeyStore.importKey(getSharedPreferences(SHARED_PREFS, MODE_PRIVATE).getString("account" + 0, "").getBytes(), password.getText().toString(), password.getText().toString());
+                                    Account account = mKeyStore.getAccounts().get(0);
+                                    mKeyStore.unlock(account, password.getText().toString());
                                     Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
                                     mKeyStore.lock(account.getAddress());
                                     return signed;
                                 }
                             });
                             tOpts.setValue(new BigInt(0));
-                            long noncePending  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(1).getAddress());
-                            long nonce = mEthereumClient.getNonceAt(mContext, mAccounts.get(1).getAddress(), 0);
+                            long noncePending  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
+                            long nonce = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
                             tOpts.setNonce(Math.max(nonce, noncePending));
                             Interfaces params = Geth.newInterfaces(1);
                             Interface param = Geth.newInterface();
@@ -485,7 +489,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     }
 
     public void reloadFeed(View view) {
-        //mFetchResponseTextView.setText("reloading...\n");
         fetchFromPile();
     }
 

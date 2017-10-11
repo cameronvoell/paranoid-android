@@ -89,13 +89,8 @@
 
     </RelativeLayout>
 
-    <!--<TextView
-        android:id="@+id/fetchResponse"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/statusBar"/>-->
-    <fragment android:name="com.example.cameron.ethereumtest1.activities.ContentListFragment"
-        android:id="@+id/fragment"
+    <FrameLayout
+        android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/statusBar"/>
@@ -103,8 +98,9 @@
     <LinearLayout
         android:id="@+id/networkSynch"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_below="@id/statusBar"
+        android:layout_above="@+id/selector"
         android:background="@android:color/darker_gray"
         android:orientation="vertical">
 
@@ -126,8 +122,9 @@
     <RelativeLayout
         android:id="@+id/accountPage"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_below="@id/statusBar"
+        android:layout_above="@id/selector"
         android:background="@android:color/darker_gray"
         android:visibility="gone">
 
@@ -160,14 +157,57 @@
             android:onClick="createAccount"/>
 
     </RelativeLayout>
+    <LinearLayout
+        android:id="@id/selector"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/holo_green_dark"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/button_content_list"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:tint="@android:color/white"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/ic_menu_compass"
+            android:scaleType="fitCenter"
+            android:onClick="showContentList"/>
+
+        <ImageButton
+            android:id="@+id/button_contract_list"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:tint="@android:color/darker_gray"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/ic_search_category_default"
+            android:scaleType="fitCenter"
+            android:onClick="showContentContracts"/>
+
+        <ImageButton
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:tint="@android:color/darker_gray"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/ic_menu_preferences"
+            android:scaleType="fitCenter"/>
+
+    </LinearLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
+        android:layout_above="@id/selector"
         android:layout_margin="16dp"
         app:elevation="6dp"
         android:src="@android:drawable/ic_input_add"

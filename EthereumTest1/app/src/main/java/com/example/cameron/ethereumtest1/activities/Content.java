@@ -5,38 +5,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Helper class for providing sample content for user interfaces created by
- * Android template wizards.
- * <p>
- * TODO: Replace all uses of this class before publishing your app.
- */
 public class Content {
 
-    /**
-     * An array of sample (dummy) items.
-     */
     public static final List<ContentItem> ITEMS = new ArrayList<ContentItem>();
-
-    /**
-     * A map of sample (dummy) items, by ID.
-     */
     public static final Map<String, ContentItem> ITEM_MAP = new HashMap<String, ContentItem>();
+    public static final List<ContentContract.ContentContractItem> CONTRACT_ITEMS = new ArrayList<ContentContract.ContentContractItem>();
+    public static final Map<String, ContentContract.ContentContractItem> CONTRACT_ITEM_MAP = new HashMap<String, ContentContract.ContentContractItem>();
 
-    private static final int COUNT = 25;
 
-    public static void addItem(ContentItem item) {
+    public static void addContentItem(ContentItem item) {
         ITEMS.add(item);
         ITEM_MAP.put(item.id, item);
     }
-    public static void clear() {
+
+    public static void addContractItem(ContentContract.ContentContractItem item) {
+        CONTRACT_ITEMS.add(item);
+        CONTRACT_ITEM_MAP.put(item.name, item);
+    }
+
+    public static void clearItems() {
         ITEMS.clear();
     }
 
-    /**
-     * A dummy item representing a piece of content.
-     */
-    public static class ContentItem {
+    public static void clearContractItems() {
+        CONTRACT_ITEMS.clear();
+    }
+
+   public static class ContentItem {
         public final String id;
         public final String title;
 
@@ -48,6 +43,28 @@ public class Content {
         @Override
         public String toString() {
             return title;
+        }
+    }
+
+    public static class ContentContract {
+
+        public static class ContentContractItem {
+            public final String name;
+            public final String description;
+            public final long numPosts;
+            public final String admin;
+
+            public ContentContractItem(String name, String description, long numPosts, String admin) {
+                this.name = name;
+                this.description = description;
+                this.numPosts = numPosts;
+                this.admin = admin;
+            }
+
+            @Override
+            public String toString() {
+                return name;
+            }
         }
     }
 }

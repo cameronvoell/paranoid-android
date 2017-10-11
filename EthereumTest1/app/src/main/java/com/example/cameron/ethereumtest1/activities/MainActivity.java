@@ -1,15 +1,23 @@
 package com.example.cameron.ethereumtest1.activities;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -39,27 +47,35 @@ import org.ethereum.geth.PeerInfos;
 import org.ethereum.geth.Signer;
 import org.ethereum.geth.TransactOpts;
 import org.ethereum.geth.Transaction;
+
 import java.util.ArrayList;
 
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 
+import static com.example.cameron.ethereumtest1.util.EthereumConstants.CONTENT_CONTRACT_REGISTER_ABI;
+import static com.example.cameron.ethereumtest1.util.EthereumConstants.CONTENT_CONTRACT_REGISTER_RINKEBY_ADDRESS;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.NO_SUITABLE_PEERS_ERROR;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.RINKEBY_NETWORK_ID;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.SLUSH_PILE_ABI;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.SLUSH_PILE_RINKEBY_ADDRESS;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.getRinkebyGenesis;
 
-public class MainActivity extends AppCompatActivity implements ContentListFragment.OnListFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity implements ContentListFragment.OnListFragmentInteractionListener,
+                                                    ContentContractListFragment.OnListFragmentInteractionListener{
 
     private final static String KEY_STORE = "/geth_keystore";
+    public final static String sharedPreferencesName = "paranoid_preferences";
 
     private TextView mSynchInfoTextView;
     private TextView mSynchLogTextView;
     private TextView mAccountTextView;
     private TextView mAccountListTextView;
     private ContentListFragment mContentListFragment;
+    private ContentContractListFragment mContentContractListFragment;
+    private ImageButton mContententListButton;
+    private ImageButton mContractListButton;
 
     private LinearLayout mNetworkSynchView;
     private RelativeLayout mAccountPageView;
@@ -80,6 +96,8 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
     private Content mContent;
     private MyContentItemRecyclerViewAdapter mMyContentItemAdapter;
+    private MyContentContractRecyclerViewAdapter mMyContentContractRecyclerViewAdapter;
+    private boolean mShowingContracts = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +111,15 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
         mNetworkSynchView = (LinearLayout) findViewById(R.id.networkSynch);
         mAccountPageView = (RelativeLayout) findViewById(R.id.accountPage);
-        mContentListFragment = (ContentListFragment) getSupportFragmentManager().findFragmentById(R.id.fragment);
+        mContententListButton = (ImageButton) findViewById(R.id.button_content_list);
+        mContractListButton = (ImageButton) findViewById(R.id.button_contract_list);
+
+        mContentListFragment = ContentListFragment.newInstance();
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mContentListFragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
 
         mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
@@ -172,8 +198,9 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
             config.setEthereumGenesis(getRinkebyGenesis(getBaseContext()));
             config.setEthereumNetworkID(RINKEBY_NETWORK_ID);
             config.setBootstrapNodes(EthereumConstants.getRinkebyBootNodes());
-            if (mNode == null)
-                mNode = Geth.newNode(getFilesDir() + "/.rinkeby", config);
+            if (mNode == null) {
+                mNode = Geth.newNode(getFilesDir() + "/rinkeby", config);
+            }
             mNode.start();
 
             long numPeersInitial = mNode.getPeersInfo().size();
@@ -211,6 +238,19 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                Log.v("PERMISSION","Permission is granted");
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+                //File write logic here
+            }
         }
     }
 
@@ -278,8 +318,146 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         }
     }
 
+    public void fetchFromContentContractRegister() {
+        if (mContent == null) mContent = new Content();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Address address = new Address(CONTENT_CONTRACT_REGISTER_RINKEBY_ADDRESS);
+                    BoundContract contract = Geth.bindContract(address, CONTENT_CONTRACT_REGISTER_ABI, mEthereumClient);
+
+                    CallOpts callOpts = Geth.newCallOpts();
+                    callOpts.setContext(mContext);
+
+                    //Check num of Registered Contracts
+                    Interfaces paramsNumRegisteredCallData = Geth.newInterfaces(0);
+                    Interfaces paramsNumRegisteredReturnData = Geth.newInterfaces(1);
+                    Interface paramNumRegisteredReturnParameter = Geth.newInterface();
+                    paramNumRegisteredReturnParameter.setDefaultBigInt();
+                    paramsNumRegisteredReturnData.set(0,paramNumRegisteredReturnParameter);
+
+                    contract.call(callOpts, paramsNumRegisteredReturnData, "numRegistered", paramsNumRegisteredCallData);
+                    long numRegisteredResponse = paramsNumRegisteredReturnData.get(0).getBigInt().getInt64();
+
+                    //Load in registered ContentContracts
+                    Interfaces paramsFetchRegisteredContractsCallData = Geth.newInterfaces(1);
+                    Interfaces paramsFetchRegisteredContractsReturnData = Geth.newInterfaces(4);
+
+                    Interface contractName = Geth.newInterface();
+                    Interface contractDescription = Geth.newInterface();
+                    Interface numPosts = Geth.newInterface();
+                    Interface contractAdmin = Geth.newInterface();
+                    contractName.setDefaultString();
+                    contractDescription.setDefaultString();
+                    numPosts.setDefaultBigInt();
+                    contractAdmin.setDefaultAddress();
+                    paramsFetchRegisteredContractsReturnData.set(0, contractName);
+                    paramsFetchRegisteredContractsReturnData.set(1, contractDescription);
+                    paramsFetchRegisteredContractsReturnData.set(2, numPosts);
+                    paramsFetchRegisteredContractsReturnData.set(3, contractAdmin);
+
+                    mContent.clearContractItems();
+                    mContent.addContractItem(new Content.ContentContract.ContentContractItem("slush-pile", "Anyone can post here!", 0, "n/a"));
+                    for (int i = (int)(numRegisteredResponse - 1); i >= 0 && i > numRegisteredResponse - 10; i--) {
+                        Interface paramFetchCallParameter = Geth.newInterface();
+                        paramFetchCallParameter.setBigInt(new BigInt(i));
+                        paramsFetchRegisteredContractsCallData.set(0, paramFetchCallParameter);
+                        contract.call(callOpts, paramsFetchRegisteredContractsReturnData, "localContentContracts", paramsFetchRegisteredContractsCallData);
+                        final String name = paramsFetchRegisteredContractsReturnData.get(0).getString();
+                        final String description = paramsFetchRegisteredContractsReturnData.get(1).getString();
+                        final long num = paramsFetchRegisteredContractsReturnData.get(2).getBigInt().getInt64();
+                        final String admin = paramsFetchRegisteredContractsReturnData.get(3).getAddress().getHex();
+                        mContent.addContractItem(new Content.ContentContract.ContentContractItem(name, description, num, admin));
+                    }
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMyContentContractRecyclerViewAdapter = new MyContentContractRecyclerViewAdapter(mContent.CONTRACT_ITEMS, MainActivity.this);
+                            mContentContractListFragment.setAdapter(mMyContentContractRecyclerViewAdapter);
+                        }
+                    });
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    private void fetchFromSelectedContract() {
+        if (mContent == null) mContent = new Content();
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                try {
+                    Address address = new Address(CONTENT_CONTRACT_REGISTER_RINKEBY_ADDRESS);
+                    BoundContract contract = Geth.bindContract(address, CONTENT_CONTRACT_REGISTER_ABI, mEthereumClient);
+
+                    CallOpts callOpts = Geth.newCallOpts();
+                    callOpts.setContext(mContext);
+
+                    Interfaces paramsContentSizeCallData = Geth.newInterfaces(1);
+                    Interfaces paramsContentSizeReturnData = Geth.newInterfaces(1); //return size
+                    Interface paramContentSizeReturnParameter = Geth.newInterface();
+                    paramContentSizeReturnParameter.setDefaultBigInt();
+                    paramsContentSizeReturnData.set(0, paramContentSizeReturnParameter);
+                    Interface paramContentSizeCallParameter = Geth.newInterface();
+                    paramContentSizeCallParameter.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", ""));
+                    paramsContentSizeCallData.set(0, paramContentSizeCallParameter);
+
+                    contract.call(callOpts, paramsContentSizeReturnData, "getLocalContentListSize", paramsContentSizeCallData);
+                    long numContent = paramsContentSizeReturnData.get(0).getBigInt().getInt64();
+
+                    Interfaces paramsFetchReturnData = Geth.newInterfaces(1);
+                    Interface paramFetchReturnParameter = Geth.newInterface();
+                    paramFetchReturnParameter.setDefaultString();
+                    paramsFetchReturnData.set(0, paramFetchReturnParameter);
+                    Interfaces paramsFetchCallData = Geth.newInterfaces(2);
+                    Interface nameParameter = Geth.newInterface();
+                    nameParameter.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", ""));
+                    paramsFetchCallData.set(0, nameParameter);
+                    mContent.clearItems();
+                    for (int i = (int)(numContent - 1); i >= 0 && i > numContent - 10; i--) {
+                        Interface paramFetchCallParameter = Geth.newInterface();
+                        paramFetchCallParameter.setBigInt(new BigInt(i));
+                        paramsFetchCallData.set(1, paramFetchCallParameter);
+                        contract.call(callOpts, paramsFetchReturnData, "getLocalContent", paramsFetchCallData);
+                        final String response = paramsFetchReturnData.get(0).getString();
+                        final String content = new IPFS().getGet().cat(response);
+                        mContent.addContentItem(new Content.ContentItem(i + "", content));
+                    }
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMyContentItemAdapter = new MyContentItemRecyclerViewAdapter(mContent.ITEMS, MainActivity.this);
+                            mContentListFragment.setAdapter(mMyContentItemAdapter);
+                        }
+                    });
+                    mLoadedSlush = true;
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMyContentItemAdapter = new MyContentItemRecyclerViewAdapter(mContent.ITEMS, MainActivity.this);
+                            mContentListFragment.setAdapter(mMyContentItemAdapter);
+                        }
+                    });
+                    mLoadedSlush = true;
+                }
+            }
+        }).start();
+    }
+
+
     public void fetchFromPile() {
-        mContent = new Content();
+        if (mContent == null) mContent = new Content();
         new Thread(new Runnable() {
 
             @Override
@@ -306,7 +484,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                     paramFetchReturnParameter.setDefaultString();
                     paramsFetchReturnData.set(0, paramFetchReturnParameter);
                     Interfaces paramsFetchCallData = Geth.newInterfaces(1);
-                    mContent.clear();
+                    mContent.clearItems();
                     for (int i = (int)(response2 - 1); i >= 0 && i > response2 - 10; i--) {
                         Interface paramFetchCallParameter = Geth.newInterface();
                         paramFetchCallParameter.setBigInt(new BigInt(i));
@@ -314,7 +492,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                         contract.call(callOpts, paramsFetchReturnData, "fetchFromPile", paramsFetchCallData);
                         final String response = paramsFetchReturnData.get(0).getString();
                         final String content = new IPFS().getGet().cat(response);
-                        mContent.addItem(new Content.ContentItem(i + "", content));
+                        mContent.addContentItem(new Content.ContentItem(i + "", content));
                     }
 
                     runOnUiThread(new Runnable() {
@@ -328,6 +506,13 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
                 } catch (Exception e) {
                     e.printStackTrace();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMyContentItemAdapter = new MyContentItemRecyclerViewAdapter(mContent.ITEMS, MainActivity.this);
+                            mContentListFragment.setAdapter(mMyContentItemAdapter);
+                        }
+                    });
                     mLoadedSlush = true;
                 }
             }
@@ -489,11 +674,59 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     }
 
     public void reloadFeed(View view) {
-        fetchFromPile();
+        if (mShowingContracts) {
+            fetchFromContentContractRegister();
+        } else {
+            if (getSharedPreferences(sharedPreferencesName, 0).getString("selected", "").equals("slush-pile")) {
+                fetchFromPile();
+            } else {
+                fetchFromSelectedContract();
+            }
+        }
+    }
+
+
+
+    public void showContentContracts(View view) {
+        if (mContentContractListFragment == null)
+            mContentContractListFragment = ContentContractListFragment.newInstance();
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mContentContractListFragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
+
+
+        mContententListButton.setColorFilter(Color.DKGRAY);
+        mContractListButton.setColorFilter(Color.WHITE);
+
+        mShowingContracts = true;
+    }
+
+    public void showContentList(View view) {
+        if (mContentListFragment == null)
+            mContentListFragment = ContentListFragment.newInstance();
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mContentListFragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
+
+        mContententListButton.setColorFilter(Color.WHITE);
+        mContractListButton.setColorFilter(Color.DKGRAY);
+
+        mShowingContracts = false;
     }
 
     @Override
     public void onListFragmentInteraction(Content.ContentItem item) {
 
+    }
+
+    @Override
+    public void onListFragmentInteraction(Content.ContentContract.ContentContractItem item) {
+        SharedPreferences sp = getSharedPreferences(sharedPreferencesName, 0);
+        sp.edit().putString("selected", item.name).commit();
+        fetchFromContentContractRegister();
     }
 }

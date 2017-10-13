@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <EditText
+        android:id="@+id/editName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:hint="name"/>
+
+    <EditText
+        android:id="@+id/editDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/editName"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:hint="description"/>
+
+    <EditText
+        android:id="@+id/editPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/editDescription"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:hint="password"
+        android:inputType="textPassword"/>
+
+    <Button
+        android:id="@+id/dialogButtonPost"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=" post "
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/editPassword"/>
+
+</RelativeLayout>

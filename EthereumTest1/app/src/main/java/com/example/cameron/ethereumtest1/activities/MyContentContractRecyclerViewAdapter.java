@@ -44,6 +44,7 @@ public class MyContentContractRecyclerViewAdapter extends RecyclerView.Adapter<M
         holder.mItem = mValues.get(position);
         holder.mIdView.setText(mValues.get(position).numPosts + "");
         holder.mNameView.setText(mValues.get(position).name);
+        holder.mAdminView.setText(mValues.get(position).admin);
         holder.mDescriptionView.setText(mValues.get(position).description);
 
         if (mValues.get(position).name.equals(mSelected)) {
@@ -72,6 +73,7 @@ public class MyContentContractRecyclerViewAdapter extends RecyclerView.Adapter<M
         public final View mView;
         public final TextView mIdView;
         public final TextView mNameView;
+        public final TextView mAdminView;
         public final TextView mDescriptionView;
         public Content.ContentContract.ContentContractItem mItem;
 
@@ -80,6 +82,7 @@ public class MyContentContractRecyclerViewAdapter extends RecyclerView.Adapter<M
             mView = view;
             mIdView = (TextView) view.findViewById(R.id.id);
             mNameView = (TextView) view.findViewById(R.id.name);
+            mAdminView = (TextView) view.findViewById(R.id.admin);
             mDescriptionView = (TextView) view.findViewById(R.id.description);
         }
 

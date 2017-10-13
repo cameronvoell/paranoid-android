@@ -1,4 +1,4 @@
-package com.example.cameron.ethereumtest1.activities
+package com.example.cameron.ethereumtest1.ipfs
 
 import android.app.Activity
 import android.app.ProgressDialog

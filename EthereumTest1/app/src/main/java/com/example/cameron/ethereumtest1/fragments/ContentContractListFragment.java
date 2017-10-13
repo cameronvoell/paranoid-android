@@ -1,4 +1,4 @@
-package com.example.cameron.ethereumtest1.activities;
+package com.example.cameron.ethereumtest1.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -9,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.adapters.MyContentContractRecyclerViewAdapter;
+import com.example.cameron.ethereumtest1.data.Content;
 
 /**
  * A fragment representing a list of Items.

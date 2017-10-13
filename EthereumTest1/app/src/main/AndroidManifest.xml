@@ -14,7 +14,7 @@
         android:theme="@style/AppTheme">
 
         <service
-            android:name=".activities.IPFSDaemonService"
+            android:name=".ipfs.IPFSDaemonService"
             android:exported="false"/>
 
         <activity android:name=".activities.MainActivity"

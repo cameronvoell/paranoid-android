@@ -1,4 +1,4 @@
-package com.example.cameron.ethereumtest1.activities;
+package com.example.cameron.ethereumtest1.data;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,14 +8,12 @@ import java.util.Map;
 public class Content {
 
     public static final List<ContentItem> ITEMS = new ArrayList<ContentItem>();
-    public static final Map<String, ContentItem> ITEM_MAP = new HashMap<String, ContentItem>();
     public static final List<ContentContract.ContentContractItem> CONTRACT_ITEMS = new ArrayList<ContentContract.ContentContractItem>();
     public static final Map<String, ContentContract.ContentContractItem> CONTRACT_ITEM_MAP = new HashMap<String, ContentContract.ContentContractItem>();
 
 
     public static void addContentItem(ContentItem item) {
         ITEMS.add(item);
-        ITEM_MAP.put(item.id, item);
     }
 
     public static void addContractItem(ContentContract.ContentContractItem item) {
@@ -29,21 +27,6 @@ public class Content {
 
     public static void clearContractItems() {
         CONTRACT_ITEMS.clear();
-    }
-
-   public static class ContentItem {
-        public final String id;
-        public final String title;
-
-        public ContentItem(String id, String title) {
-            this.id = id;
-            this.title = title;
-        }
-
-        @Override
-        public String toString() {
-            return title;
-        }
     }
 
     public static class ContentContract {

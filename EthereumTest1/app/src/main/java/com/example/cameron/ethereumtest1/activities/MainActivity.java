@@ -24,7 +24,17 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.adapters.MyContentContractRecyclerViewAdapter;
+import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
+import com.example.cameron.ethereumtest1.data.Content;
+import com.example.cameron.ethereumtest1.data.ContentItem;
+import com.example.cameron.ethereumtest1.fragments.ContentContractListFragment;
+import com.example.cameron.ethereumtest1.fragments.ContentListFragment;
+import com.example.cameron.ethereumtest1.ipfs.IPFSDaemon;
+import com.example.cameron.ethereumtest1.ipfs.IPFSDaemonService;
 import com.example.cameron.ethereumtest1.util.EthereumConstants;
+import com.google.gson.Gson;
+
 import org.ethereum.geth.Account;
 import org.ethereum.geth.Address;
 import org.ethereum.geth.BigInt;
@@ -47,6 +57,8 @@ import org.ethereum.geth.Signer;
 import org.ethereum.geth.TransactOpts;
 import org.ethereum.geth.Transaction;
 import java.util.ArrayList;
+import java.util.HashMap;
+
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
@@ -55,6 +67,8 @@ import static com.example.cameron.ethereumtest1.util.EthereumConstants.CONTENT_C
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.RINKEBY_NETWORK_ID;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.SLUSH_PILE_ABI;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.SLUSH_PILE_RINKEBY_ADDRESS;
+import static com.example.cameron.ethereumtest1.util.EthereumConstants.USERNAME_CONTRACT_ABI;
+import static com.example.cameron.ethereumtest1.util.EthereumConstants.USERNAME_CONTRACT_RINKEBY;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.getRinkebyGenesis;
 
 public class MainActivity extends AppCompatActivity implements ContentListFragment.OnListFragmentInteractionListener,
@@ -63,16 +77,20 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     private final static String KEY_STORE = "/geth_keystore";
     public final static String sharedPreferencesName = "paranoid_preferences";
 
+    private static enum WHICH_CONTRACT{SLUSH_PILE, CONTRACT_REGISTER, USERNAME};
+
     private final static int ETH_CALL_NUM_CONTENT_CONTRACTS_REGISTERED = 0;
     private final static int ETH_CALL_FETCH_CONTENT_CONTRACT = 1;
     private final static int ETH_CALL_FETCH_CONTENT_LIST_SIZE = 2;
     private final static int ETH_CALL_FETCH_CONTENT_FROM_SELECTED_CONTRACT = 3;
     private final static int ETH_CALL_PILE_SIZE= 4;
     private final static int ETH_CALL_FETCH_FROM_PILE = 5;
+    private final static int ETH_CALL_FETCH_USERNAME = 6;
 
     private final static int ETH_TRANSACT_CREATE_CONTENT_FEED = 0;
     private final static int ETH_TRANSACT_POST_TO_SELECTED_FEED = 1;
     private final static int ETH_TRANSACT_POST_TO_SLUSH_PILE = 2;
+    private static final int ETH_TRANSACT_UPDATE_USERNAME = 3;
 
     private TextView mSynchInfoTextView;
     private TextView mSynchLogTextView;
@@ -84,6 +102,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     private ImageButton mContractListButton;
     private FloatingActionButton mFloatingActionButton1;
     private FloatingActionButton mFloatingActionButton2;
+    private FloatingActionButton mFloatingActionButton3;
     private LinearLayout mNetworkSynchView;
     private RelativeLayout mAccountPageView;
 
@@ -125,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         mContractListButton = (ImageButton) findViewById(R.id.button_contract_list);
         mFloatingActionButton1 = (FloatingActionButton) findViewById(R.id.fab1);
         mFloatingActionButton2 = (FloatingActionButton) findViewById(R.id.fab2);
+        mFloatingActionButton3 = (FloatingActionButton) findViewById(R.id.fab3);
 
         mContentListFragment = ContentListFragment.newInstance();
 
@@ -239,26 +259,28 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                 final Runnable checkPeers = new Runnable() {
                     @Override
                     public void run() {
-                        long numPeers = mNode.getPeersInfo().size();
+                        if (mNode != null) {
+                            long numPeers = mNode.getPeersInfo().size();
 
-                        if (numPeers < 1) {
-                            mSynchLogTextView.setText("Connecting to peers... " + ++mCounter + " seconds" + "\n");
-                            h.postDelayed(this, 1000);
-                        } else {
-                            PeerInfos info = mNode.getPeersInfo();
-                            PeerInfo firstPeer = null;
-                            try {
-                                firstPeer = info.get(0);
-                            } catch (Exception e) {
-                                mSynchLogTextView.setText("BUG" +  " info.get " + e.getMessage());
+                            if (numPeers < 1) {
+                                mSynchLogTextView.setText("Connecting to peers... " + ++mCounter + " seconds" + "\n");
+                                h.postDelayed(this, 1000);
+                            } else {
+                                PeerInfos info = mNode.getPeersInfo();
+                                PeerInfo firstPeer = null;
+                                try {
+                                    firstPeer = info.get(0);
+                                } catch (Exception e) {
+                                    mSynchLogTextView.setText("BUG" + " info.get " + e.getMessage());
+                                }
+                                mSynchLogTextView.append("Connected to: \n" + firstPeer.getName() + "\n");
+                                NodeInfo myInfo = mNode.getNodeInfo();
+                                mSynchLogTextView.append("\nMy name: " + myInfo.getName() + "\n");
+                                mSynchLogTextView.append("My address: " + myInfo.getListenerAddress() + "\n");
+                                mSynchLogTextView.append("My protocols: " + myInfo.getProtocols() + "\n\n");
+                                mCounter = 0;
+                                showSynchInfo();
                             }
-                            mSynchLogTextView.append("Connected to: \n" + firstPeer.getName() + "\n");
-                            NodeInfo myInfo = mNode.getNodeInfo();
-                            mSynchLogTextView.append("\nMy name: " + myInfo.getName() + "\n");
-                            mSynchLogTextView.append("My address: " + myInfo.getListenerAddress() + "\n");
-                            mSynchLogTextView.append("My protocols: " + myInfo.getProtocols() + "\n\n");
-                            mCounter = 0;
-                            showSynchInfo();
                         }
                     }
                 };
@@ -270,6 +292,45 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         }
     }
 
+    Runnable updateBlockNumber = new Runnable() {
+        @Override
+        public void run() {
+            Log.e("Error", "GOT CALLED2");
+            if (mHighest == 0) {
+                Log.e("Error", "GOT CALLED3");
+                try {
+                    mHighest = mEthereumClient.syncProgress(mContext).getHighestBlock();
+                } catch (Exception e) {
+                    mHighest = -1;
+                    Log.e("Error", "called 4" + e.getMessage());
+
+                }
+            }
+            if (mHighest != -1) {
+                Log.e("Error", "GOT CALLED5");
+                if (mHeader.getNumber() - mLastUpdated > 1000) {
+                    mLastUpdated = mHeader.getNumber();
+                    mSynchInfoTextView.setText(mHeader.getNumber() + "/" + mHighest);
+                    if (!mLoadedSlush && mHeader.getNumber() > 723887) {
+                        //fetchFromPile();
+                    }
+                    if (mLastUpdated > mHighest) {
+                        mHighest = -1;
+                    }
+                }
+            } else {
+                Log.e("Error", "GOT CALLED6");
+                mSynchInfoTextView.setText("Block: " + mHeader.getNumber());
+            }
+            uiUpdated = true;
+        }
+    };
+
+    Header mHeader = null;
+    boolean uiUpdated = false;
+    boolean firstTime = true;
+    int attemptsWhileWaitingForUIUpdate = 0;
+
     private NewHeadHandler mNewHeadHandler = new NewHeadHandler() {
         @Override
         public void onError(String error) {
@@ -279,39 +340,20 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
         @Override
         public void onNewHead(final Header header) {
+            mHeader = header;
             Log.e("Error", "GOT CALLED1");
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    Log.e("Error", "GOT CALLED2");
-                    if (mHighest == 0) {
-                        Log.e("Error", "GOT CALLED3");
-                        try {
-                            mHighest = mEthereumClient.syncProgress(mContext).getHighestBlock();
-                        } catch (Exception e) {
-                            mHighest = -1;
-                            Log.e("Error", "called 4" + e.getMessage());
-
-                        }
-                    }
-                    if (mHighest != -1) {
-                        Log.e("Error", "GOT CALLED5");
-                        if (header.getNumber() - mLastUpdated > 1000) {
-                            mLastUpdated = header.getNumber();
-                            mSynchInfoTextView.setText(header.getNumber() + "/" + mHighest);
-                            if (!mLoadedSlush && header.getNumber() > 723887) {
-                                //fetchFromPile();
-                            }
-                            if (mLastUpdated > mHighest) {
-                                mHighest = -1;
-                            }
-                        }
-                    } else {
-                        Log.e("Error", "GOT CALLED6");
-                        mSynchInfoTextView.setText("Block: " + header.getNumber());
-                    }
-
-                }
-            });
+            if (firstTime || uiUpdated || attemptsWhileWaitingForUIUpdate > 10) {
+                uiUpdated = false;
+                firstTime = false;
+                attemptsWhileWaitingForUIUpdate = 0;
+                Log.e("Error", "ATTEMPTED UI UPDATE");
+                runOnUiThread(updateBlockNumber);
+            } else {
+                if (!firstTime && !uiUpdated)
+                    attemptsWhileWaitingForUIUpdate++;
+            }
+            firstTime = false;
+            Log.e("Error", "GOT CALLED AFTER");
         }
     };
 
@@ -402,8 +444,18 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                     for (int i = (int)(numContent - 1); i >= 0 && i > numContent - 10; i--) {
                         Interfaces contentData = callEthereumContract(ETH_CALL_FETCH_CONTENT_FROM_SELECTED_CONTRACT, i);
                         final String response = contentData.get(0).getString();
-                        final String content = new IPFS().getGet().cat(response);
-                        mContent.addContentItem(new Content.ContentItem(i + "", content));
+                        String json = "";
+                        try {
+                            json = new IPFS().getGet().cat(response);
+                        } catch (Exception e) {
+                            json = "CONTENT CURRENTLY UNAVAILABLE";// + e.getMessage();
+                           // Log.e("oops", e.getMessage());
+                        }
+                        ContentItem contentItem = convertJsonToContentItem(json);
+                        Interfaces userNameResponse = callEthereumContract(ETH_CALL_FETCH_USERNAME, 0, contentItem.publishedBy);
+                        if (userNameResponse != null && userNameResponse.get(0).getString().length() > 0)
+                            contentItem.publishedBy = userNameResponse.get(0).getString();
+                        mContent.addContentItem(contentItem);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -420,6 +472,12 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         }).start();
     }
 
+    private ContentItem convertJsonToContentItem(String json) {
+        Gson gson = new Gson();
+        ContentItem contentItem = gson.fromJson(json, ContentItem.class);
+        return contentItem;
+    }
+
     public void fetchFromPile() {
         if (mContent == null) mContent = new Content();
         mContent.clearItems();
@@ -432,8 +490,9 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                     for (int i = (int)(pileSize - 1); i >= 0 && i > pileSize - 10; i--) {
                         Interfaces pileReturnData = callEthereumContract(ETH_CALL_FETCH_FROM_PILE, i);
                         final String response = pileReturnData.get(0).getString();
-                        final String content = new IPFS().getGet().cat(response);
-                        mContent.addContentItem(new Content.ContentItem(i + "", content));
+                        final String json = new IPFS().getGet().cat(response);
+                        ContentItem contentItem = convertJsonToContentItem(json);
+                        mContent.addContentItem(contentItem);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -451,13 +510,37 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     }
 
     private Interfaces callEthereumContract(int whichContractCall, int integerParameter) {
+        return callEthereumContract(whichContractCall, integerParameter, "");
+    }
+
+    private Interfaces callEthereumContract(int whichContractCall, int integerParameter, String stringParameter) {
         try {
-            boolean isSlushPileContract = whichContractCall == ETH_CALL_PILE_SIZE ||
-                    whichContractCall == ETH_CALL_FETCH_FROM_PILE;
-            Address address =  isSlushPileContract? new Address(SLUSH_PILE_RINKEBY_ADDRESS) :
-                    new Address(CONTENT_CONTRACT_REGISTER_RINKEBY_ADDRESS);
-            BoundContract contract = isSlushPileContract ? Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient) :
-                    Geth.bindContract(address, CONTENT_CONTRACT_REGISTER_ABI, mEthereumClient);
+            WHICH_CONTRACT whichContract;
+            if (whichContractCall == ETH_CALL_PILE_SIZE ||
+                whichContractCall == ETH_CALL_FETCH_FROM_PILE) {
+                whichContract = WHICH_CONTRACT.SLUSH_PILE;
+            } else if (whichContractCall == ETH_CALL_FETCH_USERNAME) {
+                whichContract = WHICH_CONTRACT.USERNAME;
+            } else {
+                whichContract = WHICH_CONTRACT.CONTRACT_REGISTER;
+            }
+
+            Address address;
+            BoundContract contract;
+            switch(whichContract) {
+                case SLUSH_PILE:
+                    address = new Address(SLUSH_PILE_RINKEBY_ADDRESS);
+                    contract = Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient);
+                    break;
+                case USERNAME:
+                    address = new Address(USERNAME_CONTRACT_RINKEBY);
+                    contract = Geth.bindContract(address, USERNAME_CONTRACT_ABI, mEthereumClient);
+                    break;
+                default:
+                    address = new Address(CONTENT_CONTRACT_REGISTER_RINKEBY_ADDRESS);
+                    contract = Geth.bindContract(address, CONTENT_CONTRACT_REGISTER_ABI, mEthereumClient);
+                    break;
+            }
 
             CallOpts callOpts = Geth.newCallOpts();
             callOpts.setContext(mContext);
@@ -535,6 +618,17 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                     paramsFetchFromPileCallData.set(0, paramFetchFromPileCallParameter);
                     contract.call(callOpts, paramsFetchFromPileReturnData, "fetchFromPile", paramsFetchFromPileCallData);
                     return paramsFetchFromPileReturnData;
+                case ETH_CALL_FETCH_USERNAME:
+                    Interfaces paramsFetchUsernameReturnData = Geth.newInterfaces(1);
+                    Interface paramFetchUsernameReturnParameter = Geth.newInterface();
+                    paramFetchUsernameReturnParameter.setDefaultString();
+                    paramsFetchUsernameReturnData.set(0, paramFetchUsernameReturnParameter);
+                    Interfaces paramsFetchUsernameCallData = Geth.newInterfaces(1);
+                    Interface paramFetchUsernameCallParameter = Geth.newInterface();
+                    paramFetchUsernameCallParameter.setAddress(new Address(stringParameter));
+                    paramsFetchUsernameCallData.set(0, paramFetchUsernameCallParameter);
+                    contract.call(callOpts, paramsFetchUsernameReturnData, "getUsername", paramsFetchUsernameCallData);
+                    return paramsFetchUsernameReturnData;
                 default:
                     return null;
             }
@@ -565,6 +659,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                             @Override
                             public void run() {
                                 dialog.dismiss();
+                                animateFabMenu(null);
                             }
                         });
                     }
@@ -572,6 +667,24 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
             }
         });
         dialog.show();
+    }
+
+    private String convertContentItemToJSON(ContentItem contentItem) {
+        Gson gson = new Gson();
+        String json = gson.toJson(contentItem);
+        return json;
+    }
+
+    private ContentItem convertDialogInputToContentItem(String title, String primaryText) {
+        String publishedBy = mAccounts.get(0).getAddress().getHex();
+        String contentTypeDictionaryAddress = "empty";
+        String contentType = "empty";
+        long publishedDate = System.currentTimeMillis();
+        String primaryImageUrl = "empty";
+        String primaryHttpLink = "empty";
+        String primaryContentAddressedLink = "empty";
+        return new ContentItem(publishedBy, contentTypeDictionaryAddress, contentType, title,
+                publishedDate, primaryText, primaryImageUrl, primaryHttpLink, primaryContentAddressedLink);
     }
 
     public void postToSelectedFeed(View view) {
@@ -582,24 +695,27 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         } else {
             // custom dialog
             final Dialog dialog = new Dialog(this);
-            dialog.setContentView(R.layout.dialog_post_to_slush);
+            dialog.setContentView(R.layout.dialog_post_content_to_feed);
             dialog.setTitle("Post to " + selected);
 
-            final EditText text = (EditText) dialog.findViewById(R.id.editMessage);
+            final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
+            final EditText body = (EditText) dialog.findViewById(R.id.editBody);
             final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
             Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
             dialogButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    final String message = text.getText().toString();
+                    ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString());
+                    final String json = convertContentItemToJSON(contentItem);
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            sendEthereumTransaction(ETH_TRANSACT_POST_TO_SELECTED_FEED, password.getText().toString(), message, "");
+                            sendEthereumTransaction(ETH_TRANSACT_POST_TO_SELECTED_FEED, password.getText().toString(), json, "");
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     dialog.dismiss();
+                                    animateFabMenu(null);
                                 }
                             });
                         }
@@ -612,7 +728,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
     public void postToSlushPile(View view) {
         final Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_post_to_slush);
+        dialog.setContentView(R.layout.dialog_post_content_to_feed);
         dialog.setTitle("Post Message");
 
         final EditText text = (EditText) dialog.findViewById(R.id.editMessage);
@@ -631,6 +747,37 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                             @Override
                             public void run() {
                                 dialog.dismiss();
+                                animateFabMenu(null);
+                            }
+                        });
+                    }
+                } ).start();
+            }
+        });
+        dialog.show();
+    }
+
+    public void updateUsername(View view) {
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_update_username);
+        dialog.setTitle("Update Username");
+
+        final EditText editUsername = (EditText) dialog.findViewById(R.id.editUsername);
+        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
+        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
+        dialogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final String message = editUsername.getText().toString();
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        sendEthereumTransaction(ETH_TRANSACT_UPDATE_USERNAME, password.getText().toString(), message, "");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                dialog.dismiss();
                             }
                         });
                     }
@@ -642,11 +789,32 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
     private void sendEthereumTransaction(int whichTransact, final String password, String stringParameterOne, String stringParameterTwo) {
         try {
-            boolean isSlushPileContract = whichTransact == ETH_TRANSACT_POST_TO_SLUSH_PILE;
-            Address address =  isSlushPileContract? new Address(SLUSH_PILE_RINKEBY_ADDRESS) :
-                    new Address(CONTENT_CONTRACT_REGISTER_RINKEBY_ADDRESS);
-            BoundContract contract = isSlushPileContract ? Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient) :
-                    Geth.bindContract(address, CONTENT_CONTRACT_REGISTER_ABI, mEthereumClient);
+            WHICH_CONTRACT whichContract;
+            if (whichTransact == ETH_TRANSACT_POST_TO_SLUSH_PILE) {
+                whichContract = WHICH_CONTRACT.SLUSH_PILE;
+            } else if (whichTransact == ETH_TRANSACT_UPDATE_USERNAME) {
+                whichContract = WHICH_CONTRACT.USERNAME;
+            } else {
+                whichContract = WHICH_CONTRACT.CONTRACT_REGISTER;
+            }
+
+            Address address;
+            BoundContract contract;
+            switch(whichContract) {
+                case SLUSH_PILE:
+                    address = new Address(SLUSH_PILE_RINKEBY_ADDRESS);
+                    contract = Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient);
+                    break;
+                case USERNAME:
+                    address = new Address(USERNAME_CONTRACT_RINKEBY);
+                    contract = Geth.bindContract(address, USERNAME_CONTRACT_ABI, mEthereumClient);
+                    break;
+                default:
+                    address = new Address(CONTENT_CONTRACT_REGISTER_RINKEBY_ADDRESS);
+                    contract = Geth.bindContract(address, CONTENT_CONTRACT_REGISTER_ABI, mEthereumClient);
+                    break;
+            }
+
             TransactOpts tOpts = new TransactOpts();
             tOpts.setContext(mContext);
             tOpts.setFrom(mAccounts.get(0).getAddress());
@@ -690,7 +858,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                     tOpts.setNonce(Math.max(noncePostFeed, noncePendingPostFeed));
                     Interfaces paramsPostFeed = Geth.newInterfaces(2);
                     Interface param = Geth.newInterface();
-                    param.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", "slush-pile"));
+                    param.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", "impossible to arrive here, autoselects slush pile"));
                     paramsPostFeed.set(0, param);
                     Interface param2 = Geth.newInterface();
                     param2.setString(multihash);
@@ -723,6 +891,24 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                         }
                     });
                     mEthereumClient.sendTransaction(mContext, txSlush);
+                    break;
+                case ETH_TRANSACT_UPDATE_USERNAME:
+                    long noncePendingUsername  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
+                    long nonceUsername = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
+                    tOpts.setNonce(Math.max(nonceUsername, noncePendingUsername));
+                    Interfaces paramsUsername = Geth.newInterfaces(1);
+                    Interface paramUsername = Geth.newInterface();
+                    paramUsername.setString(stringParameterOne);
+                    paramsUsername.set(0, paramUsername);
+
+                    final Transaction txUsername = contract.transact(tOpts, "updateMyUserName", paramsUsername);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), txUsername.getHash().getHex(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+                    mEthereumClient.sendTransaction(mContext, txUsername);
                     break;
             }
         } catch (Exception e) {
@@ -841,7 +1027,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     }
 
     @Override
-    public void onListFragmentInteraction(Content.ContentItem item) {
+    public void onListFragmentInteraction(ContentItem item) {
     }
 
     @Override
@@ -856,10 +1042,17 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
             mIsFabOpen=false;
             mFloatingActionButton1.animate().translationY(0);
             mFloatingActionButton2.animate().translationY(0);
+            mFloatingActionButton3.animate().translationY(0);
         } else {
             mIsFabOpen = true;
-            mFloatingActionButton1.animate().translationY(-getResources().getDimension(R.dimen.standard_75));
-            mFloatingActionButton2.animate().translationY(-getResources().getDimension(R.dimen.standard_150));
+            mFloatingActionButton1.animate().translationY(-getResources().getDimension(R.dimen.standard_65));
+            mFloatingActionButton2.animate().translationY(-getResources().getDimension(R.dimen.standard_130));
+            mFloatingActionButton3.animate().translationY(-getResources().getDimension(R.dimen.standard_195));
         }
+    }
+
+
+    public void previewPost(View view) {
+        Toast.makeText(getApplicationContext(), "Not yet implemented!", Toast.LENGTH_SHORT).show();
     }
 }

@@ -1,4 +1,4 @@
-package com.example.cameron.ethereumtest1.activities;
+package com.example.cameron.ethereumtest1.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -10,6 +10,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
+import com.example.cameron.ethereumtest1.data.Content;
+import com.example.cameron.ethereumtest1.data.ContentItem;
+
 /**
  * A fragment representing a list of Items.
  * <p/>
@@ -86,6 +90,6 @@ public class ContentListFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnListFragmentInteractionListener {
-        void onListFragmentInteraction(Content.ContentItem item);
+        void onListFragmentInteraction(ContentItem item);
     }
 }

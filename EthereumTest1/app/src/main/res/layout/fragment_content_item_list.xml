@@ -6,8 +6,7 @@
     android:name="com.example.cameron.ethereumtest1.activities.ContentListFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
+    android:background="@android:color/darker_gray"
     app:layoutManager="LinearLayoutManager"
-    tools:context="com.example.cameron.ethereumtest1.activities.ContentListFragment"
+    tools:context="com.example.cameron.ethereumtest1.fragments.ContentListFragment"
     tools:listitem="@layout/fragment_content_item" />

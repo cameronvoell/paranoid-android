@@ -4,12 +4,22 @@
     android:layout_height="wrap_content" >
 
     <EditText
-        android:id="@+id/editMessage"
+        android:id="@+id/editTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:focusable="true"
         android:focusableInTouchMode="true"
-        android:hint="message"/>
+        android:hint="title"/>
+
+    <EditText
+        android:id="@+id/editBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/editTitle"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:lines="8"
+        android:hint="article body"/>
 
     <EditText
         android:id="@+id/editPassword"
@@ -19,7 +29,16 @@
         android:focusableInTouchMode="true"
         android:hint="password"
         android:inputType="textPassword"
-        android:layout_below="@id/editMessage"/>
+        android:layout_below="@id/editBody"/>
+
+    <Button
+        android:id="@+id/dialogButtonPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=" preview "
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/editPassword"
+        android:onClick="previewPost"/>
 
     <Button
         android:id="@+id/dialogButtonPost"
@@ -27,6 +46,6 @@
         android:layout_height="wrap_content"
         android:text=" post "
         android:layout_centerHorizontal="true"
-        android:layout_below="@id/editPassword"/>
+        android:layout_below="@id/dialogButtonPreview"/>
 
 </RelativeLayout>

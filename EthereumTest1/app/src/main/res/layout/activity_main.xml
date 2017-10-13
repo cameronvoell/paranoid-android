@@ -203,6 +203,20 @@
     </LinearLayout>
 
     <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab3"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="bottom|end"
+        android:layout_alignParentRight="true"
+        android:layout_above="@id/selector"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/sym_action_chat"
+        android:tint="@android:color/black"
+        app:borderWidth="0dp"
+        app:elevation="6dp"
+        android:onClick="updateUsername"/>
+
+    <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab2"
         android:layout_width="60dp"
         android:layout_height="60dp"

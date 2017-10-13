@@ -1,4 +1,4 @@
-package com.example.cameron.ethereumtest1.activities
+package com.example.cameron.ethereumtest1.ipfs
 
 import android.app.IntentService
 import android.app.NotificationManager
@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.support.v4.app.NotificationCompat
 import com.example.cameron.ethereumtest1.R
+import com.example.cameron.ethereumtest1.activities.MainActivity
 
 class IPFSDaemonService : IntentService("IPFSDaemonService") {
 

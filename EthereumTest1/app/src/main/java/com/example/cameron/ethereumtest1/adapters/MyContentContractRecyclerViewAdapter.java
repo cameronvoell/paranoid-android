@@ -1,7 +1,6 @@
-package com.example.cameron.ethereumtest1.activities;
+package com.example.cameron.ethereumtest1.adapters;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
@@ -11,7 +10,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.cameron.ethereumtest1.R;
-import com.example.cameron.ethereumtest1.activities.ContentContractListFragment.OnListFragmentInteractionListener;
+import com.example.cameron.ethereumtest1.data.Content;
+import com.example.cameron.ethereumtest1.fragments.ContentContractListFragment.OnListFragmentInteractionListener;
+import com.example.cameron.ethereumtest1.activities.MainActivity;
 
 import java.util.List;
 

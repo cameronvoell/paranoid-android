@@ -5,87 +5,133 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/starrySky"
     tools:context="com.example.cameron.ethereumtest1.activities.MainActivity">
 
     <RelativeLayout
         android:id="@+id/statusBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/holo_green_dark">
+        android:background="@color/carInterior">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:paddingTop="10dp"
+            android:paddingBottom="0dp"
+            android:paddingLeft="27dp"
+            android:paddingRight="0dp"
+            android:src="@drawable/ic_star"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:paddingTop="0dp"
+            android:paddingBottom="25dp"
+            android:paddingLeft="0dp"
+            android:paddingRight="82dp"
+            android:src="@drawable/ic_star"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:paddingTop="2dp"
+            android:paddingBottom="0dp"
+            android:paddingLeft="15dp"
+            android:paddingRight="0dp"
+            android:src="@drawable/ic_star"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:paddingTop="0dp"
+            android:paddingBottom="20dp"
+            android:paddingLeft="75dp"
+            android:paddingRight="0dp"
+            android:src="@drawable/ic_star"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:paddingTop="2dp"
+            android:paddingBottom="0dp"
+            android:paddingLeft="15dp"
+            android:paddingRight="0dp"
+            android:src="@drawable/ic_star"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:paddingTop="2dp"
+            android:paddingBottom="0dp"
+            android:paddingLeft="15dp"
+            android:paddingRight="0dp"
+            android:src="@drawable/ic_star"/>
 
         <RelativeLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:layout_alignParentLeft="true"
-            android:background="@android:color/holo_green_light"
-            android:orientation="vertical"
-            android:onClick="openAccountInfo">
+            android:layout_marginRight="16dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/lock"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_margin="0dp"
+                android:paddingBottom="24dp"
+                android:layout_centerInParent="true"
+                android:src="@android:drawable/ic_lock_lock"
+                android:background="@android:color/transparent"
+                android:tint="@android:color/white"/>
 
             <TextView
                 android:id="@+id/accountInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentLeft="true"
+                android:layout_margin="0dp"
+                android:paddingTop="24dp"
+                android:layout_centerInParent="true"
+                android:textColor="@android:color/white"
                 android:text="Account: ?"/>
-
-            <TextView
-                android:id="@+id/lockLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/accountInfo"
-                android:layout_alignParentLeft="true"
-                android:text="Lock status: "/>
-
-            <ImageButton
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_below="@id/accountInfo"
-                android:src="@android:drawable/ic_lock_lock"
-                android:tint="@android:color/darker_gray"
-                android:backgroundTint="@android:color/holo_green_light"
-                android:background="@android:color/holo_green_light"
-                android:layout_toRightOf="@id/lockLabel"/>
-
-
         </RelativeLayout>
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:layout_alignParentRight="true"
-            android:background="@android:color/holo_green_light"
-            android:orientation="vertical"
-            android:onClick="openNetworkSynch">
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="16dp">
 
-            <TextView
-                android:id="@+id/networkInfo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Network: RINKEBY"/>
+            <ImageView
+                android:id="@+id/moon"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_margin="0dp"
+                android:padding="0dp"
+                android:src="@mipmap/ic_moon"
+                android:layout_centerInParent="true"
+                android:background="@android:color/transparent"
+                android:onClick="openNetworkSynch"/>
 
             <TextView
                 android:id="@+id/synchInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_below="@id/moon"
+                android:shadowColor="@android:color/black"
+                android:shadowRadius="10"
+                android:shadowDy="5"
+                android:shadowDx="5"
+                android:textColor="@android:color/white"
+                android:textSize="10dp"
                 android:text="Block: loading..."/>
 
-        </LinearLayout>
+        </RelativeLayout>
 
-        <ImageView
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:src="@mipmap/ic_paranoid_android"
-            android:layout_centerInParent="true"
-            android:onClick="reloadFeed"/>
 
     </RelativeLayout>
 
@@ -99,10 +145,10 @@
     <LinearLayout
         android:id="@+id/networkSynch"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@id/statusBar"
         android:layout_above="@+id/selector"
-        android:background="@android:color/darker_gray"
+        android:background="@android:color/transparent"
         android:orientation="vertical">
 
         <ImageButton
@@ -117,7 +163,8 @@
             android:padding="16dp"
             android:layout_marginLeft="32dp"
             android:layout_marginRight="32dp"
-            android:background="@android:color/white"/>
+            android:textColor="@android:color/white"
+            android:background="@android:color/transparent"/>
     </LinearLayout>
 
     <RelativeLayout
@@ -163,7 +210,7 @@
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:layout_alignParentBottom="true"
-        android:background="@android:color/holo_green_dark"
+        android:background="@color/carInterior"
         android:orientation="horizontal">
 
         <ImageButton
@@ -174,7 +221,7 @@
             android:layout_weight="1"
             android:tint="@android:color/white"
             android:background="@android:color/transparent"
-            android:src="@android:drawable/ic_menu_compass"
+            android:src="@drawable/ic_content_list"
             android:scaleType="fitCenter"
             android:onClick="showContentList"/>
 
@@ -186,7 +233,7 @@
             android:layout_weight="1"
             android:tint="@android:color/darker_gray"
             android:background="@android:color/transparent"
-            android:src="@android:drawable/ic_search_category_default"
+            android:src="@drawable/ic_newspaper"
             android:scaleType="fitCenter"
             android:onClick="showContentContracts"/>
 
@@ -197,7 +244,7 @@
             android:layout_weight="1"
             android:tint="@android:color/darker_gray"
             android:background="@android:color/transparent"
-            android:src="@android:drawable/ic_menu_preferences"
+            android:src="@drawable/ic_account"
             android:scaleType="fitCenter"/>
 
     </LinearLayout>
@@ -208,13 +255,14 @@
         android:layout_height="60dp"
         android:layout_gravity="bottom|end"
         android:layout_alignParentRight="true"
+        android:backgroundTint="@android:color/white"
         android:layout_above="@id/selector"
         android:layout_margin="16dp"
-        android:src="@android:drawable/sym_action_chat"
-        android:tint="@android:color/black"
+        android:src="@drawable/ic_pencil"
+        android:foregroundTint="@android:color/black"
         app:borderWidth="0dp"
         app:elevation="6dp"
-        android:onClick="updateUsername"/>
+        android:onClick="createNewContent"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab2"
@@ -222,13 +270,14 @@
         android:layout_height="60dp"
         android:layout_gravity="bottom|end"
         android:layout_alignParentRight="true"
+        android:backgroundTint="@android:color/white"
         android:layout_above="@id/selector"
         android:layout_margin="16dp"
-        android:src="@android:drawable/ic_menu_camera"
+        android:src="@drawable/ic_publication"
         android:tint="@android:color/black"
         app:borderWidth="0dp"
         app:elevation="6dp"
-        android:onClick="postToSelectedFeed"/>
+        android:onClick="createPublication"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab1"
@@ -236,13 +285,14 @@
         android:layout_height="60dp"
         android:layout_gravity="bottom|end"
         android:layout_alignParentRight="true"
+        android:backgroundTint="@android:color/white"
         android:layout_above="@id/selector"
         android:layout_margin="16dp"
-        android:src="@android:drawable/ic_dialog_email"
-        android:tint="@android:color/black"
+        android:src="@drawable/ic_account_edit"
+        android:foregroundTint="@android:color/black"
         app:borderWidth="0dp"
         app:elevation="6dp"
-        android:onClick="createNewContentFeed"/>
+        android:onClick="updateUsername"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
@@ -250,10 +300,11 @@
         android:layout_height="60dp"
         android:layout_gravity="bottom|end"
         android:layout_alignParentRight="true"
+        android:backgroundTint="@android:color/darker_gray"
+        android:src="@drawable/ic_steer_color"
+        android:scaleType="centerCrop"
         android:layout_above="@id/selector"
         android:layout_margin="16dp"
-        android:src="@android:drawable/ic_input_add"
-        android:tint="@android:color/black"
         app:borderWidth="0dp"
         app:elevation="6dp"
         android:onClick="animateFabMenu"/>

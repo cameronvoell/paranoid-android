@@ -17,16 +17,16 @@ import com.example.cameron.ethereumtest1.activities.MainActivity;
 import java.util.List;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link Content.ContentContract.ContentContractItem} and makes a call to the
+ * {@link RecyclerView.Adapter} that can display a {@link Content.QualityTag.QualityTagItem} and makes a call to the
  * specified {@link OnListFragmentInteractionListener}.
  */
 public class MyContentContractRecyclerViewAdapter extends RecyclerView.Adapter<MyContentContractRecyclerViewAdapter.ViewHolder> {
 
-    private final List<Content.ContentContract.ContentContractItem> mValues;
+    private final List<Content.QualityTag.QualityTagItem> mValues;
     private final OnListFragmentInteractionListener mListener;
     private String mSelected;
 
-    public MyContentContractRecyclerViewAdapter(List<Content.ContentContract.ContentContractItem> items, OnListFragmentInteractionListener listener) {
+    public MyContentContractRecyclerViewAdapter(List<Content.QualityTag.QualityTagItem> items, OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
         SharedPreferences sharedPreferences = ((Activity)listener).getSharedPreferences(MainActivity.sharedPreferencesName, 0);
@@ -76,7 +76,7 @@ public class MyContentContractRecyclerViewAdapter extends RecyclerView.Adapter<M
         public final TextView mNameView;
         public final TextView mAdminView;
         public final TextView mDescriptionView;
-        public Content.ContentContract.ContentContractItem mItem;
+        public Content.QualityTag.QualityTagItem mItem;
 
         public ViewHolder(View view) {
             super(view);

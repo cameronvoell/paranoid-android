@@ -57,18 +57,14 @@ import org.ethereum.geth.Signer;
 import org.ethereum.geth.TransactOpts;
 import org.ethereum.geth.Transaction;
 import java.util.ArrayList;
-import java.util.HashMap;
-
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.CONTENT_CONTRACT_REGISTER_ABI;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.CONTENT_CONTRACT_REGISTER_RINKEBY_ADDRESS;
+import static com.example.cameron.ethereumtest1.util.EthereumConstants.QUALITY_TAG_INDEX_ABI;
+import static com.example.cameron.ethereumtest1.util.EthereumConstants.QUALITY_TAG_INDEX_RINKEBY_ADDRESS;
+import static com.example.cameron.ethereumtest1.util.EthereumConstants.QUALITY_TAG_USER_DATA_ABI;
+import static com.example.cameron.ethereumtest1.util.EthereumConstants.QUALITY_TAG_USER_DATA_RINKEBY_ADDRESS;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.RINKEBY_NETWORK_ID;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.SLUSH_PILE_ABI;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.SLUSH_PILE_RINKEBY_ADDRESS;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.USERNAME_CONTRACT_ABI;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.USERNAME_CONTRACT_RINKEBY;
 import static com.example.cameron.ethereumtest1.util.EthereumConstants.getRinkebyGenesis;
 
 public class MainActivity extends AppCompatActivity implements ContentListFragment.OnListFragmentInteractionListener,
@@ -77,20 +73,19 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     private final static String KEY_STORE = "/geth_keystore";
     public final static String sharedPreferencesName = "paranoid_preferences";
 
-    private static enum WHICH_CONTRACT{SLUSH_PILE, CONTRACT_REGISTER, USERNAME};
+    private static enum ETH_CONTRACT{QUALITY_TAG_INDEX, USER_DATA};
 
-    private final static int ETH_CALL_NUM_CONTENT_CONTRACTS_REGISTERED = 0;
-    private final static int ETH_CALL_FETCH_CONTENT_CONTRACT = 1;
-    private final static int ETH_CALL_FETCH_CONTENT_LIST_SIZE = 2;
-    private final static int ETH_CALL_FETCH_CONTENT_FROM_SELECTED_CONTRACT = 3;
-    private final static int ETH_CALL_PILE_SIZE= 4;
-    private final static int ETH_CALL_FETCH_FROM_PILE = 5;
-    private final static int ETH_CALL_FETCH_USERNAME = 6;
+    private static enum ETH_CALL{ FETCH_NUM_QUALITY_TAGS,
+        FETCH_QUALITY_TAG,
+        FETCH_QUALITY_TAG_CONTENT_LIST_SIZE,
+        FETCH_QUALITY_TAG_CONTENT,
+        FETCH_USERNAME }
 
-    private final static int ETH_TRANSACT_CREATE_CONTENT_FEED = 0;
-    private final static int ETH_TRANSACT_POST_TO_SELECTED_FEED = 1;
-    private final static int ETH_TRANSACT_POST_TO_SLUSH_PILE = 2;
-    private static final int ETH_TRANSACT_UPDATE_USERNAME = 3;
+    private static enum ETH_TRANSACT{ CREATE_QUALITY_TAG,
+        SUBSCRIBE_TO_QUALITY_TAG,
+        UPVOTE_CONTENT,
+        REGISTER_NEW_USER,
+        POST_NEW_CONTENT_TO_TAG}
 
     private TextView mSynchInfoTextView;
     private TextView mSynchLogTextView;
@@ -320,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                 }
             } else {
                 Log.e("Error", "GOT CALLED6");
-                mSynchInfoTextView.setText("Block: " + mHeader.getNumber());
+                mSynchInfoTextView.setText("" + mHeader.getNumber());
             }
             uiUpdated = true;
         }
@@ -361,61 +356,109 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         try {
             mEthereumClient = mNode.getEthereumClient();
             mEthereumClient.subscribeNewHead(mContext, mNewHeadHandler, 16);
-        } catch(Exception e) {
+        } catch (Exception e) {
             Log.e("Error", "poop" + e.getMessage());
         }
-        final Handler h = new Handler();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    final long blockNumber = mEthereumClient.getBlockByNumber(mContext, -1).getNumber();
-                    Log.e("Error", "hello?");
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mSynchLogTextView.append("\nLatestBlock: " + blockNumber + ", synching...\n");
-                        }
-                    });
-                } catch (final Exception e) {
-                    Log.e("Error", e.getMessage());
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (mCounter == 0) {
-                                mSynchLogTextView.append("Awaiting EthereumClient Peer Acknowledgment (" + e.getMessage() + ")\n");
-                            } else {
-                                mSynchLogTextView.append(mCounter + ", ");
-                            }
-                            mCounter++;
-                        }
-                    });
-                    h.postDelayed(this, 1000);
-                }
-            }
-        }).start();
     }
+//        try {
+//            mEthereumClient = mNode.getEthereumClient();
+//            //mEthereumClient.subscribeNewHead(mContext, mNewHeadHandler, 16);
+//        } catch(Exception e) {
+//            Log.e("Error", "poop" + e.getMessage());
+//        }
+//        final Handler h = new Handler();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    final long blockNumber = mEthereumClient.getBlockByNumber(mContext, -1).getNumber();
+////                    Log.e("Error", "hello?");
+////                    runOnUiThread(new Runnable() {
+////                        @Override
+////                        public void run() {
+////                            mSynchLogTextView.append("\nLatestBlock: " + blockNumber + ", synching...\n");
+////                            try {
+////                                mEthereumClient.subscribeNewHead(mContext, mNewHeadHandler, 16);
+////                            } catch (Exception e) {
+////                                e.printStackTrace();
+////                            }
+////                        }
+////                    });
+//                } catch (final Exception e) {
+//                    Log.e("Error", e.getMessage());
+//                    runOnUiThread(waitingToConnectRunnable);
+//                    h.postDelayed(this, 1000);
+//                }
+//            }
+//        }).start();
+//    }
+//
+//    Runnable waitingToConnectRunnable = new Runnable() {
+//        @Override
+//        public void run() {
+//            if (mCounter == 0) {
+//                mSynchLogTextView.append("Awaiting EthereumClient Peer Acknowledgment\n");
+//            } else {
+//                mSynchLogTextView.append(mCounter + ", ");
+//            }
+//            mCounter++;
+//        }
+//    };
 
     /*
      * Methods for Posting to and Fetching data from Ethereum + IPFS
      */
-    public void fetchFromContentContractRegister() {
+//    public void fetchFromContentContractRegister() {
+//        if (mContent == null) mContent = new Content();
+//        mContent.clearContractItems();
+//        mContent.addContractItem(new Content.ContentContract.ContentContractItem("slush-pile", "Anyone can post here!", 0, "n/a"));
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    Interfaces returnData = callEthereumContract(ETH_CALL_NUM_CONTENT_CONTRACTS_REGISTERED, -1);
+//                    long numRegisteredResponse = returnData.get(0).getBigInt().getInt64();
+//                    for (int i = (int) (numRegisteredResponse - 1); i >= 0 && i > numRegisteredResponse - 10; i--) {
+//                        Interfaces fetchContentContractReturnData = callEthereumContract(ETH_CALL_FETCH_CONTENT_CONTRACT, i);
+//                        final String name = fetchContentContractReturnData.get(0).getString();
+//                        final String description = fetchContentContractReturnData.get(1).getString();
+//                        final long num = fetchContentContractReturnData.get(2).getBigInt().getInt64();
+//                        final String admin = fetchContentContractReturnData.get(3).getAddress().getHex();
+//                        mContent.addContractItem(new Content.ContentContract.ContentContractItem(name, description, num, admin));
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        mMyContentContractRecyclerViewAdapter = new MyContentContractRecyclerViewAdapter(mContent.CONTRACT_ITEMS, MainActivity.this);
+//                        mContentContractListFragment.setAdapter(mMyContentContractRecyclerViewAdapter);
+//                    }
+//                });
+//            }
+//        }).start();
+//    }
+
+    public void fetchQualityTags() {
         if (mContent == null) mContent = new Content();
         mContent.clearContractItems();
-        mContent.addContractItem(new Content.ContentContract.ContentContractItem("slush-pile", "Anyone can post here!", 0, "n/a"));
+        //mContent.addContractItem(new Content.ContentContract.ContentContractItem("slush-pile", "Anyone can post here!", 0, "n/a"));
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    Interfaces returnData = callEthereumContract(ETH_CALL_NUM_CONTENT_CONTRACTS_REGISTERED, -1);
+                    Interfaces returnData = callEthereumContract(ETH_CONTRACT.QUALITY_TAG_INDEX, ETH_CALL.FETCH_NUM_QUALITY_TAGS);
                     long numRegisteredResponse = returnData.get(0).getBigInt().getInt64();
-                    for (int i = (int) (numRegisteredResponse - 1); i >= 0 && i > numRegisteredResponse - 10; i--) {
-                        Interfaces fetchContentContractReturnData = callEthereumContract(ETH_CALL_FETCH_CONTENT_CONTRACT, i);
-                        final String name = fetchContentContractReturnData.get(0).getString();
-                        final String description = fetchContentContractReturnData.get(1).getString();
-                        final long num = fetchContentContractReturnData.get(2).getBigInt().getInt64();
-                        final String admin = fetchContentContractReturnData.get(3).getAddress().getHex();
-                        mContent.addContractItem(new Content.ContentContract.ContentContractItem(name, description, num, admin));
+                    for (int i = 0; i < numRegisteredResponse - 1; i++) {
+                        if (i == 2) continue;
+                        Interfaces fetchContentContractReturnData = callEthereumContract(ETH_CONTRACT.QUALITY_TAG_INDEX, ETH_CALL.FETCH_QUALITY_TAG, i);
+                        final String name = fetchContentContractReturnData.get(2).getString();
+                        final String description = fetchContentContractReturnData.get(3).getString();
+                        final long num = fetchContentContractReturnData.get(0).getBigInt().getInt64();
+                        final String admin = fetchContentContractReturnData.get(5).getAddress().getHex();
+                        mContent.addContractItem(new Content.QualityTag.QualityTagItem(name, description, num, admin));
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -432,45 +475,45 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         }).start();
     }
 
-    private void fetchFromSelectedContract() {
-        if (mContent == null) mContent = new Content();
-        mContent.clearItems();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Interfaces returnData = callEthereumContract(ETH_CALL_FETCH_CONTENT_LIST_SIZE, -1);
-                    long numContent = returnData.get(0).getBigInt().getInt64();
-                    for (int i = (int)(numContent - 1); i >= 0 && i > numContent - 10; i--) {
-                        Interfaces contentData = callEthereumContract(ETH_CALL_FETCH_CONTENT_FROM_SELECTED_CONTRACT, i);
-                        final String response = contentData.get(0).getString();
-                        String json = "";
-                        try {
-                            json = new IPFS().getGet().cat(response);
-                        } catch (Exception e) {
-                            json = "CONTENT CURRENTLY UNAVAILABLE";// + e.getMessage();
-                           // Log.e("oops", e.getMessage());
-                        }
-                        ContentItem contentItem = convertJsonToContentItem(json);
-                        Interfaces userNameResponse = callEthereumContract(ETH_CALL_FETCH_USERNAME, 0, contentItem.publishedBy);
-                        if (userNameResponse != null && userNameResponse.get(0).getString().length() > 0)
-                            contentItem.publishedBy = userNameResponse.get(0).getString();
-                        mContent.addContentItem(contentItem);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mMyContentItemAdapter = new MyContentItemRecyclerViewAdapter(mContent.ITEMS, MainActivity.this);
-                        mContentListFragment.setAdapter(mMyContentItemAdapter);
-                    }
-                });
-                mLoadedSlush = true;
-            }
-        }).start();
-    }
+//    private void fetchFromSelectedContract() {
+//        if (mContent == null) mContent = new Content();
+//        mContent.clearItems();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    Interfaces returnData = callEthereumContract(ETH_CALL_FETCH_CONTENT_LIST_SIZE);
+//                    long numContent = returnData.get(0).getBigInt().getInt64();
+//                    for (int i = (int)(numContent - 1); i >= 0 && i > numContent - 10; i--) {
+//                        Interfaces contentData = callEthereumContract(ETH_CALL_FETCH_CONTENT_FROM_SELECTED_CONTRACT, i);
+//                        final String response = contentData.get(0).getString();
+//                        String json = "";
+//                        try {
+//                            json = new IPFS().getGet().cat(response);
+//                        } catch (Exception e) {
+//                            json = "CONTENT CURRENTLY UNAVAILABLE";// + e.getMessage();
+//                           // Log.e("oops", e.getMessage());
+//                        }
+//                        ContentItem contentItem = convertJsonToContentItem(json);
+//                        Interfaces userNameResponse = callEthereumContract(ETH_CALL_FETCH_USERNAME, 0, contentItem.publishedBy);
+//                        if (userNameResponse != null && userNameResponse.get(0).getString().length() > 0)
+//                            contentItem.publishedBy = userNameResponse.get(0).getString();
+//                        mContent.addContentItem(contentItem);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        mMyContentItemAdapter = new MyContentItemRecyclerViewAdapter(mContent.ITEMS, MainActivity.this);
+//                        mContentListFragment.setAdapter(mMyContentItemAdapter);
+//                    }
+//                });
+//                mLoadedSlush = true;
+//            }
+//        }).start();
+//    }
 
     private ContentItem convertJsonToContentItem(String json) {
         Gson gson = new Gson();
@@ -478,157 +521,156 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         return contentItem;
     }
 
-    public void fetchFromPile() {
-        if (mContent == null) mContent = new Content();
-        mContent.clearItems();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Interfaces pileSizeResponse = callEthereumContract(ETH_CALL_PILE_SIZE, -1);
-                    long pileSize = pileSizeResponse.get(0).getBigInt().getInt64();
-                    for (int i = (int)(pileSize - 1); i >= 0 && i > pileSize - 10; i--) {
-                        Interfaces pileReturnData = callEthereumContract(ETH_CALL_FETCH_FROM_PILE, i);
-                        final String response = pileReturnData.get(0).getString();
-                        final String json = new IPFS().getGet().cat(response);
-                        ContentItem contentItem = convertJsonToContentItem(json);
-                        mContent.addContentItem(contentItem);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mMyContentItemAdapter = new MyContentItemRecyclerViewAdapter(mContent.ITEMS, MainActivity.this);
-                        mContentListFragment.setAdapter(mMyContentItemAdapter);
-                    }
-                });
-                mLoadedSlush = true;
-            }
-        }).start();
+//    public void fetchFromPile() {
+//        if (mContent == null) mContent = new Content();
+//        mContent.clearItems();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    Interfaces pileSizeResponse = callEthereumContract(ETH_CALL_PILE_SIZE, -1);
+//                    long pileSize = pileSizeResponse.get(0).getBigInt().getInt64();
+//                    for (int i = (int)(pileSize - 1); i >= 0 && i > pileSize - 10; i--) {
+//                        Interfaces pileReturnData = callEthereumContract(ETH_CALL_FETCH_FROM_PILE, i);
+//                        final String response = pileReturnData.get(0).getString();
+//                        final String json = new IPFS().getGet().cat(response);
+//                        ContentItem contentItem = convertJsonToContentItem(json);
+//                        mContent.addContentItem(contentItem);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        mMyContentItemAdapter = new MyContentItemRecyclerViewAdapter(mContent.ITEMS, MainActivity.this);
+//                        mContentListFragment.setAdapter(mMyContentItemAdapter);
+//                    }
+//                });
+//                mLoadedSlush = true;
+//            }
+//        }).start();
+//    }
+
+    private Interfaces callEthereumContract(ETH_CONTRACT whichContract, ETH_CALL whichContractCall) {
+        return callEthereumContract(whichContract, whichContractCall, -1);
     }
 
-    private Interfaces callEthereumContract(int whichContractCall, int integerParameter) {
-        return callEthereumContract(whichContractCall, integerParameter, "");
+    private Interfaces callEthereumContract(ETH_CONTRACT whichContract, ETH_CALL whichContractCall, int integerParameter) {
+        return callEthereumContract(whichContract, whichContractCall, integerParameter, "");
     }
 
-    private Interfaces callEthereumContract(int whichContractCall, int integerParameter, String stringParameter) {
+    private Interfaces callEthereumContract(ETH_CONTRACT whichContract, ETH_CALL whichContractCall, int integerParameter, String stringParameter) {
         try {
-            WHICH_CONTRACT whichContract;
-            if (whichContractCall == ETH_CALL_PILE_SIZE ||
-                whichContractCall == ETH_CALL_FETCH_FROM_PILE) {
-                whichContract = WHICH_CONTRACT.SLUSH_PILE;
-            } else if (whichContractCall == ETH_CALL_FETCH_USERNAME) {
-                whichContract = WHICH_CONTRACT.USERNAME;
-            } else {
-                whichContract = WHICH_CONTRACT.CONTRACT_REGISTER;
-            }
-
             Address address;
             BoundContract contract;
             switch(whichContract) {
-                case SLUSH_PILE:
-                    address = new Address(SLUSH_PILE_RINKEBY_ADDRESS);
-                    contract = Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient);
-                    break;
-                case USERNAME:
-                    address = new Address(USERNAME_CONTRACT_RINKEBY);
-                    contract = Geth.bindContract(address, USERNAME_CONTRACT_ABI, mEthereumClient);
+                case USER_DATA:
+                    address = new Address(QUALITY_TAG_USER_DATA_RINKEBY_ADDRESS);
+                    contract = Geth.bindContract(address, QUALITY_TAG_USER_DATA_ABI, mEthereumClient);
                     break;
                 default:
-                    address = new Address(CONTENT_CONTRACT_REGISTER_RINKEBY_ADDRESS);
-                    contract = Geth.bindContract(address, CONTENT_CONTRACT_REGISTER_ABI, mEthereumClient);
+                    address = new Address(QUALITY_TAG_INDEX_RINKEBY_ADDRESS);
+                    contract = Geth.bindContract(address, QUALITY_TAG_INDEX_ABI, mEthereumClient);
                     break;
             }
 
             CallOpts callOpts = Geth.newCallOpts();
             callOpts.setContext(mContext);
 
+            Interfaces callData;
+            Interfaces returnData;
+
             switch (whichContractCall) {
-                case ETH_CALL_NUM_CONTENT_CONTRACTS_REGISTERED:
-                    Interfaces paramsNumRegisteredCallData = Geth.newInterfaces(0);
-                    Interfaces returnData = Geth.newInterfaces(1);
+                case FETCH_NUM_QUALITY_TAGS:
+                    callData = Geth.newInterfaces(0);
+                    returnData = Geth.newInterfaces(1);
                     Interface paramNumRegisteredReturnParameter = Geth.newInterface();
                     paramNumRegisteredReturnParameter.setDefaultBigInt();
                     returnData.set(0, paramNumRegisteredReturnParameter);
-                    contract.call(callOpts, returnData, "numRegistered", paramsNumRegisteredCallData);
+                    contract.call(callOpts, returnData, "numQualityTags", callData);
                     return returnData;
-                case ETH_CALL_FETCH_CONTENT_CONTRACT:
-                    Interfaces paramsFetchRegisteredContractsCallData = Geth.newInterfaces(1);
-                    Interfaces paramsFetchRegisteredContractsReturnData = Geth.newInterfaces(4);
-                    Interface contractName = Geth.newInterface();
-                    Interface contractDescription = Geth.newInterface();
-                    Interface numPosts = Geth.newInterface();
-                    Interface contractAdmin = Geth.newInterface();
-                    contractName.setDefaultString();
-                    contractDescription.setDefaultString();
-                    numPosts.setDefaultBigInt();
-                    contractAdmin.setDefaultAddress();
-                    paramsFetchRegisteredContractsReturnData.set(0, contractName);
-                    paramsFetchRegisteredContractsReturnData.set(1, contractDescription);
-                    paramsFetchRegisteredContractsReturnData.set(2, numPosts);
-                    paramsFetchRegisteredContractsReturnData.set(3, contractAdmin);
-                    Interface paramFetchCallParameter = Geth.newInterface();
-                    paramFetchCallParameter.setBigInt(new BigInt(integerParameter));
-                    paramsFetchRegisteredContractsCallData.set(0, paramFetchCallParameter);
-                    contract.call(callOpts, paramsFetchRegisteredContractsReturnData, "localContentContracts", paramsFetchRegisteredContractsCallData);
-                    return paramsFetchRegisteredContractsReturnData;
-                case ETH_CALL_FETCH_CONTENT_LIST_SIZE:
-                    Interfaces paramsContentSizeCallData = Geth.newInterfaces(1);
-                    Interfaces paramsContentSizeReturnData = Geth.newInterfaces(1);
+                case FETCH_QUALITY_TAG:
+                    callData = Geth.newInterfaces(1);
+                    Interface qualityTagIndex = Geth.newInterface();
+                    qualityTagIndex.setBigInt(new BigInt(integerParameter));
+                    callData.set(0, qualityTagIndex);
+                    returnData = Geth.newInterfaces(6);
+                    Interface numTaggedContent = Geth.newInterface();
+                    Interface numSubscribers = Geth.newInterface();
+                    Interface name = Geth.newInterface();
+                    Interface description = Geth.newInterface();
+                    Interface isClosed = Geth.newInterface();
+                    Interface admin = Geth.newInterface();
+                    numTaggedContent.setDefaultBigInt();
+                    numSubscribers.setDefaultBigInt();
+                    name.setDefaultString();
+                    description.setDefaultString();
+                    isClosed.setDefaultBool();
+                    admin.setDefaultAddress();
+                    returnData.set(0, numTaggedContent);
+                    returnData.set(1, numSubscribers);
+                    returnData.set(2, name);
+                    returnData.set(3, description);
+                    returnData.set(4, isClosed);
+                    returnData.set(5, admin);
+                    contract.call(callOpts, returnData, "qualityTagIndex", callData);
+                    return returnData;
+                case FETCH_QUALITY_TAG_CONTENT_LIST_SIZE:
+                    callData = Geth.newInterfaces(1);
+                    returnData = Geth.newInterfaces(1);
                     Interface paramContentSizeReturnParameter = Geth.newInterface();
                     paramContentSizeReturnParameter.setDefaultBigInt();
-                    paramsContentSizeReturnData.set(0, paramContentSizeReturnParameter);
+                    returnData.set(0, paramContentSizeReturnParameter);
                     Interface paramContentSizeCallParameter = Geth.newInterface();
-                    paramContentSizeCallParameter.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", ""));
-                    paramsContentSizeCallData.set(0, paramContentSizeCallParameter);
-                    contract.call(callOpts, paramsContentSizeReturnData, "getLocalContentListSize", paramsContentSizeCallData);
-                    return paramsContentSizeReturnData;
-                case ETH_CALL_FETCH_CONTENT_FROM_SELECTED_CONTRACT:
-                    Interfaces paramsFetchReturnData = Geth.newInterfaces(1);
-                    Interface paramFetchReturnParameter = Geth.newInterface();
-                    paramFetchReturnParameter.setDefaultString();
-                    paramsFetchReturnData.set(0, paramFetchReturnParameter);
-                    Interfaces paramsFetchCallData = Geth.newInterfaces(2);
-                    Interface nameParameter = Geth.newInterface();
-                    nameParameter.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", ""));
-                    paramsFetchCallData.set(0, nameParameter);
-                    Interface paramFetchContentCallParameter = Geth.newInterface();
-                    paramFetchContentCallParameter.setBigInt(new BigInt(integerParameter));
-                    paramsFetchCallData.set(1, paramFetchContentCallParameter);
-                    contract.call(callOpts, paramsFetchReturnData, "getLocalContent", paramsFetchCallData);
-                    return paramsFetchReturnData;
-                case ETH_CALL_PILE_SIZE:
-                    Interfaces paramsPileSizeCallData = Geth.newInterfaces(0);
-                    Interfaces paramsPileSizeReturnData = Geth.newInterfaces(1);
-                    Interface paramPileSizeReturnParameter = Geth.newInterface();
-                    paramPileSizeReturnParameter.setDefaultBigInt();
-                    paramsPileSizeReturnData.set(0, paramPileSizeReturnParameter);
-                    contract.call(callOpts, paramsPileSizeReturnData, "pileSize", paramsPileSizeCallData);
-                    return paramsPileSizeReturnData;
-                case ETH_CALL_FETCH_FROM_PILE:
-                    Interfaces paramsFetchFromPileReturnData = Geth.newInterfaces(1);
-                    Interface paramFetchFromPileReturnParameter = Geth.newInterface();
-                    paramFetchFromPileReturnParameter.setDefaultString();
-                    paramsFetchFromPileReturnData.set(0, paramFetchFromPileReturnParameter);
-                    Interfaces paramsFetchFromPileCallData = Geth.newInterfaces(1);
-                    Interface paramFetchFromPileCallParameter = Geth.newInterface();
-                    paramFetchFromPileCallParameter.setBigInt(new BigInt(integerParameter));
-                    paramsFetchFromPileCallData.set(0, paramFetchFromPileCallParameter);
-                    contract.call(callOpts, paramsFetchFromPileReturnData, "fetchFromPile", paramsFetchFromPileCallData);
-                    return paramsFetchFromPileReturnData;
-                case ETH_CALL_FETCH_USERNAME:
-                    Interfaces paramsFetchUsernameReturnData = Geth.newInterfaces(1);
-                    Interface paramFetchUsernameReturnParameter = Geth.newInterface();
-                    paramFetchUsernameReturnParameter.setDefaultString();
-                    paramsFetchUsernameReturnData.set(0, paramFetchUsernameReturnParameter);
-                    Interfaces paramsFetchUsernameCallData = Geth.newInterfaces(1);
-                    Interface paramFetchUsernameCallParameter = Geth.newInterface();
-                    paramFetchUsernameCallParameter.setAddress(new Address(stringParameter));
-                    paramsFetchUsernameCallData.set(0, paramFetchUsernameCallParameter);
-                    contract.call(callOpts, paramsFetchUsernameReturnData, "getUsername", paramsFetchUsernameCallData);
-                    return paramsFetchUsernameReturnData;
+                    paramContentSizeCallParameter.setString(getSharedPreferences(sharedPreferencesName, 0).getString("index", ""));
+                    callData.set(0, paramContentSizeCallParameter);
+                    contract.call(callOpts, returnData, "numTaggedContent", callData);
+                    return returnData;
+//                case ETH_CALL_FETCH_CONTENT_FROM_SELECTED_CONTRACT:
+//                    Interfaces paramsFetchReturnData = Geth.newInterfaces(1);
+//                    Interface paramFetchReturnParameter = Geth.newInterface();
+//                    paramFetchReturnParameter.setDefaultString();
+//                    paramsFetchReturnData.set(0, paramFetchReturnParameter);
+//                    Interfaces paramsFetchCallData = Geth.newInterfaces(2);
+//                    Interface nameParameter = Geth.newInterface();
+//                    nameParameter.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", ""));
+//                    paramsFetchCallData.set(0, nameParameter);
+//                    Interface paramFetchContentCallParameter = Geth.newInterface();
+//                    paramFetchContentCallParameter.setBigInt(new BigInt(integerParameter));
+//                    paramsFetchCallData.set(1, paramFetchContentCallParameter);
+//                    contract.call(callOpts, paramsFetchReturnData, "getLocalContent", paramsFetchCallData);
+//                    return paramsFetchReturnData;
+//                case ETH_CALL_PILE_SIZE:
+//                    Interfaces paramsPileSizeCallData = Geth.newInterfaces(0);
+//                    Interfaces paramsPileSizeReturnData = Geth.newInterfaces(1);
+//                    Interface paramPileSizeReturnParameter = Geth.newInterface();
+//                    paramPileSizeReturnParameter.setDefaultBigInt();
+//                    paramsPileSizeReturnData.set(0, paramPileSizeReturnParameter);
+//                    contract.call(callOpts, paramsPileSizeReturnData, "pileSize", paramsPileSizeCallData);
+//                    return paramsPileSizeReturnData;
+//                case ETH_CALL_FETCH_FROM_PILE:
+//                    Interfaces paramsFetchFromPileReturnData = Geth.newInterfaces(1);
+//                    Interface paramFetchFromPileReturnParameter = Geth.newInterface();
+//                    paramFetchFromPileReturnParameter.setDefaultString();
+//                    paramsFetchFromPileReturnData.set(0, paramFetchFromPileReturnParameter);
+//                    Interfaces paramsFetchFromPileCallData = Geth.newInterfaces(1);
+//                    Interface paramFetchFromPileCallParameter = Geth.newInterface();
+//                    paramFetchFromPileCallParameter.setBigInt(new BigInt(integerParameter));
+//                    paramsFetchFromPileCallData.set(0, paramFetchFromPileCallParameter);
+//                    contract.call(callOpts, paramsFetchFromPileReturnData, "fetchFromPile", paramsFetchFromPileCallData);
+//                    return paramsFetchFromPileReturnData;
+//                case ETH_CALL_FETCH_USERNAME:
+//                    Interfaces paramsFetchUsernameReturnData = Geth.newInterfaces(1);
+//                    Interface paramFetchUsernameReturnParameter = Geth.newInterface();
+//                    paramFetchUsernameReturnParameter.setDefaultString();
+//                    paramsFetchUsernameReturnData.set(0, paramFetchUsernameReturnParameter);
+//                    Interfaces paramsFetchUsernameCallData = Geth.newInterfaces(1);
+//                    Interface paramFetchUsernameCallParameter = Geth.newInterface();
+//                    paramFetchUsernameCallParameter.setAddress(new Address(stringParameter));
+//                    paramsFetchUsernameCallData.set(0, paramFetchUsernameCallParameter);
+//                    contract.call(callOpts, paramsFetchUsernameReturnData, "getUsername", paramsFetchUsernameCallData);
+//                    return paramsFetchUsernameReturnData;
                 default:
                     return null;
             }
@@ -637,37 +679,37 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         }
     }
 
-    public void createNewContentFeed(View view) {
-        final Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_new_content_feed);
-        dialog.setTitle("New Content Feed");
-
-        final EditText editName = (EditText) dialog.findViewById(R.id.editName);
-        final EditText editDescription = (EditText) dialog.findViewById(R.id.editDescription);
-        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
-        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
-        dialogButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final String name = editName.getText().toString();
-                final String description = editDescription.getText().toString();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        sendEthereumTransaction(ETH_TRANSACT_CREATE_CONTENT_FEED, password.getText().toString(), name, description);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                dialog.dismiss();
-                                animateFabMenu(null);
-                            }
-                        });
-                    }
-                }).start();
-            }
-        });
-        dialog.show();
-    }
+//    public void createNewContentFeed(View view) {
+//        final Dialog dialog = new Dialog(this);
+//        dialog.setContentView(R.layout.dialog_new_content_feed);
+//        dialog.setTitle("New Content Feed");
+//
+//        final EditText editName = (EditText) dialog.findViewById(R.id.editName);
+//        final EditText editDescription = (EditText) dialog.findViewById(R.id.editDescription);
+//        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
+//        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
+//        dialogButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                final String name = editName.getText().toString();
+//                final String description = editDescription.getText().toString();
+//                new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        sendEthereumTransaction(ETH_TRANSACT_CREATE_CONTENT_FEED, password.getText().toString(), name, description);
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                dialog.dismiss();
+//                                animateFabMenu(null);
+//                            }
+//                        });
+//                    }
+//                }).start();
+//            }
+//        });
+//        dialog.show();
+//    }
 
     private String convertContentItemToJSON(ContentItem contentItem) {
         Gson gson = new Gson();
@@ -687,131 +729,118 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                 publishedDate, primaryText, primaryImageUrl, primaryHttpLink, primaryContentAddressedLink);
     }
 
-    public void postToSelectedFeed(View view) {
-        SharedPreferences sp = getSharedPreferences(sharedPreferencesName, 0);
-        final String selected = sp.getString("selected", "");
-        if (selected.equals("slush-pile")){
-            postToSlushPile(view);
-        } else {
-            // custom dialog
-            final Dialog dialog = new Dialog(this);
-            dialog.setContentView(R.layout.dialog_post_content_to_feed);
-            dialog.setTitle("Post to " + selected);
+//    public void postToSelectedFeed(View view) {
+//        SharedPreferences sp = getSharedPreferences(sharedPreferencesName, 0);
+//        final String selected = sp.getString("selected", "");
+//        if (selected.equals("slush-pile")){
+//            postToSlushPile(view);
+//        } else {
+//            // custom dialog
+//            final Dialog dialog = new Dialog(this);
+//            dialog.setContentView(R.layout.dialog_post_content_to_feed);
+//            dialog.setTitle("Post to " + selected);
+//
+//            final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
+//            final EditText body = (EditText) dialog.findViewById(R.id.editBody);
+//            final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
+//            Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
+//            dialogButton.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString());
+//                    final String json = convertContentItemToJSON(contentItem);
+//                    new Thread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            sendEthereumTransaction(ETH_TRANSACT_POST_TO_SELECTED_FEED, password.getText().toString(), json, "");
+//                            runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    dialog.dismiss();
+//                                    animateFabMenu(null);
+//                                }
+//                            });
+//                        }
+//                    } ).start();
+//                }
+//            });
+//            dialog.show();
+//        }
+//    }
 
-            final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
-            final EditText body = (EditText) dialog.findViewById(R.id.editBody);
-            final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
-            Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
-            dialogButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString());
-                    final String json = convertContentItemToJSON(contentItem);
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            sendEthereumTransaction(ETH_TRANSACT_POST_TO_SELECTED_FEED, password.getText().toString(), json, "");
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    dialog.dismiss();
-                                    animateFabMenu(null);
-                                }
-                            });
-                        }
-                    } ).start();
-                }
-            });
-            dialog.show();
-        }
-    }
+//    public void postToSlushPile(View view) {
+//        final Dialog dialog = new Dialog(this);
+//        dialog.setContentView(R.layout.dialog_post_content_to_feed);
+//        dialog.setTitle("Post Message");
+//
+//        final EditText text = (EditText) dialog.findViewById(R.id.editMessage);
+//        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
+//        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
+//        dialogButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                final String message = text.getText().toString();
+//
+//                new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        sendEthereumTransaction(ETH_TRANSACT_POST_TO_SLUSH_PILE, password.getText().toString(), message, "");
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                dialog.dismiss();
+//                                animateFabMenu(null);
+//                            }
+//                        });
+//                    }
+//                } ).start();
+//            }
+//        });
+//        dialog.show();
+//    }
 
-    public void postToSlushPile(View view) {
-        final Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_post_content_to_feed);
-        dialog.setTitle("Post Message");
+//    public void updateUsername(View view) {
+//        final Dialog dialog = new Dialog(this);
+//        dialog.setContentView(R.layout.dialog_update_username);
+//        dialog.setTitle("Update Username");
+//
+//        final EditText editUsername = (EditText) dialog.findViewById(R.id.editUsername);
+//        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
+//        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
+//        dialogButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                final String message = editUsername.getText().toString();
+//
+//                new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        sendEthereumTransaction(ETH_TRANSACT_UPDATE_USERNAME, password.getText().toString(), message, "");
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                dialog.dismiss();
+//                            }
+//                        });
+//                    }
+//                } ).start();
+//            }
+//        });
+//        dialog.show();
+//    }
 
-        final EditText text = (EditText) dialog.findViewById(R.id.editMessage);
-        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
-        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
-        dialogButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final String message = text.getText().toString();
-
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        sendEthereumTransaction(ETH_TRANSACT_POST_TO_SLUSH_PILE, password.getText().toString(), message, "");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                dialog.dismiss();
-                                animateFabMenu(null);
-                            }
-                        });
-                    }
-                } ).start();
-            }
-        });
-        dialog.show();
-    }
-
-    public void updateUsername(View view) {
-        final Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_update_username);
-        dialog.setTitle("Update Username");
-
-        final EditText editUsername = (EditText) dialog.findViewById(R.id.editUsername);
-        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
-        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
-        dialogButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final String message = editUsername.getText().toString();
-
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        sendEthereumTransaction(ETH_TRANSACT_UPDATE_USERNAME, password.getText().toString(), message, "");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                dialog.dismiss();
-                            }
-                        });
-                    }
-                } ).start();
-            }
-        });
-        dialog.show();
-    }
-
-    private void sendEthereumTransaction(int whichTransact, final String password, String stringParameterOne, String stringParameterTwo) {
+    private void sendEthereumTransaction(ETH_CONTRACT whichContract, ETH_TRANSACT whichTransact, final String password, String stringParameterOne, String stringParameterTwo) {
         try {
-            WHICH_CONTRACT whichContract;
-            if (whichTransact == ETH_TRANSACT_POST_TO_SLUSH_PILE) {
-                whichContract = WHICH_CONTRACT.SLUSH_PILE;
-            } else if (whichTransact == ETH_TRANSACT_UPDATE_USERNAME) {
-                whichContract = WHICH_CONTRACT.USERNAME;
-            } else {
-                whichContract = WHICH_CONTRACT.CONTRACT_REGISTER;
-            }
-
             Address address;
             BoundContract contract;
             switch(whichContract) {
-                case SLUSH_PILE:
-                    address = new Address(SLUSH_PILE_RINKEBY_ADDRESS);
-                    contract = Geth.bindContract(address, SLUSH_PILE_ABI, mEthereumClient);
-                    break;
-                case USERNAME:
-                    address = new Address(USERNAME_CONTRACT_RINKEBY);
-                    contract = Geth.bindContract(address, USERNAME_CONTRACT_ABI, mEthereumClient);
+                case USER_DATA:
+                    address = new Address(QUALITY_TAG_USER_DATA_RINKEBY_ADDRESS);
+                    contract = Geth.bindContract(address, QUALITY_TAG_USER_DATA_ABI, mEthereumClient);
                     break;
                 default:
-                    address = new Address(CONTENT_CONTRACT_REGISTER_RINKEBY_ADDRESS);
-                    contract = Geth.bindContract(address, CONTENT_CONTRACT_REGISTER_ABI, mEthereumClient);
+                    address = new Address(QUALITY_TAG_INDEX_RINKEBY_ADDRESS);
+                    contract = Geth.bindContract(address, QUALITY_TAG_INDEX_ABI, mEthereumClient);
                     break;
             }
 
@@ -831,18 +860,21 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
             tOpts.setValue(new BigInt(0));
 
             switch (whichTransact) {
-                case ETH_TRANSACT_CREATE_CONTENT_FEED:
+                case CREATE_QUALITY_TAG:
                     long noncePending  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
                     long nonce = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
                     tOpts.setNonce(Math.max(nonce, noncePending));
-                    Interfaces params = Geth.newInterfaces(2);
+                    Interfaces callData = Geth.newInterfaces(3);
                     Interface nameParam = Geth.newInterface();
                     Interface descriptionParam = Geth.newInterface();
+                    Interface isClosedParam = Geth.newInterface();
                     nameParam.setString(stringParameterOne);
                     descriptionParam.setString(stringParameterTwo);
-                    params.set(0, nameParam);
-                    params.set(1, descriptionParam);
-                    final Transaction tx = contract.transact(tOpts, "registerLocalContentContract", params);
+                    isClosedParam.setBool(false);
+                    callData.set(0, nameParam);
+                    callData.set(1, descriptionParam);
+                    callData.set(2, isClosedParam);
+                    final Transaction tx = contract.transact(tOpts, "addQualityTag", callData);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -851,65 +883,65 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                     });
                     mEthereumClient.sendTransaction(mContext, tx);
                     break;
-                case ETH_TRANSACT_POST_TO_SELECTED_FEED:
-                    final String multihash = new IPFS().getAdd().string(stringParameterOne).getHash();
-                    long noncePendingPostFeed  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
-                    long noncePostFeed = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
-                    tOpts.setNonce(Math.max(noncePostFeed, noncePendingPostFeed));
-                    Interfaces paramsPostFeed = Geth.newInterfaces(2);
-                    Interface param = Geth.newInterface();
-                    param.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", "impossible to arrive here, autoselects slush pile"));
-                    paramsPostFeed.set(0, param);
-                    Interface param2 = Geth.newInterface();
-                    param2.setString(multihash);
-                    paramsPostFeed.set(1, param2);
-
-                    final Transaction txPostFeed = contract.transact(tOpts, "registerLocalContent", paramsPostFeed);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(), txPostFeed.getHash().getHex(), Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    mEthereumClient.sendTransaction(mContext, txPostFeed);
-                    break;
-                case ETH_TRANSACT_POST_TO_SLUSH_PILE:
-                    final String multihashSlush = new IPFS().getAdd().string(stringParameterOne).getHash();
-                    long noncePendingSlush  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
-                    long nonceSlush = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
-                    tOpts.setNonce(Math.max(nonceSlush, noncePendingSlush));
-                    Interfaces paramsSlush = Geth.newInterfaces(1);
-                    Interface paramSlush = Geth.newInterface();
-                    paramSlush.setString(multihashSlush);
-                    paramsSlush.set(0, paramSlush);
-
-                    final Transaction txSlush = contract.transact(tOpts, "addToPile", paramsSlush);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(), txSlush.getHash().getHex(), Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    mEthereumClient.sendTransaction(mContext, txSlush);
-                    break;
-                case ETH_TRANSACT_UPDATE_USERNAME:
-                    long noncePendingUsername  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
-                    long nonceUsername = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
-                    tOpts.setNonce(Math.max(nonceUsername, noncePendingUsername));
-                    Interfaces paramsUsername = Geth.newInterfaces(1);
-                    Interface paramUsername = Geth.newInterface();
-                    paramUsername.setString(stringParameterOne);
-                    paramsUsername.set(0, paramUsername);
-
-                    final Transaction txUsername = contract.transact(tOpts, "updateMyUserName", paramsUsername);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(), txUsername.getHash().getHex(), Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    mEthereumClient.sendTransaction(mContext, txUsername);
-                    break;
+//                case ETH_TRANSACT_POST_TO_SELECTED_FEED:
+//                    final String multihash = new IPFS().getAdd().string(stringParameterOne).getHash();
+//                    long noncePendingPostFeed  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
+//                    long noncePostFeed = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
+//                    tOpts.setNonce(Math.max(noncePostFeed, noncePendingPostFeed));
+//                    Interfaces paramsPostFeed = Geth.newInterfaces(2);
+//                    Interface param = Geth.newInterface();
+//                    param.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", "impossible to arrive here, autoselects slush pile"));
+//                    paramsPostFeed.set(0, param);
+//                    Interface param2 = Geth.newInterface();
+//                    param2.setString(multihash);
+//                    paramsPostFeed.set(1, param2);
+//
+//                    final Transaction txPostFeed = contract.transact(tOpts, "registerLocalContent", paramsPostFeed);
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            Toast.makeText(getApplicationContext(), txPostFeed.getHash().getHex(), Toast.LENGTH_LONG).show();
+//                        }
+//                    });
+//                    mEthereumClient.sendTransaction(mContext, txPostFeed);
+//                    break;
+//                case ETH_TRANSACT_POST_TO_SLUSH_PILE:
+//                    final String multihashSlush = new IPFS().getAdd().string(stringParameterOne).getHash();
+//                    long noncePendingSlush  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
+//                    long nonceSlush = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
+//                    tOpts.setNonce(Math.max(nonceSlush, noncePendingSlush));
+//                    Interfaces paramsSlush = Geth.newInterfaces(1);
+//                    Interface paramSlush = Geth.newInterface();
+//                    paramSlush.setString(multihashSlush);
+//                    paramsSlush.set(0, paramSlush);
+//
+//                    final Transaction txSlush = contract.transact(tOpts, "addToPile", paramsSlush);
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            Toast.makeText(getApplicationContext(), txSlush.getHash().getHex(), Toast.LENGTH_LONG).show();
+//                        }
+//                    });
+//                    mEthereumClient.sendTransaction(mContext, txSlush);
+//                    break;
+//                case ETH_TRANSACT_UPDATE_USERNAME:
+//                    long noncePendingUsername  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
+//                    long nonceUsername = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
+//                    tOpts.setNonce(Math.max(nonceUsername, noncePendingUsername));
+//                    Interfaces paramsUsername = Geth.newInterfaces(1);
+//                    Interface paramUsername = Geth.newInterface();
+//                    paramUsername.setString(stringParameterOne);
+//                    paramsUsername.set(0, paramUsername);
+//
+//                    final Transaction txUsername = contract.transact(tOpts, "updateMyUserName", paramsUsername);
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            Toast.makeText(getApplicationContext(), txUsername.getHash().getHex(), Toast.LENGTH_LONG).show();
+//                        }
+//                    });
+//                    mEthereumClient.sendTransaction(mContext, txUsername);
+//                    break;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -933,7 +965,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                 try {
                     Account newAcc = mKeyStore.newAccount(text.getText().toString());
                     String account = newAcc.getAddress().getHex();
-                    mAccountTextView.setText(account.substring(0,4) + "..." + account.substring(account.length() -5,account.length() - 1));
+                    mAccountTextView.setText(account.substring(0,4) + "..." + account.substring(account.length() -4,account.length() - 1));
                     openAccountInfo(null);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -958,7 +990,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                     String accountString = account.getAddress().getHex();
                     mAccountListTextView.append("Account: " + accountString + "\n");
                     if (i == 0) {
-                        mAccountTextView.setText(accountString.substring(0, 9) + "..." + accountString.substring(accountString.length() - 4, accountString.length()));
+                       mAccountTextView.setText(accountString.substring(0, 4) + "..." + accountString.substring(accountString.length() - 4, accountString.length()));
                     }
 
 
@@ -992,12 +1024,12 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
     public void reloadFeed(View view) {
         if (mShowingContracts) {
-            fetchFromContentContractRegister();
+            fetchQualityTags();
         } else {
             if (getSharedPreferences(sharedPreferencesName, 0).getString("selected", "").equals("slush-pile")) {
-                fetchFromPile();
+                //fetchFromPile();
             } else {
-                fetchFromSelectedContract();
+                //fetchFromSelectedContract();
             }
         }
     }
@@ -1031,13 +1063,20 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     }
 
     @Override
-    public void onListFragmentInteraction(Content.ContentContract.ContentContractItem item) {
+    public void onListFragmentInteraction(Content.QualityTag.QualityTagItem item) {
         SharedPreferences sp = getSharedPreferences(sharedPreferencesName, 0);
         sp.edit().putString("selected", item.name).commit();
-        fetchFromContentContractRegister();
+        //fetchQualityTags();
     }
 
     public void animateFabMenu(View v) {
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
         if (mIsFabOpen) {
             mIsFabOpen=false;
             mFloatingActionButton1.animate().translationY(0);

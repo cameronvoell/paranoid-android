@@ -8,15 +8,15 @@ import java.util.Map;
 public class Content {
 
     public static final List<ContentItem> ITEMS = new ArrayList<ContentItem>();
-    public static final List<ContentContract.ContentContractItem> CONTRACT_ITEMS = new ArrayList<ContentContract.ContentContractItem>();
-    public static final Map<String, ContentContract.ContentContractItem> CONTRACT_ITEM_MAP = new HashMap<String, ContentContract.ContentContractItem>();
+    public static final List<QualityTag.QualityTagItem> CONTRACT_ITEMS = new ArrayList<QualityTag.QualityTagItem>();
+    public static final Map<String, QualityTag.QualityTagItem> CONTRACT_ITEM_MAP = new HashMap<String, QualityTag.QualityTagItem>();
 
 
     public static void addContentItem(ContentItem item) {
         ITEMS.add(item);
     }
 
-    public static void addContractItem(ContentContract.ContentContractItem item) {
+    public static void addContractItem(QualityTag.QualityTagItem item) {
         CONTRACT_ITEMS.add(item);
         CONTRACT_ITEM_MAP.put(item.name, item);
     }
@@ -29,15 +29,15 @@ public class Content {
         CONTRACT_ITEMS.clear();
     }
 
-    public static class ContentContract {
+    public static class QualityTag {
 
-        public static class ContentContractItem {
+        public static class QualityTagItem {
             public final String name;
             public final String description;
             public final long numPosts;
             public final String admin;
 
-            public ContentContractItem(String name, String description, long numPosts, String admin) {
+            public QualityTagItem(String name, String description, long numPosts, String admin) {
                 this.name = name;
                 this.description = description;
                 this.numPosts = numPosts;

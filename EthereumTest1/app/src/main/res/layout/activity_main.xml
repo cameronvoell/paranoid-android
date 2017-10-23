@@ -14,14 +14,14 @@
         android:layout_height="wrap_content"
         android:background="@color/carInterior">
 
-        <ImageView
+        <!--<ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:paddingTop="10dp"
             android:paddingBottom="0dp"
-            android:paddingLeft="27dp"
-            android:paddingRight="0dp"
+            android:paddingLeft="0dp"
+            android:paddingRight="43dp"
             android:src="@drawable/ic_star"/>
         <ImageView
             android:layout_width="wrap_content"
@@ -67,7 +67,7 @@
             android:paddingBottom="0dp"
             android:paddingLeft="15dp"
             android:paddingRight="0dp"
-            android:src="@drawable/ic_star"/>
+            android:src="@drawable/ic_star"/>-->
 
         <RelativeLayout
             android:layout_width="wrap_content"
@@ -75,28 +75,30 @@
             android:layout_marginRight="16dp"
             android:layout_centerVertical="true"
             android:layout_alignParentRight="true"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:onClick="openAccountInfo">
 
             <ImageButton
                 android:id="@+id/lock"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_margin="0dp"
-                android:paddingBottom="24dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:paddingBottom="12dp"
                 android:layout_centerInParent="true"
                 android:src="@android:drawable/ic_lock_lock"
                 android:background="@android:color/transparent"
-                android:tint="@android:color/white"/>
+                android:tint="@android:color/white"
+                android:onClick="openAccountInfo"/>
 
             <TextView
                 android:id="@+id/accountInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="0dp"
                 android:paddingTop="24dp"
+                android:textSize="10dp"
                 android:layout_centerInParent="true"
                 android:textColor="@android:color/white"
-                android:text="Account: ?"/>
+                android:text="Account: ?"
+                android:onClick="openAccountInfo"/>
         </RelativeLayout>
 
         <RelativeLayout
@@ -107,8 +109,8 @@
 
             <ImageView
                 android:id="@+id/moon"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_margin="0dp"
                 android:padding="0dp"
                 android:src="@mipmap/ic_moon"
@@ -128,7 +130,7 @@
                 android:shadowDx="5"
                 android:textColor="@android:color/white"
                 android:textSize="10dp"
-                android:text="Block: loading..."/>
+                android:text="synching..."/>
 
         </RelativeLayout>
 
@@ -170,10 +172,9 @@
     <RelativeLayout
         android:id="@+id/accountPage"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@id/statusBar"
-        android:layout_above="@id/selector"
-        android:background="@android:color/darker_gray"
+        android:background="@android:color/transparent"
         android:visibility="gone">
 
         <ImageButton
@@ -277,7 +278,7 @@
         android:tint="@android:color/black"
         app:borderWidth="0dp"
         app:elevation="6dp"
-        android:onClick="createPublication"/>
+        android:onClick="reloadFeed"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab1"

@@ -32,7 +32,7 @@ import com.example.cameron.ethereumtest1.fragments.ContentContractListFragment;
 import com.example.cameron.ethereumtest1.fragments.ContentListFragment;
 import com.example.cameron.ethereumtest1.ipfs.IPFSDaemon;
 import com.example.cameron.ethereumtest1.ipfs.IPFSDaemonService;
-import com.example.cameron.ethereumtest1.util.EthereumConstants;
+import com.example.cameron.ethereumtest1.data.EthereumConstants;
 import com.google.gson.Gson;
 
 import org.ethereum.geth.Account;
@@ -60,32 +60,14 @@ import java.util.ArrayList;
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.QUALITY_TAG_INDEX_ABI;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.QUALITY_TAG_INDEX_RINKEBY_ADDRESS;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.QUALITY_TAG_USER_DATA_ABI;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.QUALITY_TAG_USER_DATA_RINKEBY_ADDRESS;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.RINKEBY_NETWORK_ID;
-import static com.example.cameron.ethereumtest1.util.EthereumConstants.getRinkebyGenesis;
+import static com.example.cameron.ethereumtest1.data.EthereumConstants.RINKEBY_NETWORK_ID;
+import static com.example.cameron.ethereumtest1.data.EthereumConstants.getRinkebyGenesis;
 
 public class MainActivity extends AppCompatActivity implements ContentListFragment.OnListFragmentInteractionListener,
         ContentContractListFragment.OnListFragmentInteractionListener{
 
     private final static String KEY_STORE = "/geth_keystore";
     public final static String sharedPreferencesName = "paranoid_preferences";
-
-    private static enum ETH_CONTRACT{QUALITY_TAG_INDEX, USER_DATA};
-
-    private static enum ETH_CALL{ FETCH_NUM_QUALITY_TAGS,
-        FETCH_QUALITY_TAG,
-        FETCH_QUALITY_TAG_CONTENT_LIST_SIZE,
-        FETCH_QUALITY_TAG_CONTENT,
-        FETCH_USERNAME }
-
-    private static enum ETH_TRANSACT{ CREATE_QUALITY_TAG,
-        SUBSCRIBE_TO_QUALITY_TAG,
-        UPVOTE_CONTENT,
-        REGISTER_NEW_USER,
-        POST_NEW_CONTENT_TO_TAG}
 
     private TextView mSynchInfoTextView;
     private TextView mSynchLogTextView;
@@ -408,6 +390,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     /*
      * Methods for Posting to and Fetching data from Ethereum + IPFS
      */
+
 //    public void fetchFromContentContractRegister() {
 //        if (mContent == null) mContent = new Content();
 //        mContent.clearContractItems();
@@ -440,40 +423,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 //            }
 //        }).start();
 //    }
-
-    public void fetchQualityTags() {
-        if (mContent == null) mContent = new Content();
-        mContent.clearContractItems();
-        //mContent.addContractItem(new Content.ContentContract.ContentContractItem("slush-pile", "Anyone can post here!", 0, "n/a"));
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Interfaces returnData = callEthereumContract(ETH_CONTRACT.QUALITY_TAG_INDEX, ETH_CALL.FETCH_NUM_QUALITY_TAGS);
-                    long numRegisteredResponse = returnData.get(0).getBigInt().getInt64();
-                    for (int i = 0; i < numRegisteredResponse - 1; i++) {
-                        if (i == 2) continue;
-                        Interfaces fetchContentContractReturnData = callEthereumContract(ETH_CONTRACT.QUALITY_TAG_INDEX, ETH_CALL.FETCH_QUALITY_TAG, i);
-                        final String name = fetchContentContractReturnData.get(2).getString();
-                        final String description = fetchContentContractReturnData.get(3).getString();
-                        final long num = fetchContentContractReturnData.get(0).getBigInt().getInt64();
-                        final String admin = fetchContentContractReturnData.get(5).getAddress().getHex();
-                        mContent.addContractItem(new Content.QualityTag.QualityTagItem(name, description, num, admin));
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mMyContentContractRecyclerViewAdapter = new MyContentContractRecyclerViewAdapter(mContent.CONTRACT_ITEMS, MainActivity.this);
-                        mContentContractListFragment.setAdapter(mMyContentContractRecyclerViewAdapter);
-                    }
-                });
-            }
-        }).start();
-    }
 
 //    private void fetchFromSelectedContract() {
 //        if (mContent == null) mContent = new Content();
@@ -552,132 +501,132 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 //        }).start();
 //    }
 
-    private Interfaces callEthereumContract(ETH_CONTRACT whichContract, ETH_CALL whichContractCall) {
-        return callEthereumContract(whichContract, whichContractCall, -1);
-    }
-
-    private Interfaces callEthereumContract(ETH_CONTRACT whichContract, ETH_CALL whichContractCall, int integerParameter) {
-        return callEthereumContract(whichContract, whichContractCall, integerParameter, "");
-    }
-
-    private Interfaces callEthereumContract(ETH_CONTRACT whichContract, ETH_CALL whichContractCall, int integerParameter, String stringParameter) {
-        try {
-            Address address;
-            BoundContract contract;
-            switch(whichContract) {
-                case USER_DATA:
-                    address = new Address(QUALITY_TAG_USER_DATA_RINKEBY_ADDRESS);
-                    contract = Geth.bindContract(address, QUALITY_TAG_USER_DATA_ABI, mEthereumClient);
-                    break;
-                default:
-                    address = new Address(QUALITY_TAG_INDEX_RINKEBY_ADDRESS);
-                    contract = Geth.bindContract(address, QUALITY_TAG_INDEX_ABI, mEthereumClient);
-                    break;
-            }
-
-            CallOpts callOpts = Geth.newCallOpts();
-            callOpts.setContext(mContext);
-
-            Interfaces callData;
-            Interfaces returnData;
-
-            switch (whichContractCall) {
-                case FETCH_NUM_QUALITY_TAGS:
-                    callData = Geth.newInterfaces(0);
-                    returnData = Geth.newInterfaces(1);
-                    Interface paramNumRegisteredReturnParameter = Geth.newInterface();
-                    paramNumRegisteredReturnParameter.setDefaultBigInt();
-                    returnData.set(0, paramNumRegisteredReturnParameter);
-                    contract.call(callOpts, returnData, "numQualityTags", callData);
-                    return returnData;
-                case FETCH_QUALITY_TAG:
-                    callData = Geth.newInterfaces(1);
-                    Interface qualityTagIndex = Geth.newInterface();
-                    qualityTagIndex.setBigInt(new BigInt(integerParameter));
-                    callData.set(0, qualityTagIndex);
-                    returnData = Geth.newInterfaces(6);
-                    Interface numTaggedContent = Geth.newInterface();
-                    Interface numSubscribers = Geth.newInterface();
-                    Interface name = Geth.newInterface();
-                    Interface description = Geth.newInterface();
-                    Interface isClosed = Geth.newInterface();
-                    Interface admin = Geth.newInterface();
-                    numTaggedContent.setDefaultBigInt();
-                    numSubscribers.setDefaultBigInt();
-                    name.setDefaultString();
-                    description.setDefaultString();
-                    isClosed.setDefaultBool();
-                    admin.setDefaultAddress();
-                    returnData.set(0, numTaggedContent);
-                    returnData.set(1, numSubscribers);
-                    returnData.set(2, name);
-                    returnData.set(3, description);
-                    returnData.set(4, isClosed);
-                    returnData.set(5, admin);
-                    contract.call(callOpts, returnData, "qualityTagIndex", callData);
-                    return returnData;
-                case FETCH_QUALITY_TAG_CONTENT_LIST_SIZE:
-                    callData = Geth.newInterfaces(1);
-                    returnData = Geth.newInterfaces(1);
-                    Interface paramContentSizeReturnParameter = Geth.newInterface();
-                    paramContentSizeReturnParameter.setDefaultBigInt();
-                    returnData.set(0, paramContentSizeReturnParameter);
-                    Interface paramContentSizeCallParameter = Geth.newInterface();
-                    paramContentSizeCallParameter.setString(getSharedPreferences(sharedPreferencesName, 0).getString("index", ""));
-                    callData.set(0, paramContentSizeCallParameter);
-                    contract.call(callOpts, returnData, "numTaggedContent", callData);
-                    return returnData;
-//                case ETH_CALL_FETCH_CONTENT_FROM_SELECTED_CONTRACT:
-//                    Interfaces paramsFetchReturnData = Geth.newInterfaces(1);
-//                    Interface paramFetchReturnParameter = Geth.newInterface();
-//                    paramFetchReturnParameter.setDefaultString();
-//                    paramsFetchReturnData.set(0, paramFetchReturnParameter);
-//                    Interfaces paramsFetchCallData = Geth.newInterfaces(2);
-//                    Interface nameParameter = Geth.newInterface();
-//                    nameParameter.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", ""));
-//                    paramsFetchCallData.set(0, nameParameter);
-//                    Interface paramFetchContentCallParameter = Geth.newInterface();
-//                    paramFetchContentCallParameter.setBigInt(new BigInt(integerParameter));
-//                    paramsFetchCallData.set(1, paramFetchContentCallParameter);
-//                    contract.call(callOpts, paramsFetchReturnData, "getLocalContent", paramsFetchCallData);
-//                    return paramsFetchReturnData;
-//                case ETH_CALL_PILE_SIZE:
-//                    Interfaces paramsPileSizeCallData = Geth.newInterfaces(0);
-//                    Interfaces paramsPileSizeReturnData = Geth.newInterfaces(1);
-//                    Interface paramPileSizeReturnParameter = Geth.newInterface();
-//                    paramPileSizeReturnParameter.setDefaultBigInt();
-//                    paramsPileSizeReturnData.set(0, paramPileSizeReturnParameter);
-//                    contract.call(callOpts, paramsPileSizeReturnData, "pileSize", paramsPileSizeCallData);
-//                    return paramsPileSizeReturnData;
-//                case ETH_CALL_FETCH_FROM_PILE:
-//                    Interfaces paramsFetchFromPileReturnData = Geth.newInterfaces(1);
-//                    Interface paramFetchFromPileReturnParameter = Geth.newInterface();
-//                    paramFetchFromPileReturnParameter.setDefaultString();
-//                    paramsFetchFromPileReturnData.set(0, paramFetchFromPileReturnParameter);
-//                    Interfaces paramsFetchFromPileCallData = Geth.newInterfaces(1);
-//                    Interface paramFetchFromPileCallParameter = Geth.newInterface();
-//                    paramFetchFromPileCallParameter.setBigInt(new BigInt(integerParameter));
-//                    paramsFetchFromPileCallData.set(0, paramFetchFromPileCallParameter);
-//                    contract.call(callOpts, paramsFetchFromPileReturnData, "fetchFromPile", paramsFetchFromPileCallData);
-//                    return paramsFetchFromPileReturnData;
-//                case ETH_CALL_FETCH_USERNAME:
-//                    Interfaces paramsFetchUsernameReturnData = Geth.newInterfaces(1);
-//                    Interface paramFetchUsernameReturnParameter = Geth.newInterface();
-//                    paramFetchUsernameReturnParameter.setDefaultString();
-//                    paramsFetchUsernameReturnData.set(0, paramFetchUsernameReturnParameter);
-//                    Interfaces paramsFetchUsernameCallData = Geth.newInterfaces(1);
-//                    Interface paramFetchUsernameCallParameter = Geth.newInterface();
-//                    paramFetchUsernameCallParameter.setAddress(new Address(stringParameter));
-//                    paramsFetchUsernameCallData.set(0, paramFetchUsernameCallParameter);
-//                    contract.call(callOpts, paramsFetchUsernameReturnData, "getUsername", paramsFetchUsernameCallData);
-//                    return paramsFetchUsernameReturnData;
-                default:
-                    return null;
-            }
-        } catch (Exception e) {
-            return null;
-        }
-    }
+//    private Interfaces callEthereumContract(ETH_CONTRACT whichContract, ETH_CALL whichContractCall) {
+//        return callEthereumContract(whichContract, whichContractCall, -1);
+//    }
+//
+//    private Interfaces callEthereumContract(ETH_CONTRACT whichContract, ETH_CALL whichContractCall, int integerParameter) {
+//        return callEthereumContract(whichContract, whichContractCall, integerParameter, "");
+//    }
+//
+//    private Interfaces callEthereumContract(ETH_CALL whichContractCall, int integerParameter, String stringParameter) {
+//        try {
+//            Address address;
+//            BoundContract contract;
+//            switch(whichContract) {
+////                case USER_DATA:
+////                    address = new Address(QUALITY_TAG_USER_DATA_RINKEBY_ADDRESS);
+////                    contract = Geth.bindContract(address, QUALITY_TAG_USER_DATA_ABI, mEthereumClient);
+////                    break;
+//                default:
+//                    address = new Address("");
+//                    contract = Geth.bindContract(address, "", mEthereumClient);
+//                    break;
+//            }
+//
+//            CallOpts callOpts = Geth.newCallOpts();
+//            callOpts.setContext(mContext);
+//
+//            Interfaces callData;
+//            Interfaces returnData;
+//
+//            switch (whichContractCall) {
+//                case FETCH_NUM_QUALITY_TAGS:
+//                    callData = Geth.newInterfaces(0);
+//                    returnData = Geth.newInterfaces(1);
+//                    Interface paramNumRegisteredReturnParameter = Geth.newInterface();
+//                    paramNumRegisteredReturnParameter.setDefaultBigInt();
+//                    returnData.set(0, paramNumRegisteredReturnParameter);
+//                    contract.call(callOpts, returnData, "numQualityTags", callData);
+//                    return returnData;
+//                case FETCH_QUALITY_TAG:
+//                    callData = Geth.newInterfaces(1);
+//                    Interface qualityTagIndex = Geth.newInterface();
+//                    qualityTagIndex.setBigInt(new BigInt(integerParameter));
+//                    callData.set(0, qualityTagIndex);
+//                    returnData = Geth.newInterfaces(6);
+//                    Interface numTaggedContent = Geth.newInterface();
+//                    Interface numSubscribers = Geth.newInterface();
+//                    Interface name = Geth.newInterface();
+//                    Interface description = Geth.newInterface();
+//                    Interface isClosed = Geth.newInterface();
+//                    Interface admin = Geth.newInterface();
+//                    numTaggedContent.setDefaultBigInt();
+//                    numSubscribers.setDefaultBigInt();
+//                    name.setDefaultString();
+//                    description.setDefaultString();
+//                    isClosed.setDefaultBool();
+//                    admin.setDefaultAddress();
+//                    returnData.set(0, numTaggedContent);
+//                    returnData.set(1, numSubscribers);
+//                    returnData.set(2, name);
+//                    returnData.set(3, description);
+//                    returnData.set(4, isClosed);
+//                    returnData.set(5, admin);
+//                    contract.call(callOpts, returnData, "qualityTagIndex", callData);
+//                    return returnData;
+//                case FETCH_QUALITY_TAG_CONTENT_LIST_SIZE:
+//                    callData = Geth.newInterfaces(1);
+//                    returnData = Geth.newInterfaces(1);
+//                    Interface paramContentSizeReturnParameter = Geth.newInterface();
+//                    paramContentSizeReturnParameter.setDefaultBigInt();
+//                    returnData.set(0, paramContentSizeReturnParameter);
+//                    Interface paramContentSizeCallParameter = Geth.newInterface();
+//                    paramContentSizeCallParameter.setString(getSharedPreferences(sharedPreferencesName, 0).getString("index", ""));
+//                    callData.set(0, paramContentSizeCallParameter);
+//                    contract.call(callOpts, returnData, "numTaggedContent", callData);
+//                    return returnData;
+////                case ETH_CALL_FETCH_CONTENT_FROM_SELECTED_CONTRACT:
+////                    Interfaces paramsFetchReturnData = Geth.newInterfaces(1);
+////                    Interface paramFetchReturnParameter = Geth.newInterface();
+////                    paramFetchReturnParameter.setDefaultString();
+////                    paramsFetchReturnData.set(0, paramFetchReturnParameter);
+////                    Interfaces paramsFetchCallData = Geth.newInterfaces(2);
+////                    Interface nameParameter = Geth.newInterface();
+////                    nameParameter.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", ""));
+////                    paramsFetchCallData.set(0, nameParameter);
+////                    Interface paramFetchContentCallParameter = Geth.newInterface();
+////                    paramFetchContentCallParameter.setBigInt(new BigInt(integerParameter));
+////                    paramsFetchCallData.set(1, paramFetchContentCallParameter);
+////                    contract.call(callOpts, paramsFetchReturnData, "getLocalContent", paramsFetchCallData);
+////                    return paramsFetchReturnData;
+////                case ETH_CALL_PILE_SIZE:
+////                    Interfaces paramsPileSizeCallData = Geth.newInterfaces(0);
+////                    Interfaces paramsPileSizeReturnData = Geth.newInterfaces(1);
+////                    Interface paramPileSizeReturnParameter = Geth.newInterface();
+////                    paramPileSizeReturnParameter.setDefaultBigInt();
+////                    paramsPileSizeReturnData.set(0, paramPileSizeReturnParameter);
+////                    contract.call(callOpts, paramsPileSizeReturnData, "pileSize", paramsPileSizeCallData);
+////                    return paramsPileSizeReturnData;
+////                case ETH_CALL_FETCH_FROM_PILE:
+////                    Interfaces paramsFetchFromPileReturnData = Geth.newInterfaces(1);
+////                    Interface paramFetchFromPileReturnParameter = Geth.newInterface();
+////                    paramFetchFromPileReturnParameter.setDefaultString();
+////                    paramsFetchFromPileReturnData.set(0, paramFetchFromPileReturnParameter);
+////                    Interfaces paramsFetchFromPileCallData = Geth.newInterfaces(1);
+////                    Interface paramFetchFromPileCallParameter = Geth.newInterface();
+////                    paramFetchFromPileCallParameter.setBigInt(new BigInt(integerParameter));
+////                    paramsFetchFromPileCallData.set(0, paramFetchFromPileCallParameter);
+////                    contract.call(callOpts, paramsFetchFromPileReturnData, "fetchFromPile", paramsFetchFromPileCallData);
+////                    return paramsFetchFromPileReturnData;
+////                case ETH_CALL_FETCH_USERNAME:
+////                    Interfaces paramsFetchUsernameReturnData = Geth.newInterfaces(1);
+////                    Interface paramFetchUsernameReturnParameter = Geth.newInterface();
+////                    paramFetchUsernameReturnParameter.setDefaultString();
+////                    paramsFetchUsernameReturnData.set(0, paramFetchUsernameReturnParameter);
+////                    Interfaces paramsFetchUsernameCallData = Geth.newInterfaces(1);
+////                    Interface paramFetchUsernameCallParameter = Geth.newInterface();
+////                    paramFetchUsernameCallParameter.setAddress(new Address(stringParameter));
+////                    paramsFetchUsernameCallData.set(0, paramFetchUsernameCallParameter);
+////                    contract.call(callOpts, paramsFetchUsernameReturnData, "getUsername", paramsFetchUsernameCallData);
+////                    return paramsFetchUsernameReturnData;
+//                default:
+//                    return null;
+//            }
+//        } catch (Exception e) {
+//            return null;
+//        }
+//    }
 
 //    public void createNewContentFeed(View view) {
 //        final Dialog dialog = new Dialog(this);
@@ -829,125 +778,125 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 //        dialog.show();
 //    }
 
-    private void sendEthereumTransaction(ETH_CONTRACT whichContract, ETH_TRANSACT whichTransact, final String password, String stringParameterOne, String stringParameterTwo) {
-        try {
-            Address address;
-            BoundContract contract;
-            switch(whichContract) {
-                case USER_DATA:
-                    address = new Address(QUALITY_TAG_USER_DATA_RINKEBY_ADDRESS);
-                    contract = Geth.bindContract(address, QUALITY_TAG_USER_DATA_ABI, mEthereumClient);
-                    break;
-                default:
-                    address = new Address(QUALITY_TAG_INDEX_RINKEBY_ADDRESS);
-                    contract = Geth.bindContract(address, QUALITY_TAG_INDEX_ABI, mEthereumClient);
-                    break;
-            }
-
-            TransactOpts tOpts = new TransactOpts();
-            tOpts.setContext(mContext);
-            tOpts.setFrom(mAccounts.get(0).getAddress());
-            tOpts.setSigner(new Signer() {
-                @Override
-                public Transaction sign(Address address, Transaction transaction) throws Exception {
-                    Account account = mKeyStore.getAccounts().get(0);
-                    mKeyStore.unlock(account, password);
-                    Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
-                    mKeyStore.lock(account.getAddress());
-                    return signed;
-                }
-            });
-            tOpts.setValue(new BigInt(0));
-
-            switch (whichTransact) {
-                case CREATE_QUALITY_TAG:
-                    long noncePending  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
-                    long nonce = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
-                    tOpts.setNonce(Math.max(nonce, noncePending));
-                    Interfaces callData = Geth.newInterfaces(3);
-                    Interface nameParam = Geth.newInterface();
-                    Interface descriptionParam = Geth.newInterface();
-                    Interface isClosedParam = Geth.newInterface();
-                    nameParam.setString(stringParameterOne);
-                    descriptionParam.setString(stringParameterTwo);
-                    isClosedParam.setBool(false);
-                    callData.set(0, nameParam);
-                    callData.set(1, descriptionParam);
-                    callData.set(2, isClosedParam);
-                    final Transaction tx = contract.transact(tOpts, "addQualityTag", callData);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(), tx.getHash().getHex(), Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    mEthereumClient.sendTransaction(mContext, tx);
-                    break;
-//                case ETH_TRANSACT_POST_TO_SELECTED_FEED:
-//                    final String multihash = new IPFS().getAdd().string(stringParameterOne).getHash();
-//                    long noncePendingPostFeed  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
-//                    long noncePostFeed = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
-//                    tOpts.setNonce(Math.max(noncePostFeed, noncePendingPostFeed));
-//                    Interfaces paramsPostFeed = Geth.newInterfaces(2);
-//                    Interface param = Geth.newInterface();
-//                    param.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", "impossible to arrive here, autoselects slush pile"));
-//                    paramsPostFeed.set(0, param);
-//                    Interface param2 = Geth.newInterface();
-//                    param2.setString(multihash);
-//                    paramsPostFeed.set(1, param2);
 //
-//                    final Transaction txPostFeed = contract.transact(tOpts, "registerLocalContent", paramsPostFeed);
+//private void sendEthereumTransaction(ETH_TRANSACT whichTransact, final String password, String stringParameterOne, String stringParameterTwo) {
+//        try {
+//            Address address;
+//            BoundContract contract;
+//            switch(whichContract) {
+////                case USER_DATA:
+////                    address = new Address(QUALITY_TAG_USER_DATA_RINKEBY_ADDRESS);
+////                    contract = Geth.bindContract(address, QUALITY_TAG_USER_DATA_ABI, mEthereumClient);
+////                    break;
+//                default:
+//                    address = new Address("");
+//                    contract = Geth.bindContract(address, "", mEthereumClient);
+//                    break;
+//            }
+//
+//            TransactOpts tOpts = new TransactOpts();
+//            tOpts.setContext(mContext);
+//            tOpts.setFrom(mAccounts.get(0).getAddress());
+//            tOpts.setSigner(new Signer() {
+//                @Override
+//                public Transaction sign(Address address, Transaction transaction) throws Exception {
+//                    Account account = mKeyStore.getAccounts().get(0);
+//                    mKeyStore.unlock(account, password);
+//                    Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
+//                    mKeyStore.lock(account.getAddress());
+//                    return signed;
+//                }
+//            });
+//            tOpts.setValue(new BigInt(0));
+//
+//            switch (whichTransact) {
+//                case CREATE_QUALITY_TAG:
+//                    long noncePending  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
+//                    long nonce = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
+//                    tOpts.setNonce(Math.max(nonce, noncePending));
+//                    Interfaces callData = Geth.newInterfaces(3);
+//                    Interface nameParam = Geth.newInterface();
+//                    Interface descriptionParam = Geth.newInterface();
+//                    Interface isClosedParam = Geth.newInterface();
+//                    nameParam.setString(stringParameterOne);
+//                    descriptionParam.setString(stringParameterTwo);
+//                    isClosedParam.setBool(false);
+//                    callData.set(0, nameParam);
+//                    callData.set(1, descriptionParam);
+//                    callData.set(2, isClosedParam);
+//                    final Transaction tx = contract.transact(tOpts, "addQualityTag", callData);
 //                    runOnUiThread(new Runnable() {
 //                        @Override
 //                        public void run() {
-//                            Toast.makeText(getApplicationContext(), txPostFeed.getHash().getHex(), Toast.LENGTH_LONG).show();
+//                            Toast.makeText(getApplicationContext(), tx.getHash().getHex(), Toast.LENGTH_LONG).show();
 //                        }
 //                    });
-//                    mEthereumClient.sendTransaction(mContext, txPostFeed);
+//                    mEthereumClient.sendTransaction(mContext, tx);
 //                    break;
-//                case ETH_TRANSACT_POST_TO_SLUSH_PILE:
-//                    final String multihashSlush = new IPFS().getAdd().string(stringParameterOne).getHash();
-//                    long noncePendingSlush  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
-//                    long nonceSlush = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
-//                    tOpts.setNonce(Math.max(nonceSlush, noncePendingSlush));
-//                    Interfaces paramsSlush = Geth.newInterfaces(1);
-//                    Interface paramSlush = Geth.newInterface();
-//                    paramSlush.setString(multihashSlush);
-//                    paramsSlush.set(0, paramSlush);
-//
-//                    final Transaction txSlush = contract.transact(tOpts, "addToPile", paramsSlush);
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            Toast.makeText(getApplicationContext(), txSlush.getHash().getHex(), Toast.LENGTH_LONG).show();
-//                        }
-//                    });
-//                    mEthereumClient.sendTransaction(mContext, txSlush);
-//                    break;
-//                case ETH_TRANSACT_UPDATE_USERNAME:
-//                    long noncePendingUsername  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
-//                    long nonceUsername = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
-//                    tOpts.setNonce(Math.max(nonceUsername, noncePendingUsername));
-//                    Interfaces paramsUsername = Geth.newInterfaces(1);
-//                    Interface paramUsername = Geth.newInterface();
-//                    paramUsername.setString(stringParameterOne);
-//                    paramsUsername.set(0, paramUsername);
-//
-//                    final Transaction txUsername = contract.transact(tOpts, "updateMyUserName", paramsUsername);
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            Toast.makeText(getApplicationContext(), txUsername.getHash().getHex(), Toast.LENGTH_LONG).show();
-//                        }
-//                    });
-//                    mEthereumClient.sendTransaction(mContext, txUsername);
-//                    break;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
+////                case ETH_TRANSACT_POST_TO_SELECTED_FEED:
+////                    final String multihash = new IPFS().getAdd().string(stringParameterOne).getHash();
+////                    long noncePendingPostFeed  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
+////                    long noncePostFeed = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
+////                    tOpts.setNonce(Math.max(noncePostFeed, noncePendingPostFeed));
+////                    Interfaces paramsPostFeed = Geth.newInterfaces(2);
+////                    Interface param = Geth.newInterface();
+////                    param.setString(getSharedPreferences(sharedPreferencesName, 0).getString("selected", "impossible to arrive here, autoselects slush pile"));
+////                    paramsPostFeed.set(0, param);
+////                    Interface param2 = Geth.newInterface();
+////                    param2.setString(multihash);
+////                    paramsPostFeed.set(1, param2);
+////
+////                    final Transaction txPostFeed = contract.transact(tOpts, "registerLocalContent", paramsPostFeed);
+////                    runOnUiThread(new Runnable() {
+////                        @Override
+////                        public void run() {
+////                            Toast.makeText(getApplicationContext(), txPostFeed.getHash().getHex(), Toast.LENGTH_LONG).show();
+////                        }
+////                    });
+////                    mEthereumClient.sendTransaction(mContext, txPostFeed);
+////                    break;
+////                case ETH_TRANSACT_POST_TO_SLUSH_PILE:
+////                    final String multihashSlush = new IPFS().getAdd().string(stringParameterOne).getHash();
+////                    long noncePendingSlush  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
+////                    long nonceSlush = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
+////                    tOpts.setNonce(Math.max(nonceSlush, noncePendingSlush));
+////                    Interfaces paramsSlush = Geth.newInterfaces(1);
+////                    Interface paramSlush = Geth.newInterface();
+////                    paramSlush.setString(multihashSlush);
+////                    paramsSlush.set(0, paramSlush);
+////
+////                    final Transaction txSlush = contract.transact(tOpts, "addToPile", paramsSlush);
+////                    runOnUiThread(new Runnable() {
+////                        @Override
+////                        public void run() {
+////                            Toast.makeText(getApplicationContext(), txSlush.getHash().getHex(), Toast.LENGTH_LONG).show();
+////                        }
+////                    });
+////                    mEthereumClient.sendTransaction(mContext, txSlush);
+////                    break;
+////                case ETH_TRANSACT_UPDATE_USERNAME:
+////                    long noncePendingUsername  = mEthereumClient.getPendingNonceAt(mContext, mAccounts.get(0).getAddress());
+////                    long nonceUsername = mEthereumClient.getNonceAt(mContext, mAccounts.get(0).getAddress(), 0);
+////                    tOpts.setNonce(Math.max(nonceUsername, noncePendingUsername));
+////                    Interfaces paramsUsername = Geth.newInterfaces(1);
+////                    Interface paramUsername = Geth.newInterface();
+////                    paramUsername.setString(stringParameterOne);
+////                    paramsUsername.set(0, paramUsername);
+////
+////                    final Transaction txUsername = contract.transact(tOpts, "updateMyUserName", paramsUsername);
+////                    runOnUiThread(new Runnable() {
+////                        @Override
+////                        public void run() {
+////                            Toast.makeText(getApplicationContext(), txUsername.getHash().getHex(), Toast.LENGTH_LONG).show();
+////                        }
+////                    });
+////                    mEthereumClient.sendTransaction(mContext, txUsername);
+////                    break;
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
     /*
      * Methods for Managing Ethereum Accounts
      */
@@ -1024,7 +973,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
     public void reloadFeed(View view) {
         if (mShowingContracts) {
-            fetchQualityTags();
+            //fetchQualityTags();
         } else {
             if (getSharedPreferences(sharedPreferencesName, 0).getString("selected", "").equals("slush-pile")) {
                 //fetchFromPile();

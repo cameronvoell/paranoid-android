@@ -1,0 +1,56 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    tools:context="com.example.cameron.ethereumtest1.fragments.UserFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:layout_weight="5">
+
+        <TextView
+            android:id="@+id/userName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:textSize="24dp"
+            android:text="@string/user_name_not_loaded" />
+
+        <TextView
+            android:id="@+id/selectedAccount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:textSize="12dp"
+            android:text="eth-account" />
+        <TextView
+            android:id="@+id/ethBalance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:textSize="16dp"
+            android:text="0 ETH" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:background="@color/starrySky"
+        android:layout_weight="5">
+
+    </LinearLayout>
+
+
+    <!--<ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </ListView>-->
+
+</LinearLayout>

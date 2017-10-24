@@ -29,8 +29,8 @@ public class MyContentContractRecyclerViewAdapter extends RecyclerView.Adapter<M
     public MyContentContractRecyclerViewAdapter(List<Content.QualityTag.QualityTagItem> items, OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
-        SharedPreferences sharedPreferences = ((Activity)listener).getSharedPreferences(MainActivity.sharedPreferencesName, 0);
-        mSelected = sharedPreferences.getString("selected", "");
+        //SharedPreferences sharedPreferences = ((Activity)listener).getSharedPreferences(MainActivity.SHARED_PREFERENCES, MainActivity.PREF_MODE);
+        mSelected = "";//sharedPreferences.getString("selected", "");
     }
 
     @Override

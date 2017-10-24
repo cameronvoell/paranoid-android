@@ -2,16 +2,19 @@ package com.example.cameron.ethereumtest1.activities;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,44 +33,29 @@ import com.example.cameron.ethereumtest1.data.Content;
 import com.example.cameron.ethereumtest1.data.ContentItem;
 import com.example.cameron.ethereumtest1.fragments.ContentContractListFragment;
 import com.example.cameron.ethereumtest1.fragments.ContentListFragment;
+import com.example.cameron.ethereumtest1.fragments.UserFragment;
 import com.example.cameron.ethereumtest1.ipfs.IPFSDaemon;
 import com.example.cameron.ethereumtest1.ipfs.IPFSDaemonService;
-import com.example.cameron.ethereumtest1.data.EthereumConstants;
+import com.example.cameron.ethereumtest1.util.PrefUtils;
 import com.google.gson.Gson;
-
 import org.ethereum.geth.Account;
-import org.ethereum.geth.Address;
-import org.ethereum.geth.BigInt;
-import org.ethereum.geth.BoundContract;
-import org.ethereum.geth.CallOpts;
-import org.ethereum.geth.Context;
-import org.ethereum.geth.EthereumClient;
 import org.ethereum.geth.Geth;
-import org.ethereum.geth.Header;
-import org.ethereum.geth.Interface;
-import org.ethereum.geth.Interfaces;
 import org.ethereum.geth.KeyStore;
-import org.ethereum.geth.NewHeadHandler;
-import org.ethereum.geth.Node;
-import org.ethereum.geth.NodeConfig;
-import org.ethereum.geth.NodeInfo;
-import org.ethereum.geth.PeerInfo;
-import org.ethereum.geth.PeerInfos;
-import org.ethereum.geth.Signer;
-import org.ethereum.geth.TransactOpts;
-import org.ethereum.geth.Transaction;
 import java.util.ArrayList;
+import ethereum.EthereumClientService;
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-import static com.example.cameron.ethereumtest1.data.EthereumConstants.RINKEBY_NETWORK_ID;
-import static com.example.cameron.ethereumtest1.data.EthereumConstants.getRinkebyGenesis;
+import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_CONTENT_LIST;
+import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_PUBLICATION_LIST;
+import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_USER_FRAGMENT;
 
 public class MainActivity extends AppCompatActivity implements ContentListFragment.OnListFragmentInteractionListener,
-        ContentContractListFragment.OnListFragmentInteractionListener{
+        ContentContractListFragment.OnListFragmentInteractionListener,
+        UserFragment.OnFragmentInteractionListener {
 
+    private final static String TAG = MainActivity.class.getName();
     private final static String KEY_STORE = "/geth_keystore";
-    public final static String sharedPreferencesName = "paranoid_preferences";
 
     private TextView mSynchInfoTextView;
     private TextView mSynchLogTextView;
@@ -75,17 +63,16 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     private TextView mAccountListTextView;
     private ContentListFragment mContentListFragment;
     private ContentContractListFragment mContentContractListFragment;
+    private UserFragment mUserFragment;
     private ImageButton mContententListButton;
     private ImageButton mContractListButton;
+    private ImageButton mUserFragmentButton;
     private FloatingActionButton mFloatingActionButton1;
     private FloatingActionButton mFloatingActionButton2;
     private FloatingActionButton mFloatingActionButton3;
     private LinearLayout mNetworkSynchView;
     private RelativeLayout mAccountPageView;
 
-    private EthereumClient mEthereumClient;
-    private Context mContext;
-    private Node mNode;
     private ArrayList<Account> mAccounts = new ArrayList<>();
     private KeyStore mKeyStore;
 
@@ -101,6 +88,19 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     private long mHighest = 0;
     private boolean mLoadedSlush = false;
     private long mLastUpdated = 0;
+
+    // handler for received data from service
+    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(android.content.Context context, Intent intent) {
+            if (intent.getAction().equals(EthereumClientService.UI_UPDATE_ETH_BLOCK)) {
+                final long blockNumber = intent.getLongExtra(EthereumClientService.PARAM_BLOCK_NUMBER, 0);
+                mSynchInfoTextView.setText("" + blockNumber);
+                // do something
+            }
+        }
+    };
+    private long mSelectedAccount;
 
     /*
      * Lifecycle Methods
@@ -119,27 +119,54 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         mAccountPageView = (RelativeLayout) findViewById(R.id.accountPage);
         mContententListButton = (ImageButton) findViewById(R.id.button_content_list);
         mContractListButton = (ImageButton) findViewById(R.id.button_contract_list);
+        mUserFragmentButton = (ImageButton) findViewById(R.id.user_fragment_button);
+        mContententListButton.setColorFilter(Color.WHITE);
+        mUserFragmentButton.setColorFilter(Color.DKGRAY);
+        mContractListButton.setColorFilter(Color.DKGRAY);
         mFloatingActionButton1 = (FloatingActionButton) findViewById(R.id.fab1);
         mFloatingActionButton2 = (FloatingActionButton) findViewById(R.id.fab2);
         mFloatingActionButton3 = (FloatingActionButton) findViewById(R.id.fab3);
 
-        mContentListFragment = ContentListFragment.newInstance();
+        int selectedFragment = PrefUtils.getSelectedFragment(getBaseContext());
+        switch (selectedFragment) {
+            case SELECTED_CONTENT_LIST:
+                showContentList(null);
+                break;
+            case SELECTED_PUBLICATION_LIST:
+                showContentContracts(null);
+                break;
+            case SELECTED_USER_FRAGMENT:
+                showUserFragment(null);
+                break;
+            default:
+                Log.e("ERROR", "ERROR");
+                break;
+        }
 
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mContentListFragment);
-        transaction.addToBackStack(null);
-        transaction.commit();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(EthereumClientService.UI_UPDATE_ETH_BLOCK);
+        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(this);
+        bm.registerReceiver(mBroadcastReceiver, filter);
 
         mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
+        long numAccounts = mKeyStore.getAccounts().size();
+        if (numAccounts > 0) {
+            mSelectedAccount = PrefUtils.getSelectedAccount(getBaseContext());
+        }
+        try {
+            String accountString = mKeyStore.getAccounts().get(mSelectedAccount).getAddress().getHex();
+            mAccountTextView.setText(accountString.substring(0, 4) + "..." + accountString.substring(accountString.length() - 4, accountString.length()));
+        } catch (Exception e) {
+            Log.e(TAG, "Error retrieving account" + e.getMessage());
+        }
 
         mSynchLogTextView.append("Connecting to peers...");
-        mContext = new Context();
 
-        openAccountInfo(null);
-        openNetworkSynch(null);
+        //openAccountInfo(null);
+        //openNetworkSynch(null);
 
         startIPFSDaemon();
-        startEthereumClientAndConnectToPeers();
+        EthereumClientService.startEthereumService(this);
     }
 
     @Override
@@ -157,19 +184,13 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        try {
-            mNode.stop();
-            mNode = null;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(this);
+        bm.unregisterReceiver(mBroadcastReceiver);
     }
 
     /*
-     * Methods for managing Ethereum and IPFS Connectivity
+     * Methods for managing IPFS Connectivity
      */
-
     private void startIPFSDaemon() {
         if (!mIpfsDaemon.isReady()) {
             mIpfsDaemon.download(this, new Function0<Unit>() {
@@ -216,176 +237,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
             } ).start();
         }
     };
-
-    private void startEthereumClientAndConnectToPeers() {
-        try {
-            final NodeConfig config = new NodeConfig();
-            config.setEthereumEnabled(true);
-            config.setEthereumGenesis(getRinkebyGenesis(getBaseContext()));
-            config.setEthereumNetworkID(RINKEBY_NETWORK_ID);
-            config.setBootstrapNodes(EthereumConstants.getRinkebyBootNodes());
-            if (mNode == null) {
-                mNode = Geth.newNode(getFilesDir() + "/rinkeby", config);
-            }
-            mNode.start();
-
-            long numPeersInitial = mNode.getPeersInfo().size();
-
-            if (numPeersInitial < 1) {
-                final Handler h = new Handler();
-                final Runnable checkPeers = new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mNode != null) {
-                            long numPeers = mNode.getPeersInfo().size();
-
-                            if (numPeers < 1) {
-                                mSynchLogTextView.setText("Connecting to peers... " + ++mCounter + " seconds" + "\n");
-                                h.postDelayed(this, 1000);
-                            } else {
-                                PeerInfos info = mNode.getPeersInfo();
-                                PeerInfo firstPeer = null;
-                                try {
-                                    firstPeer = info.get(0);
-                                } catch (Exception e) {
-                                    mSynchLogTextView.setText("BUG" + " info.get " + e.getMessage());
-                                }
-                                mSynchLogTextView.append("Connected to: \n" + firstPeer.getName() + "\n");
-                                NodeInfo myInfo = mNode.getNodeInfo();
-                                mSynchLogTextView.append("\nMy name: " + myInfo.getName() + "\n");
-                                mSynchLogTextView.append("My address: " + myInfo.getListenerAddress() + "\n");
-                                mSynchLogTextView.append("My protocols: " + myInfo.getProtocols() + "\n\n");
-                                mCounter = 0;
-                                showSynchInfo();
-                            }
-                        }
-                    }
-                };
-                checkPeers.run();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    Runnable updateBlockNumber = new Runnable() {
-        @Override
-        public void run() {
-            Log.e("Error", "GOT CALLED2");
-            if (mHighest == 0) {
-                Log.e("Error", "GOT CALLED3");
-                try {
-                    mHighest = mEthereumClient.syncProgress(mContext).getHighestBlock();
-                } catch (Exception e) {
-                    mHighest = -1;
-                    Log.e("Error", "called 4" + e.getMessage());
-
-                }
-            }
-            if (mHighest != -1) {
-                Log.e("Error", "GOT CALLED5");
-                if (mHeader.getNumber() - mLastUpdated > 1000) {
-                    mLastUpdated = mHeader.getNumber();
-                    mSynchInfoTextView.setText(mHeader.getNumber() + "/" + mHighest);
-                    if (!mLoadedSlush && mHeader.getNumber() > 723887) {
-                        //fetchFromPile();
-                    }
-                    if (mLastUpdated > mHighest) {
-                        mHighest = -1;
-                    }
-                }
-            } else {
-                Log.e("Error", "GOT CALLED6");
-                mSynchInfoTextView.setText("" + mHeader.getNumber());
-            }
-            uiUpdated = true;
-        }
-    };
-
-    Header mHeader = null;
-    boolean uiUpdated = false;
-    boolean firstTime = true;
-    int attemptsWhileWaitingForUIUpdate = 0;
-
-    private NewHeadHandler mNewHeadHandler = new NewHeadHandler() {
-        @Override
-        public void onError(String error) {
-            mSynchLogTextView.setText("error");
-            mSynchLogTextView.invalidate();
-        }
-
-        @Override
-        public void onNewHead(final Header header) {
-            mHeader = header;
-            Log.e("Error", "GOT CALLED1");
-            if (firstTime || uiUpdated || attemptsWhileWaitingForUIUpdate > 10) {
-                uiUpdated = false;
-                firstTime = false;
-                attemptsWhileWaitingForUIUpdate = 0;
-                Log.e("Error", "ATTEMPTED UI UPDATE");
-                runOnUiThread(updateBlockNumber);
-            } else {
-                if (!firstTime && !uiUpdated)
-                    attemptsWhileWaitingForUIUpdate++;
-            }
-            firstTime = false;
-            Log.e("Error", "GOT CALLED AFTER");
-        }
-    };
-
-    private void showSynchInfo() {
-        try {
-            mEthereumClient = mNode.getEthereumClient();
-            mEthereumClient.subscribeNewHead(mContext, mNewHeadHandler, 16);
-        } catch (Exception e) {
-            Log.e("Error", "poop" + e.getMessage());
-        }
-    }
-//        try {
-//            mEthereumClient = mNode.getEthereumClient();
-//            //mEthereumClient.subscribeNewHead(mContext, mNewHeadHandler, 16);
-//        } catch(Exception e) {
-//            Log.e("Error", "poop" + e.getMessage());
-//        }
-//        final Handler h = new Handler();
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    final long blockNumber = mEthereumClient.getBlockByNumber(mContext, -1).getNumber();
-////                    Log.e("Error", "hello?");
-////                    runOnUiThread(new Runnable() {
-////                        @Override
-////                        public void run() {
-////                            mSynchLogTextView.append("\nLatestBlock: " + blockNumber + ", synching...\n");
-////                            try {
-////                                mEthereumClient.subscribeNewHead(mContext, mNewHeadHandler, 16);
-////                            } catch (Exception e) {
-////                                e.printStackTrace();
-////                            }
-////                        }
-////                    });
-//                } catch (final Exception e) {
-//                    Log.e("Error", e.getMessage());
-//                    runOnUiThread(waitingToConnectRunnable);
-//                    h.postDelayed(this, 1000);
-//                }
-//            }
-//        }).start();
-//    }
-//
-//    Runnable waitingToConnectRunnable = new Runnable() {
-//        @Override
-//        public void run() {
-//            if (mCounter == 0) {
-//                mSynchLogTextView.append("Awaiting EthereumClient Peer Acknowledgment\n");
-//            } else {
-//                mSynchLogTextView.append(mCounter + ", ");
-//            }
-//            mCounter++;
-//        }
-//    };
 
     /*
      * Methods for Posting to and Fetching data from Ethereum + IPFS
@@ -925,34 +776,13 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         dialog.show();
     }
 
+    public KeyStore getKeyStore() {
+        return mKeyStore;
+    }
+
     public void openAccountInfo(View view) {
-        closeNetworkSynch(null);
-        mAccountPageView.setVisibility(View.VISIBLE);
-        mAccountListTextView.setText("");
-        long numAccounts = mKeyStore.getAccounts().size();
-        if (numAccounts > 0) {
-            mAccounts = new ArrayList<>();
-            for (int i = 0; i < numAccounts; i++) {
-                try {
-                    Account account = mKeyStore.getAccounts().get(i);
-                    mAccounts.add(account);
-                    String accountString = account.getAddress().getHex();
-                    mAccountListTextView.append("Account: " + accountString + "\n");
-                    if (i == 0) {
-                       mAccountTextView.setText(accountString.substring(0, 4) + "..." + accountString.substring(accountString.length() - 4, accountString.length()));
-                    }
-
-
-                    BigInt balance = mEthereumClient.getBalanceAt(mContext, account.getAddress(), -1);
-                    mAccountListTextView.append("Balance: " + balance + " Wei" + "\n\n");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        } else {
-            mAccountListTextView.setText("no accounts yet...");
-        }
-
+//        closeNetworkSynch(null);
+//        mAccountPageView.setVisibility(View.VISIBLE);
     }
 
     /*
@@ -975,24 +805,12 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         if (mShowingContracts) {
             //fetchQualityTags();
         } else {
-            if (getSharedPreferences(sharedPreferencesName, 0).getString("selected", "").equals("slush-pile")) {
-                //fetchFromPile();
-            } else {
-                //fetchFromSelectedContract();
-            }
+//            if (getSharedPreferences(SHARED_PREFERENCES, PREF_MODE).getString("selected", "").equals("slush-pile")) {
+//                //fetchFromPile();
+//            } else {
+//                //fetchFromSelectedContract();
+//            }
         }
-    }
-
-    public void showContentContracts(View view) {
-        if (mContentContractListFragment == null)
-            mContentContractListFragment = ContentContractListFragment.newInstance();
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mContentContractListFragment);
-        transaction.addToBackStack(null);
-        transaction.commit();
-        mContententListButton.setColorFilter(Color.DKGRAY);
-        mContractListButton.setColorFilter(Color.WHITE);
-        mShowingContracts = true;
     }
 
     public void showContentList(View view) {
@@ -1000,11 +818,38 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
             mContentListFragment = ContentListFragment.newInstance();
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, mContentListFragment);
-        transaction.addToBackStack(null);
         transaction.commit();
         mContententListButton.setColorFilter(Color.WHITE);
         mContractListButton.setColorFilter(Color.DKGRAY);
+        mUserFragmentButton.setColorFilter(Color.DKGRAY);
         mShowingContracts = false;
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_CONTENT_LIST);
+    }
+
+    public void showContentContracts(View view) {
+        if (mContentContractListFragment == null)
+            mContentContractListFragment = ContentContractListFragment.newInstance();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mContentContractListFragment);
+        transaction.commit();
+        mContententListButton.setColorFilter(Color.DKGRAY);
+        mUserFragmentButton.setColorFilter(Color.DKGRAY);
+        mContractListButton.setColorFilter(Color.WHITE);
+        mShowingContracts = true;
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
+    }
+
+    public void showUserFragment(View view) {
+        if (mUserFragment == null)
+            mUserFragment = UserFragment.newInstance("","");
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mUserFragment);
+        transaction.commit();
+        mUserFragmentButton.setColorFilter(Color.WHITE);
+        mContententListButton.setColorFilter(Color.DKGRAY);
+        mContractListButton.setColorFilter(Color.DKGRAY);
+        mShowingContracts = false;
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_USER_FRAGMENT);;
     }
 
     @Override
@@ -1013,19 +858,18 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
     @Override
     public void onListFragmentInteraction(Content.QualityTag.QualityTagItem item) {
-        SharedPreferences sp = getSharedPreferences(sharedPreferencesName, 0);
-        sp.edit().putString("selected", item.name).commit();
-        //fetchQualityTags();
+//        SharedPreferences sp = getSharedPreferences(SHARED_PREFERENCES, PREF_MODE);
+//        sp.edit().putString("selected", item.name).commit();
     }
 
     public void animateFabMenu(View v) {
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
+//        getWindow().getDecorView().setSystemUiVisibility(
+//                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+//                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+//                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+//                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
         if (mIsFabOpen) {
             mIsFabOpen=false;
             mFloatingActionButton1.animate().translationY(0);
@@ -1042,5 +886,10 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
     public void previewPost(View view) {
         Toast.makeText(getApplicationContext(), "Not yet implemented!", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
     }
 }

@@ -151,6 +151,7 @@
         android:layout_below="@id/statusBar"
         android:layout_above="@+id/selector"
         android:background="@android:color/transparent"
+        android:visibility="gone"
         android:orientation="vertical">
 
         <ImageButton
@@ -239,14 +240,16 @@
             android:onClick="showContentContracts"/>
 
         <ImageButton
+            android:id="@+id/user_fragment_button"
             android:layout_width="0dp"
             android:layout_height="32dp"
             android:layout_gravity="center"
             android:layout_weight="1"
-            android:tint="@android:color/darker_gray"
+            android:foregroundTint="@android:color/darker_gray"
             android:background="@android:color/transparent"
             android:src="@drawable/ic_account"
-            android:scaleType="fitCenter"/>
+            android:scaleType="fitCenter"
+            android:onClick="showUserFragment"/>
 
     </LinearLayout>
 

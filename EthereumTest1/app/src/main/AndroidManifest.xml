@@ -27,8 +27,9 @@
         </activity>
 
         <service
-            android:name="ethereum.EthereumClientService"
-            android:exported="false"></service>
+            android:name=".ethereum.EthereumClientService"
+            android:enabled="true"
+            android:exported="true"/>
     </application>
 
 </manifest>

@@ -15,10 +15,12 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.activities.MainActivity;
+import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 import org.ethereum.geth.KeyStore;
-
-import ethereum.EthereumClientService;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_ACCOUNT_BALANCE;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_ACCOUNT_USER_NAME;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_ADDRESS_STRING;
 
 public class UserFragment extends Fragment {
 
@@ -33,9 +35,16 @@ public class UserFragment extends Fragment {
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(android.content.Context context, Intent intent) {
-            if (intent.getAction().equals(EthereumClientService.UI_UPDATE_ACCOUNT_BALANCE)) {
-                final long accountBalance = intent.getLongExtra(EthereumClientService.PARAM_BALANCE_LONG, 0);
-                mEthBalanceTextView.setText(accountBalance + " WEI");
+            String action = intent.getAction();
+            switch (action) {
+                case EthereumClientService.UI_UPDATE_ACCOUNT_USER_NAME:
+                    String userName = intent.getStringExtra(EthereumClientService.PARAM_USER_NAME);
+                    mUsernameTextView.setText(userName);
+                    break;
+                case EthereumClientService.UI_UPDATE_ACCOUNT_BALANCE:
+                    long accountBalance = intent.getLongExtra(EthereumClientService.PARAM_BALANCE_LONG, 0);
+                    mEthBalanceTextView.setText(accountBalance + " WEI");
+                    break;
             }
         }
     };
@@ -53,6 +62,7 @@ public class UserFragment extends Fragment {
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(EthereumClientService.UI_UPDATE_ACCOUNT_BALANCE);
+        filter.addAction(EthereumClientService.UI_UPDATE_ACCOUNT_USER_NAME);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(getContext());
         bm.registerReceiver(mBroadcastReceiver, filter);
     }
@@ -81,7 +91,10 @@ public class UserFragment extends Fragment {
         mEthBalanceTextView.setText(accountBalance + " WEI");
         if (PrefUtils.shouldUpdateAccountBalance(getActivity())) {
             try {
-                EthereumClientService.fetchAccountBalance(getActivity(), mKeyStore.getAccounts().get(mSelectedAccount).getAddress().getHex());
+                Intent intent = new Intent(getContext(), EthereumClientService.class);
+                intent.putExtra(PARAM_ADDRESS_STRING, mKeyStore.getAccounts().get(mSelectedAccount).getAddress().getHex());
+                intent.setAction(ETH_FETCH_ACCOUNT_BALANCE);
+                getActivity().startService(intent);
             } catch (Exception e) {
                 Log.e(TAG, "Error updating account balance: " + e.getMessage());
             }
@@ -91,7 +104,9 @@ public class UserFragment extends Fragment {
         mUsernameTextView.setText(userName);
         if (PrefUtils.shouldUpdateAccountUserName(getActivity())) {
             try {
-                EthereumClientService.fetchAccountUserName(getActivity(), mKeyStore.getAccounts().get(mSelectedAccount).getAddress().getHex());
+                getActivity().startService(new Intent(getContext(), EthereumClientService.class)
+                        .putExtra(PARAM_ADDRESS_STRING, mKeyStore.getAccounts().get(mSelectedAccount)
+                                .getAddress().getHex()).setAction(ETH_FETCH_ACCOUNT_USER_NAME));
             } catch (Exception e) {
                 Log.e(TAG, "Error updating account balance: " + e.getMessage());
             }

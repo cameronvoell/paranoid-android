@@ -2,7 +2,6 @@ package com.example.cameron.ethereumtest1.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.v4.app.FragmentActivity;
 
 /**
  * Created by cameron on 10/24/17.
@@ -10,7 +9,7 @@ import android.support.v4.app.FragmentActivity;
 
 public class PrefUtils {
 
-    private final static String SHARED_PREFERENCES = "digital_desert_preferences";
+    private final static String SHARED_PREFERENCES = "digital_desert_preferences4";
     private final static int PREF_MODE = android.content.Context.MODE_PRIVATE;
 
     private final static String PREF_SELECTED_FRAGMENT = "pref_selected_fragment";
@@ -22,10 +21,10 @@ public class PrefUtils {
 
     private static final String PREF_SELECTED_ACCOUNT_BALANCE = "pref_selected_account_balance";
     private static final String PREF_SELECTED_ACCOUNT_BALANCE_LAST_CHECKED = "pref_selected_account_balance";
-    private static final long ACCOUNT_UPDATE_INTERVAL_MS = 1000 * 60 * 30; //30 min
+    private static final long ACCOUNT_UPDATE_INTERVAL_MS = 1000 * 60 * 5; //1 min
 
     private static final String PREF_SELECTED_ACCOUNT_USER_NAME = "pref_selected_account_user_name";
-    private static final String PREF_SELECTED_ACCOUNT_USERNAME_LAST_CHECKED = "pref_selected_account_user_name_last_checked";
+    private static final String PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED = "pref_selected_account_user_name_last_checked";
 
     private static SharedPreferences sp(Context baseContext) {
         return baseContext.getSharedPreferences(SHARED_PREFERENCES, PREF_MODE);
@@ -62,7 +61,12 @@ public class PrefUtils {
     }
 
     public static boolean shouldUpdateAccountUserName(Context ctx) {
-        long lastUpdateTime = sp(ctx).getLong(PREF_SELECTED_ACCOUNT_USERNAME_LAST_CHECKED, 0);
+        long lastUpdateTime = sp(ctx).getLong(PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED, 0);
         return System.currentTimeMillis() - lastUpdateTime > ACCOUNT_UPDATE_INTERVAL_MS;
+    }
+
+    public static void saveSelectedAccountUserName(Context ctx, String userName) {
+        sp(ctx).edit().putString(PREF_SELECTED_ACCOUNT_USER_NAME, userName).commit();
+        sp(ctx).edit().putLong(PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED, System.currentTimeMillis()).commit();
     }
 }

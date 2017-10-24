@@ -5,7 +5,6 @@ import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
@@ -31,6 +30,7 @@ import com.example.cameron.ethereumtest1.adapters.MyContentContractRecyclerViewA
 import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
 import com.example.cameron.ethereumtest1.data.Content;
 import com.example.cameron.ethereumtest1.data.ContentItem;
+import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.fragments.ContentContractListFragment;
 import com.example.cameron.ethereumtest1.fragments.ContentListFragment;
 import com.example.cameron.ethereumtest1.fragments.UserFragment;
@@ -42,7 +42,6 @@ import org.ethereum.geth.Account;
 import org.ethereum.geth.Geth;
 import org.ethereum.geth.KeyStore;
 import java.util.ArrayList;
-import ethereum.EthereumClientService;
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
@@ -127,22 +126,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         mFloatingActionButton2 = (FloatingActionButton) findViewById(R.id.fab2);
         mFloatingActionButton3 = (FloatingActionButton) findViewById(R.id.fab3);
 
-        int selectedFragment = PrefUtils.getSelectedFragment(getBaseContext());
-        switch (selectedFragment) {
-            case SELECTED_CONTENT_LIST:
-                showContentList(null);
-                break;
-            case SELECTED_PUBLICATION_LIST:
-                showContentContracts(null);
-                break;
-            case SELECTED_USER_FRAGMENT:
-                showUserFragment(null);
-                break;
-            default:
-                Log.e("ERROR", "ERROR");
-                break;
-        }
-
         IntentFilter filter = new IntentFilter();
         filter.addAction(EthereumClientService.UI_UPDATE_ETH_BLOCK);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(this);
@@ -162,11 +145,24 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
         mSynchLogTextView.append("Connecting to peers...");
 
-        //openAccountInfo(null);
-        //openNetworkSynch(null);
-
         startIPFSDaemon();
-        EthereumClientService.startEthereumService(this);
+        startService(new Intent(MainActivity.this, EthereumClientService.class).setAction(EthereumClientService.START_ETHEREUM_SERVICE));
+
+        int selectedFragment = PrefUtils.getSelectedFragment(getBaseContext());
+        switch (selectedFragment) {
+            case SELECTED_CONTENT_LIST:
+                showContentList(null);
+                break;
+            case SELECTED_PUBLICATION_LIST:
+                showContentContracts(null);
+                break;
+            case SELECTED_USER_FRAGMENT:
+                showUserFragment(null);
+                break;
+            default:
+                Log.e("ERROR", "ERROR");
+                break;
+        }
     }
 
     @Override

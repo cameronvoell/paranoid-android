@@ -27,6 +27,9 @@ import org.ethereum.geth.Interfaces;
 import org.ethereum.geth.NewHeadHandler;
 import org.ethereum.geth.Node;
 import org.ethereum.geth.NodeConfig;
+
+import java.util.ArrayList;
+
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.RINKEBY_NETWORK_ID;
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.USER_CONTENT_REGISTER_ABI;
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.getRinkebyGenesis;
@@ -85,6 +88,10 @@ public class EthereumClientService extends Service {
                 case ETH_FETCH_ACCOUNT_USER_NAME:
                     addressString = b.getString(PARAM_ADDRESS_STRING);
                     handleUpdateAccountUserName(addressString);
+                    break;
+                case ETH_FETCH_USER_CONTENT_LIST:
+                    addressString = b.getString(PARAM_ADDRESS_STRING);
+                    handleFetchUserContentList(addressString);
                 default:
                     break;
             }
@@ -120,6 +127,7 @@ public class EthereumClientService extends Service {
             switch (intent.getAction()) {
                 case ETH_FETCH_ACCOUNT_BALANCE:
                 case ETH_FETCH_ACCOUNT_USER_NAME:
+                case ETH_FETCH_USER_CONTENT_LIST:
                     b.putString(PARAM_ADDRESS_STRING, intent.getStringExtra(PARAM_ADDRESS_STRING));
                     break;
             }
@@ -211,6 +219,11 @@ public class EthereumClientService extends Service {
             LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
             bm.sendBroadcast(intent);
         }
+    }
+
+    private void handleFetchUserContentList(String addressString) {
+        ArrayList<String> contentList = new ArrayList<>();
+        
     }
 
     private void handleUpdateAccountUserName(String addressString) {

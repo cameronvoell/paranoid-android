@@ -20,6 +20,7 @@ import com.example.cameron.ethereumtest1.util.PrefUtils;
 import org.ethereum.geth.KeyStore;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_ACCOUNT_BALANCE;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_ACCOUNT_USER_NAME;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_ADDRESS_STRING;
 
 public class UserFragment extends Fragment {
@@ -110,6 +111,14 @@ public class UserFragment extends Fragment {
             } catch (Exception e) {
                 Log.e(TAG, "Error updating account balance: " + e.getMessage());
             }
+        }
+
+        try {
+            getActivity().startService(new Intent(getContext(), EthereumClientService.class)
+                    .putExtra(PARAM_ADDRESS_STRING, mKeyStore.getAccounts().get(mSelectedAccount)
+                            .getAddress().getHex()).setAction(ETH_PUBLISH_USER_CONTENT));
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating account balance: " + e.getMessage());
         }
 
 

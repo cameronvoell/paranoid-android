@@ -28,8 +28,8 @@ import android.widget.Toast;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.adapters.MyContentContractRecyclerViewAdapter;
 import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
-import com.example.cameron.ethereumtest1.data.Content;
-import com.example.cameron.ethereumtest1.data.ContentItem;
+import com.example.cameron.ethereumtest1.model.Content;
+import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.fragments.ContentContractListFragment;
 import com.example.cameron.ethereumtest1.fragments.ContentListFragment;
@@ -513,17 +513,17 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         return json;
     }
 
-    private ContentItem convertDialogInputToContentItem(String title, String primaryText) {
-        String publishedBy = mAccounts.get(0).getAddress().getHex();
-        String contentTypeDictionaryAddress = "empty";
-        String contentType = "empty";
-        long publishedDate = System.currentTimeMillis();
-        String primaryImageUrl = "empty";
-        String primaryHttpLink = "empty";
-        String primaryContentAddressedLink = "empty";
-        return new ContentItem(publishedBy, contentTypeDictionaryAddress, contentType, title,
-                publishedDate, primaryText, primaryImageUrl, primaryHttpLink, primaryContentAddressedLink);
-    }
+//    private ContentItem convertDialogInputToContentItem(String title, String primaryText) {
+//        String publishedBy = mAccounts.get(0).getAddress().getHex();
+//        String contentTypeDictionaryAddress = "empty";
+//        String contentType = "empty";
+//        long publishedDate = System.currentTimeMillis();
+//        String primaryImageUrl = "empty";
+//        String primaryHttpLink = "empty";
+//        String primaryContentAddressedLink = "empty";
+//        return new ContentItem(publishedBy, contentTypeDictionaryAddress, contentType, title,
+//                publishedDate, primaryText, primaryImageUrl, primaryHttpLink, primaryContentAddressedLink);
+//    }
 
 //    public void postToSelectedFeed(View view) {
 //        SharedPreferences sp = getSharedPreferences(sharedPreferencesName, 0);

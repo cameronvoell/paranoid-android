@@ -26,6 +26,8 @@ public class PrefUtils {
     private static final String PREF_SELECTED_ACCOUNT_USER_NAME = "pref_selected_account_user_name";
     private static final String PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED = "pref_selected_account_user_name_last_checked";
 
+    private static final String PREF_SELECTED_ACCOUNT_CONTENT_LIST_LAST_CHECKED = "pref_selected_account_content_list_last_checked";
+
     private static SharedPreferences sp(Context baseContext) {
         return baseContext.getSharedPreferences(SHARED_PREFERENCES, PREF_MODE);
     }
@@ -68,5 +70,10 @@ public class PrefUtils {
     public static void saveSelectedAccountUserName(Context ctx, String userName) {
         sp(ctx).edit().putString(PREF_SELECTED_ACCOUNT_USER_NAME, userName).commit();
         sp(ctx).edit().putLong(PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED, System.currentTimeMillis()).commit();
+    }
+
+    public static boolean shouldUpdateAccountContentList(Context ctx) {
+        long lastUpdateTime = sp(ctx).getLong(PREF_SELECTED_ACCOUNT_CONTENT_LIST_LAST_CHECKED, 0);
+        return System.currentTimeMillis() - lastUpdateTime > ACCOUNT_UPDATE_INTERVAL_MS;
     }
 }

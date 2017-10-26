@@ -1,7 +1,6 @@
 package com.example.cameron.ethereumtest1.fragments;
 
 import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,8 +11,8 @@ import android.view.ViewGroup;
 
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
-import com.example.cameron.ethereumtest1.data.Content;
-import com.example.cameron.ethereumtest1.data.ContentItem;
+import com.example.cameron.ethereumtest1.model.Content;
+import com.example.cameron.ethereumtest1.model.ContentItem;
 
 /**
  * A fragment representing a list of Items.

@@ -14,6 +14,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.data.EthereumConstants;
+import com.example.cameron.ethereumtest1.database.DatabaseHelper;
+import com.example.cameron.ethereumtest1.model.ContentItem;
+import com.example.cameron.ethereumtest1.model.UserFragmentContentItem;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 import org.ethereum.geth.Address;
 import org.ethereum.geth.BigInt;
@@ -56,6 +59,7 @@ public class EthereumClientService extends Service {
 
     public static final String ETH_FETCH_USER_CONTENT_LIST = "eth.fetch.user.content.list";
     public static final String UI_UPDATE_USER_CONTENT_LIST = "ui.update.user.content.list";
+    public static final String PARAM_CONTENT_STRING = "param.content.string";
 
     public static final String ETH_PUBLISH_USER_CONTENT = "eth.publish.user.content";
 
@@ -166,7 +170,7 @@ public class EthereumClientService extends Service {
         config.setBootstrapNodes(EthereumConstants.getRinkebyBootNodes());
         try {
             if (mNode == null) {
-                mNode = Geth.newNode(getFilesDir() + "/rinkeby", config);
+                mNode = Geth.newNode(getFilesDir() + "/rinkeby1", config);
             }
             mNode.start();
             mEthereumClient = mNode.getEthereumClient();
@@ -207,12 +211,12 @@ public class EthereumClientService extends Service {
             successful = true;
         } catch (Exception e) {
             successful = false;
-            //Log.e(TAG, "Error retrieving balance: " + e.getMessage());
+            Log.e(TAG, "Error retrieving balance: " + e.getMessage());
         }
 
         if (successful) {
             PrefUtils.saveSelectedAccountBalance(getBaseContext(), balance.getInt64());
-            //Log.e(TAG, "SUCCESSFULLY UPDATED BALANCE");
+            Log.e(TAG, "SUCCESSFULLY UPDATED BALANCE");
 
             Intent intent = new Intent(UI_UPDATE_ACCOUNT_BALANCE);
             intent.putExtra(PARAM_BALANCE_LONG, balance.getInt64());
@@ -222,8 +226,51 @@ public class EthereumClientService extends Service {
     }
 
     private void handleFetchUserContentList(String addressString) {
-        ArrayList<String> contentList = new ArrayList<>();
-        
+        String contentString = "";
+        while (!mIsReady) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            BoundContract contract = Geth.bindContract(
+                    new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
+                    USER_CONTENT_REGISTER_ABI, mEthereumClient);
+            CallOpts callOpts = Geth.newCallOpts();
+            callOpts.setContext(mContext);
+            Interfaces callData;
+            Interfaces returnData;
+
+            callData = new Interfaces(2);
+            Interface address = new Interface();
+            Interface index = new Interface();
+            address.setAddress(new Address(addressString));
+            address.setBigInt(new BigInt(0));
+            callData.set(0, address);
+            callData.set(1, index);
+
+            returnData = new Interfaces(1);
+            Interface content = new Interface();
+            content.setBinary(new byte[32]);
+            returnData.set(0, content);
+
+            contract.call(callOpts, returnData, "getUserContent", callData);
+            contentString = new String(returnData.get(0).getBinary());
+
+            //PrefUtils.saveSelectedAccountUserName(getBaseContext(), userName);
+
+            Intent intent = new Intent(UI_UPDATE_USER_CONTENT_LIST);
+            intent.putExtra(PARAM_CONTENT_STRING, contentString);
+            LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+            bm.sendBroadcast(intent);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error retrieving contentList: " + e.getMessage());
+        }
+
     }
 
     private void handleUpdateAccountUserName(String addressString) {
@@ -244,6 +291,11 @@ public class EthereumClientService extends Service {
             Interfaces callData;
             Interfaces returnData;
 
+            callData = Geth.newInterfaces(1);
+            Interface paramFetchUsernameCallParameter = Geth.newInterface();
+            paramFetchUsernameCallParameter.setAddress(new Address(addressString));
+            callData.set(0, paramFetchUsernameCallParameter);
+
             returnData = Geth.newInterfaces(3);
             Interface userNameData = Geth.newInterface();
             Interface metaData = Geth.newInterface();
@@ -254,11 +306,6 @@ public class EthereumClientService extends Service {
             returnData.set(0, userNameData);
             returnData.set(1, metaData);
             returnData.set(2, numContent);
-
-            callData = Geth.newInterfaces(1);
-            Interface paramFetchUsernameCallParameter = Geth.newInterface();
-            paramFetchUsernameCallParameter.setAddress(new Address(addressString));
-            callData.set(0, paramFetchUsernameCallParameter);
 
             contract.call(callOpts, returnData, "userIndex", callData);
             userName = returnData.get(0).getString();

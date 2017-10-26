@@ -1,4 +1,4 @@
-package com.example.cameron.ethereumtest1.data;
+package com.example.cameron.ethereumtest1.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;

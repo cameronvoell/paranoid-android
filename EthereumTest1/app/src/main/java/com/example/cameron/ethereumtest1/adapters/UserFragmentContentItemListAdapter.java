@@ -5,24 +5,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.fragments.UserFragment.OnListFragmentInteractionListener;
 import com.example.cameron.ethereumtest1.model.ContentItem;
-import com.example.cameron.ethereumtest1.fragments.ContentListFragment.OnListFragmentInteractionListener;
+import com.example.cameron.ethereumtest1.model.UserFragmentContentItem;
 import com.example.cameron.ethereumtest1.util.DataUtils;
-
 import java.util.List;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link ContentItem} and makes a call to the
- * specified {@link OnListFragmentInteractionListener}.
+ * Created by cameron on 10/26/17.
  */
-public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyContentItemRecyclerViewAdapter.ViewHolder> {
 
-    private final List<ContentItem> mValues;
+public class UserFragmentContentItemListAdapter extends RecyclerView.Adapter<UserFragmentContentItemListAdapter.ViewHolder> {
+
+    private final List<UserFragmentContentItem> mValues;
     private final OnListFragmentInteractionListener mListener;
 
-    public MyContentItemRecyclerViewAdapter(List<ContentItem> items, OnListFragmentInteractionListener listener) {
+    public UserFragmentContentItemListAdapter(List<UserFragmentContentItem> items, OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
     }
@@ -36,11 +35,12 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.mItem = mValues.get(position);
-        holder.mTitleView.setText(mValues.get(position).title);
-        holder.mBodyView.setText(mValues.get(position).primaryText);
-        holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(mValues.get(position).publishedDate)
-                + " by " + mValues.get(position).publishedBy);
+        ContentItem ci = mValues.get(position).contentItem;
+        holder.mItem = ci;
+        holder.mTitleView.setText(ci.title);
+        holder.mBodyView.setText(ci.primaryText);
+        holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(ci.publishedDate)
+                + " by " + ci.publishedBy);
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,7 +56,7 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
 
     @Override
     public int getItemCount() {
-        return mValues.size();
+        return 0;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

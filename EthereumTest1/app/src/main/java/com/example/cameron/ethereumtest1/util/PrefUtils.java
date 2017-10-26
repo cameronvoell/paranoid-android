@@ -21,7 +21,7 @@ public class PrefUtils {
 
     private static final String PREF_SELECTED_ACCOUNT_BALANCE = "pref_selected_account_balance";
     private static final String PREF_SELECTED_ACCOUNT_BALANCE_LAST_CHECKED = "pref_selected_account_balance";
-    private static final long ACCOUNT_UPDATE_INTERVAL_MS = 1000 * 60 * 5; //1 min
+    private static final long ACCOUNT_UPDATE_INTERVAL_MS = 1000 * 60 * 1; //1 min
 
     private static final String PREF_SELECTED_ACCOUNT_USER_NAME = "pref_selected_account_user_name";
     private static final String PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED = "pref_selected_account_user_name_last_checked";

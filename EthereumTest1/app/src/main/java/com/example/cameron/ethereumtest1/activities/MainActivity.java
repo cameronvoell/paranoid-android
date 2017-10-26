@@ -873,9 +873,9 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
             mFloatingActionButton3.animate().translationY(0);
         } else {
             mIsFabOpen = true;
-            mFloatingActionButton1.animate().translationY(-getResources().getDimension(R.dimen.standard_65));
-            mFloatingActionButton2.animate().translationY(-getResources().getDimension(R.dimen.standard_130));
-            mFloatingActionButton3.animate().translationY(-getResources().getDimension(R.dimen.standard_195));
+            mFloatingActionButton1.animate().translationY(-getResources().getDimension(R.dimen.standard_60));
+            mFloatingActionButton2.animate().translationY(-getResources().getDimension(R.dimen.standard_120));
+            mFloatingActionButton3.animate().translationY(-getResources().getDimension(R.dimen.standard_180));
         }
     }
 

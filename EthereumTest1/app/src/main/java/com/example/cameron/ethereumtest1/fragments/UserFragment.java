@@ -94,7 +94,7 @@ public class UserFragment extends Fragment {
                 Intent intent = new Intent(getContext(), EthereumClientService.class);
                 intent.putExtra(PARAM_ADDRESS_STRING, mKeyStore.getAccounts().get(mSelectedAccount).getAddress().getHex());
                 intent.setAction(ETH_FETCH_ACCOUNT_BALANCE);
-                getActivity().startService(intent);
+                 getActivity().startService(intent);
             } catch (Exception e) {
                 Log.e(TAG, "Error updating account balance: " + e.getMessage());
             }

@@ -51,6 +51,11 @@ public class EthereumClientService extends Service {
     public static final String UI_UPDATE_ACCOUNT_USER_NAME = "ui.update.account.user.name";
     public static final String PARAM_USER_NAME = "param.user.name";
 
+    public static final String ETH_FETCH_USER_CONTENT_LIST = "eth.fetch.user.content.list";
+    public static final String UI_UPDATE_USER_CONTENT_LIST = "ui.update.user.content.list";
+
+    public static final String ETH_PUBLISH_USER_CONTENT = "eth.publish.user.content";
+
     private EthereumClient mEthereumClient;
     private org.ethereum.geth.Context mContext;
     private Node mNode;
@@ -106,22 +111,22 @@ public class EthereumClientService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
         Message msg = mServiceHandler.obtainMessage();
         msg.arg1 = startId;
         Bundle b = new Bundle();
-        switch (intent.getAction()) {
-            case ETH_FETCH_ACCOUNT_BALANCE:
-            case ETH_FETCH_ACCOUNT_USER_NAME:
-                b.putString(PARAM_ADDRESS_STRING, intent.getStringExtra(PARAM_ADDRESS_STRING));
-                break;
+        if (intent != null && intent.getAction() != null) {
+            switch (intent.getAction()) {
+                case ETH_FETCH_ACCOUNT_BALANCE:
+                case ETH_FETCH_ACCOUNT_USER_NAME:
+                    b.putString(PARAM_ADDRESS_STRING, intent.getStringExtra(PARAM_ADDRESS_STRING));
+                    break;
+            }
+            b.putString(MESSAGE_ACTION, intent.getAction());
+            msg.setData(b);
+            mServiceHandler.sendMessage(msg);
         }
-        b.putString(MESSAGE_ACTION, intent.getAction());
-        msg.setData(b);
-        mServiceHandler.sendMessage(msg);
 
         // If we get killed, after returning from here, restart
         return START_STICKY;
@@ -174,7 +179,7 @@ public class EthereumClientService extends Service {
             intent.putExtra(PARAM_BLOCK_NUMBER, header.getNumber());
             LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
             bm.sendBroadcast(intent);
-            Log.e("New HEAD", "Blocks received by IntentService");
+            //Log.e("New HEAD", "Blocks received by IntentService");
             mIsReady = true;
         }
     };

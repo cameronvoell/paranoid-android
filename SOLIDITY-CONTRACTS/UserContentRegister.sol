@@ -15,7 +15,7 @@ contract UserContentRegister {
     uint256 public numUsers;
     mapping (string => bool) _checkUserNameTaken; 
 
-    function UserContentRegistry() public  {}
+    function UserContentRegister() public  {}
     
     function registerNewUser(string userName, string metaData) public returns (bool) {
         if (!registered[msg.sender] && !_checkUserNameTaken[userName]) {
@@ -29,7 +29,7 @@ contract UserContentRegister {
     }
     
     function publishContent(string content) public  {
-        assert(!registered[msg.sender]);
+        assert(registered[msg.sender]);
         userIndex[msg.sender].contentIndex[userIndex[msg.sender].numContent] = content;
         userIndex[msg.sender].numContent++;
     }
@@ -65,9 +65,13 @@ contract UserContentRegister {
         return stringToBytes32(userIndex[whichUser].contentIndex[index]);
     }
     
-    function stringToBytes32(string memory source) returns (bytes32 result) {
+    function stringToBytes32(string memory source) private returns (bytes32 result) {
         assembly {
             result := mload(add(source, 32))
         }
+    }
+    
+    function getContentLinks(address whichUser, uint256 index) public returns (string) {
+        return userIndex[whichUser].contentLinks[index];
     }
 }

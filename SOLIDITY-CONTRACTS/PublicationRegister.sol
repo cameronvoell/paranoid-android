@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-contract UserContentRegisterInterface {
+interface UserContentRegisterInterface {
     function getUserContentBytes(address whichUser, uint256 index) public returns (bytes32);
 }
 

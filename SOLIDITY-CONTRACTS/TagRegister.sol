@@ -2,10 +2,10 @@ pragma solidity ^0.4.11;
 
 contract PublicationRegisterInterface {
     function numPublications() public returns (uint256);
-    function getNumPublished(uint256 whichPublication) public constant returns (uint256);
-    function getAdmin(uint256 whichPublication) public constant returns (address);
-    function getContentAuthor(uint256 whichPublication, uint256 contentIndex) public returns (address);
-    function getContentBytes(uint256 whichPublication, uint256 contentIndex) public returns (bytes32);
+    function getNumPublished(uint256 num) public returns (uint256);
+    function getContentAuthor(uint256 which, uint256 num) public returns (address);
+    function getContentBytes(uint256 whichP, uint256 whichC) public returns (bytes32);
+    function getAdmin(uint256 whichP) public returns (address);
 }
 
 contract TagRegister {
@@ -15,7 +15,7 @@ contract TagRegister {
         uint256 index;
     }
     
-    PublicationRegisterInterface public publicationRegister;
+    PublicationRegisterInterface publicationRegister;
     uint256 public numTags;
     mapping (uint256 => uint256) public numContentTagsIndex;
     mapping (uint256 => uint256) public numPublicationTagsIndex;

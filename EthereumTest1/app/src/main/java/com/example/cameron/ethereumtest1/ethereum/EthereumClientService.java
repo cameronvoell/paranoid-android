@@ -254,7 +254,7 @@ public class EthereumClientService extends Service {
 
             returnData = new Interfaces(1);
             Interface content = new Interface();
-            content.setBinary(new byte[32]);
+            content.setDefaultString();
             returnData.set(0, content);
 
             contract.call(callOpts, returnData, "getUserContent", callData);

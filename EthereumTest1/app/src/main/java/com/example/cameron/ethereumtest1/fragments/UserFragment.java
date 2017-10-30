@@ -1,5 +1,6 @@
 package com.example.cameron.ethereumtest1.fragments;
 
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +15,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.activities.MainActivity;
@@ -24,7 +30,11 @@ import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.model.Content;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.model.UserFragmentContentItem;
+import com.example.cameron.ethereumtest1.util.DataUtils;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
+import com.google.gson.Gson;
+
+import org.ethereum.geth.Account;
 import org.ethereum.geth.KeyStore;
 
 import java.util.ArrayList;
@@ -44,12 +54,15 @@ public class UserFragment extends Fragment {
     private OnListFragmentInteractionListener mListInteractionListener;
 
     private TextView mUsernameTextView;
-    private TextView mSelectedAccountTextView;
+    private TextView mEthAddressTextView;
     private TextView mEthBalanceTextView;
     private RecyclerView mRecyclerView;
+    private Spinner mAccountSelectionSpinner;
+    private Button mRegisterButton;
 
     private KeyStore mKeyStore;
-    private long mSelectedAccount;
+    private long mSelectedAccountNum;
+    private long mNumAccounts;
     private String mSelectedAddress;
     private List<UserFragmentContentItem> mContentItems;
 
@@ -60,6 +73,11 @@ public class UserFragment extends Fragment {
             switch (action) {
                 case EthereumClientService.UI_UPDATE_ACCOUNT_USER_NAME:
                     String userName = intent.getStringExtra(EthereumClientService.PARAM_USER_NAME);
+                    if (userName.equals(getString(R.string.user_name_not_registered))) {
+                        mRegisterButton.setVisibility(View.VISIBLE);
+                    } else {
+                        mRegisterButton.setVisibility(View.GONE);
+                    }
                     mUsernameTextView.setText(userName);
                     break;
                 case EthereumClientService.UI_UPDATE_ACCOUNT_BALANCE:
@@ -67,8 +85,12 @@ public class UserFragment extends Fragment {
                     mEthBalanceTextView.setText(accountBalance + " WEI");
                     break;
                 case EthereumClientService.UI_UPDATE_USER_CONTENT_LIST:
-                    String contentString = intent.getStringExtra(EthereumClientService.PARAM_CONTENT_STRING);
-                    reloadUserContentList(contentString);
+                    ArrayList<String> jsonArray = intent.getStringArrayListExtra(EthereumClientService.PARAM_ARRAY_CONTENT_STRING);
+                    reloadUserContentList(jsonArray);
+                    break;
+                case EthereumClientService.UI_REGISTER_USER_PENDING_CONFIRMATION:
+                    String username = intent.getStringExtra(EthereumClientService.PARAM_USER_NAME);
+                    mUsernameTextView.setText(username + " (pending confirmation)");
                     break;
             }
         }
@@ -89,6 +111,7 @@ public class UserFragment extends Fragment {
         filter.addAction(EthereumClientService.UI_UPDATE_ACCOUNT_BALANCE);
         filter.addAction(EthereumClientService.UI_UPDATE_ACCOUNT_USER_NAME);
         filter.addAction(EthereumClientService.UI_UPDATE_USER_CONTENT_LIST);
+        filter.addAction(EthereumClientService.UI_REGISTER_USER_PENDING_CONFIRMATION);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(getContext());
         bm.registerReceiver(mBroadcastReceiver, filter);
     }
@@ -99,27 +122,61 @@ public class UserFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_user, container, false);
 
         mUsernameTextView = (TextView)v.findViewById(R.id.userName);
-        mSelectedAccountTextView = (TextView)v.findViewById(R.id.selectedAccount);
+        mEthAddressTextView = (TextView)v.findViewById(R.id.ethAddress);
         mEthBalanceTextView = (TextView)v.findViewById(R.id.ethBalance);
         mRecyclerView = (RecyclerView)v.findViewById(R.id.userFragmentContentItemList);
+        mAccountSelectionSpinner = (Spinner) v.findViewById(R.id.accountSelectionSpinner);
+        mRegisterButton = (Button) v.findViewById(R.id.registerButton);
 
-        loadSelectedAccount();
-        loadAccountBalance();
-        loadAccountUserName();
-        loadContentList();
+        refreshKeyStore();
+        reloadUserInfo();
 
         return v;
     }
 
+    private void reloadUserInfo() {
+        loadSelectedAccount();
+        loadAccountBalance();
+        loadAccountUserName();
+        loadContentList();
+    }
+
+    private void loadSelectedAccount() {
+        mSelectedAccountNum = PrefUtils.getSelectedAccountNum(getContext());
+        mSelectedAddress = PrefUtils.getSelectedAccountAddress(getContext());
+        mEthAddressTextView.setText(mSelectedAddress);
+    }
+
+    private void refreshKeyStore() {
+        mKeyStore = ((MainActivity)getActivity()).getKeyStore();
+        mNumAccounts = mKeyStore.getAccounts().size();
+        ArrayList<String> accountArray = new ArrayList<>();
+        if (mNumAccounts > 0) {
+            try {
+                for (int i = 0; i < mNumAccounts; i++) {
+                    accountArray.add(DataUtils.formatEthereumAccount(mKeyStore.getAccounts().get(i).getAddress().getHex()));
+                }
+            } catch (Exception e) {
+
+            }
+        }
+        accountArray.add("NEW ACCOUNT");
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, accountArray);
+        mAccountSelectionSpinner.setAdapter(spinnerArrayAdapter);
+        mAccountSelectionSpinner.setOnItemSelectedListener(mSpinnerItemSelectedListener);
+        //mAccountSelectionSpinner.setSelection((int)mSelectedAccountNum);
+    }
+
     private void loadContentList() {
-        mContentItems = new DatabaseHelper(getContext()).getUserFragmentContentItems(mSelectedAddress, 0, 1);
+        //mContentItems = new DatabaseHelper(getContext()).getUserFragmentContentItems(mSelectedAddress, 0, 1);
+        mContentItems = new ArrayList<>();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         mRecyclerView.setAdapter(new UserFragmentContentItemListAdapter(mContentItems, mListInteractionListener));
 
         if ((PrefUtils.shouldUpdateAccountContentList(getActivity()))) {
             try {
                 getActivity().startService(new Intent(getContext(), EthereumClientService.class)
-                        .putExtra(PARAM_ADDRESS_STRING, mKeyStore.getAccounts().get(mSelectedAccount)
+                        .putExtra(PARAM_ADDRESS_STRING, mKeyStore.getAccounts().get(mSelectedAccountNum)
                                 .getAddress().getHex()).setAction(ETH_FETCH_USER_CONTENT_LIST));
             } catch (Exception e) {
                 Log.e(TAG, "Error updating account balance: " + e.getMessage());
@@ -127,38 +184,46 @@ public class UserFragment extends Fragment {
         }
     }
 
+    private ContentItem convertJsonToContentItem(String json) {
+        Gson gson = new Gson();
+        ContentItem contentItem = gson.fromJson(json, ContentItem.class);
+        return contentItem;
+    }
 
-
-    private void reloadUserContentList(String contentString) {
-        String publishedBy = mSelectedAddress;
-//        String contentTypeDictionaryAddress = "empty";
-//        String contentType = "empty";
-        long publishedDate = System.currentTimeMillis();
-        String primaryImageUrl = "empty";
-        String primaryHttpLink = "empty";
-        String primaryContentAddressedLink = "empty";
-        String primaryText = "empty";
-        ContentItem ci = new ContentItem(publishedBy, contentString,
-                publishedDate, primaryText, primaryImageUrl, primaryHttpLink, primaryContentAddressedLink);
-
-
-        mContentItems.add(new UserFragmentContentItem(0, ci, "", "", ""));
+    private void reloadUserContentList(ArrayList<String> jsonArray) {
+        for (String json: jsonArray) {
+            ContentItem ci = convertJsonToContentItem(json);
+            mContentItems.add(new UserFragmentContentItem(0, ci, "", "", ""));
+        }
         mRecyclerView.setAdapter(new UserFragmentContentItemListAdapter(mContentItems, mListInteractionListener));
     }
 
-    private void loadSelectedAccount() {
-        mKeyStore = ((MainActivity)getActivity()).getKeyStore();
-        long numAccounts = mKeyStore.getAccounts().size();
-        if (numAccounts > 0) {
-            mSelectedAccount = PrefUtils.getSelectedAccount(getActivity());
+
+
+    private AdapterView.OnItemSelectedListener mSpinnerItemSelectedListener = new AdapterView.OnItemSelectedListener() {
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            if (position == mSelectedAccountNum) {
+                //do Nothing
+            } else if (position == mNumAccounts) {
+                createAccount();
+            } else {
+                try {
+                    mSelectedAddress = mKeyStore.getAccounts().get(position).getAddress().getHex();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error retrieving account: " + e.getMessage());;
+                }
+                mSelectedAccountNum = position;
+                PrefUtils.saveSelectedAccount(getContext(), mSelectedAccountNum, mSelectedAddress);
+                reloadUserInfo();
+            }
         }
-        try {
-            mSelectedAddress = mKeyStore.getAccounts().get(mSelectedAccount).getAddress().getHex();
-            mSelectedAccountTextView.setText(mSelectedAddress);
-        } catch (Exception e) {
-            Log.e(TAG, "Error retrieving account: " + e.getMessage());
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+            //mSelectedAccountNum = 0;
         }
-    }
+    };
 
     private void loadAccountUserName() {
         String userName = PrefUtils.getSelectedAccountUserName(getActivity());
@@ -170,6 +235,11 @@ public class UserFragment extends Fragment {
             } catch (Exception e) {
                 Log.e(TAG, "Error updating account balance: " + e.getMessage());
             }
+        }
+        if (userName.equals(getString(R.string.user_name_not_registered))) {
+            mRegisterButton.setVisibility(View.VISIBLE);
+        } else {
+            mRegisterButton.setVisibility(View.GONE);
         }
     }
 
@@ -214,27 +284,32 @@ public class UserFragment extends Fragment {
     public interface OnListFragmentInteractionListener {
         void onListFragmentInteraction(ContentItem item);
     }
-}
 
-//        if (numAccounts > 0) {
-//            mAccounts = new ArrayList<>();
-//            for (int i = 0; i < numAccounts; i++) {
-//                try {
-//                    Account account = mKeyStore.getAccounts().get(i);
-//                    mAccounts.add(account);
-//                    String accountString = account.getAddress().getHex();
-//                    mAccountListTextView.append("Account: " + accountString + "\n");
-//                    if (i == 0) {
-//                        mAccountTextView.setText(accountString.substring(0, 4) + "..." + accountString.substring(accountString.length() - 4, accountString.length()));
-//                    }
-//
-//
-//                    BigInt balance = new BigInt(0);//mEthereumClient.getBalanceAt(mContext, account.getAddress(), -1);
-//                    mAccountListTextView.append("Balance: " + balance + " Wei" + "\n\n");
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        } else {
-//            mAccountListTextView.setText("no accounts yet...");
-//        }
+    /*
+     * Methods for Managing Ethereum Accounts
+     */
+    public void createAccount() {
+        final Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.dialog_new_account);
+        dialog.setTitle("Enter New Account Password");
+
+        final EditText text = (EditText) dialog.findViewById(R.id.editMessage);
+        text.setHint("account password");
+        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonDone);
+        dialogButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                try {
+                    Account newAcc = mKeyStore.newAccount(text.getText().toString());
+                    refreshKeyStore();
+                    //reloadUserInfo();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
+    }
+}

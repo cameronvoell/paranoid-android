@@ -56,7 +56,7 @@ public class UserFragmentContentItemListAdapter extends RecyclerView.Adapter<Use
 
     @Override
     public int getItemCount() {
-        return 0;
+        return mValues.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

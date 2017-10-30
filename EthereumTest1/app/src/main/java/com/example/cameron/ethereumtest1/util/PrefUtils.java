@@ -17,7 +17,8 @@ public class PrefUtils {
     public final static int SELECTED_PUBLICATION_LIST = 1;
     public final static int SELECTED_USER_FRAGMENT = 2;
 
-    private static final String PREF_SELECTED_ACCOUNT = "pref_selected_account";
+    private static final String PREF_SELECTED_ACCOUNT_NUM = "pref_selected_account_num";
+    private static final String PREF_SELECTED_ACCOUNT_ADDRESS = "pref_selected_account_address";
 
     private static final String PREF_SELECTED_ACCOUNT_BALANCE = "pref_selected_account_balance";
     private static final String PREF_SELECTED_ACCOUNT_BALANCE_LAST_CHECKED = "pref_selected_account_balance";
@@ -36,44 +37,53 @@ public class PrefUtils {
         return sp(ctx).getInt(PREF_SELECTED_FRAGMENT, SELECTED_USER_FRAGMENT);
     }
 
-    public static long getSelectedAccount(Context ctx) {
-        return sp(ctx).getInt(PREF_SELECTED_ACCOUNT, 0);
-    }
-
     public static void saveSelectedFragment(Context ctx, int whichFragment) {
         sp(ctx).edit().putInt(PREF_SELECTED_FRAGMENT, whichFragment).commit();
     }
 
+    public static long getSelectedAccountNum(Context ctx) {
+        return sp(ctx).getInt(PREF_SELECTED_ACCOUNT_NUM, 0);
+    }
+
+    public static String getSelectedAccountAddress(Context ctx) {
+        return sp(ctx).getString(PREF_SELECTED_ACCOUNT_ADDRESS, "");
+    }
+
+    public static void saveSelectedAccount(Context ctx, long selectedAccount, String selectedAddress) {
+        sp(ctx).edit().putInt(PREF_SELECTED_ACCOUNT_NUM, (int)selectedAccount).commit();
+        sp(ctx).edit().putString(PREF_SELECTED_ACCOUNT_ADDRESS, selectedAddress).commit();
+    }
+
     public static long getSelectedAccountBalance(Context ctx) {
-        return sp(ctx).getLong(PREF_SELECTED_ACCOUNT_BALANCE, 0);
+        return sp(ctx).getLong(PREF_SELECTED_ACCOUNT_BALANCE + getSelectedAccountAddress(ctx), 0);
     }
 
     public static boolean shouldUpdateAccountBalance(Context ctx) {
-        long lastUpdateTime = sp(ctx).getLong(PREF_SELECTED_ACCOUNT_BALANCE_LAST_CHECKED, 0);
+        long lastUpdateTime = sp(ctx).getLong(PREF_SELECTED_ACCOUNT_BALANCE_LAST_CHECKED + getSelectedAccountAddress(ctx), 0);
         return System.currentTimeMillis() - lastUpdateTime > ACCOUNT_UPDATE_INTERVAL_MS;
     }
 
     public static void saveSelectedAccountBalance(Context ctx, long balance) {
-        sp(ctx).edit().putLong(PREF_SELECTED_ACCOUNT_BALANCE, balance).commit();
-        sp(ctx).edit().putLong(PREF_SELECTED_ACCOUNT_BALANCE_LAST_CHECKED, System.currentTimeMillis()).commit();
+        sp(ctx).edit().putLong(PREF_SELECTED_ACCOUNT_BALANCE + getSelectedAccountAddress(ctx), balance).commit();
+        sp(ctx).edit().putLong(PREF_SELECTED_ACCOUNT_BALANCE_LAST_CHECKED + getSelectedAccountAddress(ctx), System.currentTimeMillis()).commit();
     }
 
     public static String getSelectedAccountUserName(Context ctx) {
-        return sp(ctx).getString(PREF_SELECTED_ACCOUNT_USER_NAME, "username loading...");
+        return sp(ctx).getString(PREF_SELECTED_ACCOUNT_USER_NAME + getSelectedAccountAddress(ctx), "not yet registered...");
     }
 
     public static boolean shouldUpdateAccountUserName(Context ctx) {
-        long lastUpdateTime = sp(ctx).getLong(PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED, 0);
+        long lastUpdateTime = sp(ctx).getLong(PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED + getSelectedAccountAddress(ctx), 0);
         return System.currentTimeMillis() - lastUpdateTime > ACCOUNT_UPDATE_INTERVAL_MS;
     }
 
     public static void saveSelectedAccountUserName(Context ctx, String userName) {
-        sp(ctx).edit().putString(PREF_SELECTED_ACCOUNT_USER_NAME, userName).commit();
-        sp(ctx).edit().putLong(PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED, System.currentTimeMillis()).commit();
+        sp(ctx).edit().putString(PREF_SELECTED_ACCOUNT_USER_NAME + getSelectedAccountAddress(ctx), userName).commit();
+        sp(ctx).edit().putLong(PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED + getSelectedAccountAddress(ctx), System.currentTimeMillis()).commit();
     }
 
     public static boolean shouldUpdateAccountContentList(Context ctx) {
-        long lastUpdateTime = sp(ctx).getLong(PREF_SELECTED_ACCOUNT_CONTENT_LIST_LAST_CHECKED, 0);
+        long lastUpdateTime = sp(ctx).getLong(PREF_SELECTED_ACCOUNT_CONTENT_LIST_LAST_CHECKED + getSelectedAccountAddress(ctx), 0);
         return System.currentTimeMillis() - lastUpdateTime > ACCOUNT_UPDATE_INTERVAL_MS;
     }
 }

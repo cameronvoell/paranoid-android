@@ -22,4 +22,8 @@ public class DataUtils {
         }
         return date.getMonth() + "/" + date.getDay() + "/" + date.getYear();
     }
+
+    public static String formatEthereumAccount(String account) {
+        return account.substring(0,4) + "..." + account.substring(account.length() -4,account.length() - 1);
+    }
 }

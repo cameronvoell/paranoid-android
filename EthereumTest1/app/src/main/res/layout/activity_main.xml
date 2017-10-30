@@ -245,7 +245,7 @@
             android:layout_height="32dp"
             android:layout_gravity="center"
             android:layout_weight="1"
-            android:foregroundTint="@android:color/darker_gray"
+            android:tint="@android:color/darker_gray"
             android:background="@android:color/transparent"
             android:src="@drawable/ic_account"
             android:scaleType="fitCenter"

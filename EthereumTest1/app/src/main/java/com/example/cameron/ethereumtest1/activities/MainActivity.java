@@ -45,6 +45,15 @@ import java.util.ArrayList;
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
+
+import static com.example.cameron.ethereumtest1.data.EthereumConstants.KEY_STORE;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_USER_CONTENT_LIST;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_REGISTER_USER;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_ADDRESS_STRING;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_STRING;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PASSWORD;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_NAME;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_CONTENT_LIST;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_PUBLICATION_LIST;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_USER_FRAGMENT;
@@ -54,12 +63,10 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         UserFragment.OnFragmentInteractionListener {
 
     private final static String TAG = MainActivity.class.getName();
-    private final static String KEY_STORE = "/geth_keystore";
 
     private TextView mSynchInfoTextView;
     private TextView mSynchLogTextView;
     private TextView mAccountTextView;
-    private TextView mAccountListTextView;
     private ContentListFragment mContentListFragment;
     private ContentContractListFragment mContentContractListFragment;
     private UserFragment mUserFragment;
@@ -112,7 +119,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         mSynchLogTextView = (TextView) findViewById(R.id.synchLog);
         mSynchInfoTextView = (TextView) findViewById(R.id.synchInfo);
         mAccountTextView = (TextView) findViewById(R.id.accountInfo);
-        mAccountListTextView = (TextView) findViewById(R.id.accountList);
 
         mNetworkSynchView = (LinearLayout) findViewById(R.id.networkSynch);
         mAccountPageView = (RelativeLayout) findViewById(R.id.accountPage);
@@ -134,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
         long numAccounts = mKeyStore.getAccounts().size();
         if (numAccounts > 0) {
-            mSelectedAccount = PrefUtils.getSelectedAccount(getBaseContext());
+            mSelectedAccount = PrefUtils.getSelectedAccountNum(getBaseContext());
         }
         try {
             String accountString = mKeyStore.getAccounts().get(mSelectedAccount).getAddress().getHex();
@@ -507,12 +513,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 //        dialog.show();
 //    }
 
-    private String convertContentItemToJSON(ContentItem contentItem) {
-        Gson gson = new Gson();
-        String json = gson.toJson(contentItem);
-        return json;
-    }
-
 //    private ContentItem convertDialogInputToContentItem(String title, String primaryText) {
 //        String publishedBy = mAccounts.get(0).getAddress().getHex();
 //        String contentTypeDictionaryAddress = "empty";
@@ -525,44 +525,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 //                publishedDate, primaryText, primaryImageUrl, primaryHttpLink, primaryContentAddressedLink);
 //    }
 
-//    public void postToSelectedFeed(View view) {
-//        SharedPreferences sp = getSharedPreferences(sharedPreferencesName, 0);
-//        final String selected = sp.getString("selected", "");
-//        if (selected.equals("slush-pile")){
-//            postToSlushPile(view);
-//        } else {
-//            // custom dialog
-//            final Dialog dialog = new Dialog(this);
-//            dialog.setContentView(R.layout.dialog_post_content_to_feed);
-//            dialog.setTitle("Post to " + selected);
-//
-//            final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
-//            final EditText body = (EditText) dialog.findViewById(R.id.editBody);
-//            final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
-//            Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
-//            dialogButton.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString());
-//                    final String json = convertContentItemToJSON(contentItem);
-//                    new Thread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            sendEthereumTransaction(ETH_TRANSACT_POST_TO_SELECTED_FEED, password.getText().toString(), json, "");
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    dialog.dismiss();
-//                                    animateFabMenu(null);
-//                                }
-//                            });
-//                        }
-//                    } ).start();
-//                }
-//            });
-//            dialog.show();
-//        }
-//    }
+
 
 //    public void postToSlushPile(View view) {
 //        final Dialog dialog = new Dialog(this);
@@ -888,4 +851,123 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     public void onFragmentInteraction(Uri uri) {
 
     }
+
+    public void registerUser(View view) {
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_register_user);
+        dialog.setTitle("Register user");
+
+        final EditText usernameEditText = (EditText) dialog.findViewById(R.id.editUsername);
+        usernameEditText.setHint("desired username");
+        final EditText pw = (EditText) dialog.findViewById(R.id.editPassword);
+        pw.setHint("account password");
+        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonDone);
+        dialogButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                try {
+                    startService(new Intent(MainActivity.this, EthereumClientService.class)
+                            .putExtra(PARAM_USER_NAME, usernameEditText.getText().toString())
+                            .putExtra(PARAM_PASSWORD, pw.getText().toString())
+                            .setAction(ETH_REGISTER_USER));
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
+    }
+
+    public void createNewContent(View view) {
+        final Dialog dialog = new Dialog(this);
+            dialog.setContentView(R.layout.dialog_post_content_to_feed);
+            dialog.setTitle("Publish to your feed");
+
+            final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
+            final EditText body = (EditText) dialog.findViewById(R.id.editBody);
+            final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
+            Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
+            dialogButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString());
+                    final String json = convertContentItemToJSON(contentItem);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            //sendEthereumTransaction(ETH_TRANSACT_POST_TO_SELECTED_FEED, password.getText().toString(), json, "");
+                            startService(new Intent(MainActivity.this, EthereumClientService.class)
+                                    .putExtra(PARAM_CONTENT_STRING, json)
+                                    .putExtra(PARAM_PASSWORD, password.getText().toString())
+                                    .setAction(ETH_PUBLISH_USER_CONTENT));
+                            dialog.dismiss();
+                            animateFabMenu(null);
+                        }
+                    } ).start();
+                }
+            });
+            dialog.show();
+    }
+
+    private ContentItem convertDialogInputToContentItem(String title, String text) {
+        String publishedBy = PrefUtils.getSelectedAccountAddress(this);
+//        String contentTypeDictionaryAddress = "empty";
+//        String contentType = "empty";
+        long publishedDate = System.currentTimeMillis();
+        String primaryImageUrl = "empty";
+        String primaryHttpLink = "empty";
+        String primaryContentAddressedLink = "empty";
+        String primaryText = text;
+        ContentItem ci = new ContentItem(publishedBy, title,
+                publishedDate, primaryText, primaryImageUrl, primaryHttpLink, primaryContentAddressedLink);
+        return ci;
+    }
+
+    private String convertContentItemToJSON(ContentItem contentItem) {
+        Gson gson = new Gson();
+        String json = gson.toJson(contentItem);
+        return json;
+    }
 }
+
+//    public void postToSelectedFeed(View view) {
+//        SharedPreferences sp = getSharedPreferences(sharedPreferencesName, 0);
+//        final String selected = sp.getString("selected", "");
+//        if (selected.equals("slush-pile")){
+//            postToSlushPile(view);
+//        } else {
+//            // custom dialog
+//            final Dialog dialog = new Dialog(this);
+//            dialog.setContentView(R.layout.dialog_post_content_to_feed);
+//            dialog.setTitle("Post to " + selected);
+//
+//            final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
+//            final EditText body = (EditText) dialog.findViewById(R.id.editBody);
+//            final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
+//            Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
+//            dialogButton.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString());
+//                    final String json = convertContentItemToJSON(contentItem);
+//                    new Thread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            sendEthereumTransaction(ETH_TRANSACT_POST_TO_SELECTED_FEED, password.getText().toString(), json, "");
+//                            runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    dialog.dismiss();
+//                                    animateFabMenu(null);
+//                                }
+//                            });
+//                        }
+//                    } ).start();
+//                }
+//            });
+//            dialog.show();
+//        }
+//    }

@@ -66,17 +66,20 @@ contract UserContentRegister {
     function getUserContent(address whichUser, uint256 index) public constant returns (string content) {
         return userIndex[whichUser].contentIndex[index];
     }
-    
-    function getUserContentBytes(address whichUser, uint256 index) public constant returns (bytes32) {
-        return stringToBytes32(userIndex[whichUser].contentIndex[index]);
+
+    function getUserContentBytes(address whichUser, uint256 index) public constant returns (bytes32, bytes32) {
+        bytes memory totalMemory = bytes(userIndex[whichUser].contentIndex[index]);
+        return (bytesToBytes32(totalMemory, 0), bytesToBytes32(totalMemory, 32));
     }
     
-    function stringToBytes32(string memory source) public constant returns (bytes32 result) {
-        assembly {
-            result := mload(add(source, 32))
+    function bytesToBytes32(bytes b, uint offset) private constant returns (bytes32) {
+        bytes32 out;
+        for (uint i = 0; i < 32 && offset + i < b.length; i++) {
+            out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
         }
+         return out;
     }
-    
+
     function getContentLinks(address whichUser, uint256 index) public constant returns (string) {
         return userIndex[whichUser].contentLinks[index];
     }

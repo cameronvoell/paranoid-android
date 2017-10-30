@@ -1,7 +1,7 @@
 pragma solidity ^0.4.11;
 
 contract UserContentRegisterInterface {
-    function getUserContentBytes(address whichUser, uint256 index) public returns (bytes32);
+    function getUserContentBytes(address whichUser, uint256 index) public returns (bytes32, bytes32);
 }
 
 contract PublicationRegister {
@@ -127,17 +127,20 @@ contract PublicationRegister {
         msg.sender.transfer(owed);
     }
     
-    function getContentBytes(uint256 whichPublication, uint256 contentIndex) public constant returns (bytes32) {
+    function getContentBytes(uint256 whichPublication, uint256 contentIndex) public constant returns (bytes32, bytes32) {
         UserContentRegisterInterface contentRegister = UserContentRegisterInterface(userContentRegisterAddress);
         Publication storage p = publicationIndex[whichPublication];
         address user = p.publishedAuthorIndex[contentIndex];
         uint256 userContentIndex = p.publishedPostIndex[contentIndex];
-        bytes32 contentString = contentRegister.getUserContentBytes(user, userContentIndex);
-        return contentString;
+        bytes32 contentOne;
+        bytes32 contentTwo;
+        (contentOne, contentTwo) = contentRegister.getUserContentBytes(user, userContentIndex);
+        return (contentOne, contentTwo);
     }
     
     function getContent(uint256 whichPublication, uint256 contentIndex) public constant returns (string) {
-        return bytes32ToString(getContentBytes(whichPublication, contentIndex));
+         var (contentOne, contentTwo) = getContentBytes(whichPublication, contentIndex);
+         return strConcat(bytes32ToString(contentOne), bytes32ToString(contentTwo));
     }
     
     function getContentRevenue(uint256 whichPublication, uint256 contentIndex) public constant returns (uint256) {
@@ -188,6 +191,17 @@ contract PublicationRegister {
             bytesStringTrimmed[j] = bytesString[j];
         }
         return string(bytesStringTrimmed);
+    }
+    
+    function strConcat(string _a, string _b) internal returns (string) {
+        bytes memory _ba = bytes(_a);
+        bytes memory _bb = bytes(_b);
+        string memory ab = new string(_ba.length + _bb.length);
+        bytes memory bab = bytes(ab);
+        uint k = 0;
+        for (uint i = 0; i < _ba.length; i++) bab[k++] = _ba[i];
+        for (i = 0; i < _bb.length; i++) bab[k++] = _bb[i];
+        return string(bab);
     }
 
 }

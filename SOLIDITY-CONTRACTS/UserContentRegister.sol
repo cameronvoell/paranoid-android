@@ -12,6 +12,7 @@ contract UserContentRegister {
     
     mapping (address => User) public userIndex;
     mapping (address => bool) public registered;
+    mapping (string => address) _userAddressLookup;
     uint256 public numUsers;
     mapping (string => bool) _checkUserNameTaken; 
 
@@ -22,10 +23,15 @@ contract UserContentRegister {
             userIndex[msg.sender] = User(userName, metaData, 0);
             _checkUserNameTaken[userName] = true;
             registered[msg.sender] = true;
+            _userAddressLookup[userName] = msg.sender;
             numUsers++;
             return true;
         }
         return false;
+    }
+    
+    function getUserAddress(string userName) public constant returns (address) {
+        return _userAddressLookup[userName];
     }
     
     function publishContent(string content) public  {
@@ -53,25 +59,25 @@ contract UserContentRegister {
         }
     }
     
-    function checkUserNameTaken(string username) public returns (bool) {
+    function checkUserNameTaken(string username) public constant returns (bool) {
         return _checkUserNameTaken[username];
     }
     
-    function getUserContent(address whichUser, uint256 index) public returns (string) {
+    function getUserContent(address whichUser, uint256 index) public constant returns (string content) {
         return userIndex[whichUser].contentIndex[index];
     }
     
-    function getUserContentBytes(address whichUser, uint256 index) public returns (bytes32) {
+    function getUserContentBytes(address whichUser, uint256 index) public constant returns (bytes32) {
         return stringToBytes32(userIndex[whichUser].contentIndex[index]);
     }
     
-    function stringToBytes32(string memory source) private returns (bytes32 result) {
+    function stringToBytes32(string memory source) public constant returns (bytes32 result) {
         assembly {
             result := mload(add(source, 32))
         }
     }
     
-    function getContentLinks(address whichUser, uint256 index) public returns (string) {
+    function getContentLinks(address whichUser, uint256 index) public constant returns (string) {
         return userIndex[whichUser].contentLinks[index];
     }
 }

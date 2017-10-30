@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-interface UserContentRegisterInterface {
+contract UserContentRegisterInterface {
     function getUserContentBytes(address whichUser, uint256 index) public returns (bytes32);
 }
 
@@ -20,7 +20,7 @@ contract PublicationRegister {
         mapping (uint256 => string) publishedContentIndex;
         
         uint256 minSupportCostWei;
-        uint adminPaymentPercentage;
+        uint8 adminPaymentPercentage;
         uint256 uniqueSupporters;
         uint256 adminClaimOwedWei;
         
@@ -35,6 +35,8 @@ contract PublicationRegister {
     }
     
     mapping (uint256 => Publication) public publicationIndex;
+    mapping (string => bool) _checkNameTaken;
+    mapping (string => uint256) indexLookup;
     uint256 public numPublications;
     address public userContentRegisterAddress;
     
@@ -43,10 +45,20 @@ contract PublicationRegister {
         userContentRegisterAddress = _userContentRegisterAddress;
     }
     
-    //Make names unique
-    function createPublication(string name, string metaData, uint256 minUpVoteCostWei, uint adminPaymentPercentage) public {
+    function checkNameTaken(string name) public constant returns (bool) {
+        return _checkNameTaken[name];
+    }
+    
+    function getPublicationIndex(string name) public constant returns (uint256) {
+        return indexLookup[name];
+    }
+    
+    function createPublication(string name, string metaData, uint256 minUpVoteCostWei, uint8 adminPaymentPercentage) public {
+        assert(!_checkNameTaken[name]);
         publicationIndex[numPublications] = Publication(name, metaData, msg.sender, numPublications == 0, 0, minUpVoteCostWei, adminPaymentPercentage, 0, 0);
         publicationIndex[numPublications].publishingAccessList[msg.sender] = true;
+        _checkNameTaken[name] = true;
+        indexLookup[name] = numPublications;
         numPublications++;
     }
     
@@ -115,7 +127,7 @@ contract PublicationRegister {
         msg.sender.transfer(owed);
     }
     
-    function getContentBytes(uint256 whichPublication, uint256 contentIndex) public returns (bytes32) {
+    function getContentBytes(uint256 whichPublication, uint256 contentIndex) public constant returns (bytes32) {
         UserContentRegisterInterface contentRegister = UserContentRegisterInterface(userContentRegisterAddress);
         Publication storage p = publicationIndex[whichPublication];
         address user = p.publishedAuthorIndex[contentIndex];
@@ -124,31 +136,31 @@ contract PublicationRegister {
         return contentString;
     }
     
-    function getContent(uint256 whichPublication, uint256 contentIndex) public returns (string) {
+    function getContent(uint256 whichPublication, uint256 contentIndex) public constant returns (string) {
         return bytes32ToString(getContentBytes(whichPublication, contentIndex));
     }
     
-    function getContentRevenue(uint256 whichPublication, uint256 contentIndex) public  returns (uint256) {
+    function getContentRevenue(uint256 whichPublication, uint256 contentIndex) public constant returns (uint256) {
         Publication storage p = publicationIndex[whichPublication];
         return p.postRevenueWeiIndex[contentIndex];
     }
     
-    function getContentUniqueSupporters(uint256 whichPublication, uint256 contentIndex) public  returns (uint256) {
+    function getContentUniqueSupporters(uint256 whichPublication, uint256 contentIndex) public constant returns (uint256) {
         Publication storage p = publicationIndex[whichPublication];
         return p.postUniqueSupportersIndex[contentIndex];
     }
     
-    function getContentNumComments(uint256 whichPublication, uint256 contentIndex) public returns (uint256) {
+    function getContentNumComments(uint256 whichPublication, uint256 contentIndex) public constant returns (uint256) {
         Publication storage p = publicationIndex[whichPublication];
         return p.numCommentsIndex[contentIndex];
     }
     
-    function getContentCommentByIndex(uint256 whichPublication, uint256 contentIndex, uint256 commentIndex) public returns (bytes32) {
+    function getContentCommentByIndex(uint256 whichPublication, uint256 contentIndex, uint256 commentIndex) public constant returns (bytes32) {
         Publication storage p = publicationIndex[whichPublication];
         return p.postComments[contentIndex][commentIndex];
     }
     
-    function getContentAuthor(uint256 whichPublication, uint256 contentIndex) public returns (address) {
+    function getContentAuthor(uint256 whichPublication, uint256 contentIndex) public constant returns (address) {
         Publication storage p = publicationIndex[whichPublication];
         return p.publishedAuthorIndex[contentIndex];
     }
@@ -161,7 +173,7 @@ contract PublicationRegister {
         return publicationIndex[whichPublication].admin;
     }
     
-    function bytes32ToString(bytes32 x) constant returns (string) {
+    function bytes32ToString(bytes32 x) public constant returns (string) {
         bytes memory bytesString = new bytes(32);
         uint charCount = 0;
         for (uint j = 0; j < 32; j++) {

@@ -6,4 +6,7 @@
     <string name="user_name_not_loaded">loading username...</string>
     <string name="user_name_not_registered">not yet registered...</string>
     <string name="register_button">register</string>
+    <string name="publication">publication</string>
+    <string name="tag">tag</string>
+    <string name="sort_by">sort by</string>
 </resources>

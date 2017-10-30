@@ -90,6 +90,7 @@ public class UserFragment extends Fragment {
                     break;
                 case EthereumClientService.UI_REGISTER_USER_PENDING_CONFIRMATION:
                     String username = intent.getStringExtra(EthereumClientService.PARAM_USER_NAME);
+                    mRegisterButton.setVisibility(View.GONE);
                     mUsernameTextView.setText(username + " (pending confirmation)");
                     break;
             }

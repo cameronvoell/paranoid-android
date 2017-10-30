@@ -16,7 +16,6 @@ import android.util.Log;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.data.EthereumConstants;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
-
 import org.ethereum.geth.Account;
 import org.ethereum.geth.Address;
 import org.ethereum.geth.BigInt;
@@ -34,12 +33,10 @@ import org.ethereum.geth.NodeConfig;
 import org.ethereum.geth.Signer;
 import org.ethereum.geth.TransactOpts;
 import org.ethereum.geth.Transaction;
-
 import java.util.ArrayList;
-
 import io.ipfs.kotlin.IPFS;
-
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.KEY_STORE;
+import static com.example.cameron.ethereumtest1.data.EthereumConstants.PUBLICATION_REGISTER_ABI;
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.RINKEBY_NETWORK_ID;
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.USER_CONTENT_REGISTER_ABI;
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.getRinkebyGenesis;
@@ -75,6 +72,10 @@ public class EthereumClientService extends Service {
 
     public static final String ETH_PUBLISH_USER_CONTENT = "eth.publish.user.content";
     public static final String UI_PUBLISH_USER_CONTENT_PENDING_CONFIRMATION = "ui.publish.user.content.pending.confirmation";
+
+    public static final String ETH_FETCH_PUBLICATION_CONTENT = "eth.fetch.publication.content";
+    public static final String UI_UPDATE_PUBLICATION_CONTENT = "ui.update.publication.content";
+    public static final String PARAM_PUBLICATION_INDEX = "param.publication.index";
 
     private EthereumClient mEthereumClient;
     private org.ethereum.geth.Context mContext;
@@ -119,6 +120,10 @@ public class EthereumClientService extends Service {
                     String content = b.getString(PARAM_CONTENT_STRING);
                     password = b.getString(PARAM_PASSWORD);
                     handlePublishUserContent(content, password);
+                    break;
+                case ETH_FETCH_PUBLICATION_CONTENT:
+                    int index = b.getInt(PARAM_PUBLICATION_INDEX);
+                    handleFetchPublicationContent(index);
                     break;
                 default:
                     break;
@@ -165,6 +170,9 @@ public class EthereumClientService extends Service {
                 case ETH_PUBLISH_USER_CONTENT:
                     b.putString(PARAM_CONTENT_STRING, intent.getStringExtra(PARAM_CONTENT_STRING));
                     b.putString(PARAM_PASSWORD, intent.getStringExtra(PARAM_PASSWORD));
+                    break;
+                case ETH_FETCH_PUBLICATION_CONTENT:
+                    b.putInt(PARAM_PUBLICATION_INDEX, intent.getIntExtra(PARAM_PUBLICATION_INDEX, 0));
                     break;
             }
             b.putString(MESSAGE_ACTION, intent.getAction());
@@ -479,6 +487,80 @@ public class EthereumClientService extends Service {
         Intent intent = new Intent(UI_PUBLISH_USER_CONTENT_PENDING_CONFIRMATION);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
+    }
+
+    private void handleFetchPublicationContent(int index) {
+        String contentString = "";
+        while (!mIsReady) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            BoundContract contract = Geth.bindContract(
+                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
+                    PUBLICATION_REGISTER_ABI, mEthereumClient);
+
+            CallOpts callOpts = Geth.newCallOpts();
+            callOpts.setContext(mContext);
+            Interfaces callData;
+            Interfaces returnData;
+
+            //Find number of articles
+            callData = Geth.newInterfaces(1);
+            Interface publicationIndex = Geth.newInterface();
+            publicationIndex.setBigInt(new BigInt(index));
+            callData.set(0, publicationIndex);
+
+            returnData = Geth.newInterfaces(1);
+            Interface numPublishedParam = Geth.newInterface();
+            numPublishedParam.setDefaultBigInt();
+            returnData.set(0, numPublishedParam);
+
+            contract.call(callOpts, returnData, "getNumPublished", callData);
+            long numPublished = returnData.get(0).getBigInt().getInt64();
+
+            ArrayList<String> postJsonArray = new ArrayList<>();
+
+            for (long i = numPublished - 1; i >= 0; i--) {
+                callData = Geth.newInterfaces(2);
+                callData.set(0, publicationIndex);
+                Interface contentIndex = Geth.newInterface();
+                contentIndex.setBigInt(Geth.newBigInt(i));
+                callData.set(1, contentIndex);
+
+                returnData = Geth.newInterfaces(1);
+                Interface content = Geth.newInterface();
+                content.setDefaultString();
+                returnData.set(0, content);
+
+                contract.call(callOpts, returnData, "getContent", callData);
+                contentString = new String(returnData.get(0).getString());
+
+                String json = "";
+                try {
+                    json = new IPFS().getGet().cat(contentString);
+                } catch (Exception e) {
+                    json = "CONTENT CURRENTLY UNAVAILABLE";// + e.getMessage();
+                    // Log.e("oops", e.getMessage());
+                }
+                postJsonArray.add(json);
+            }
+
+
+            //PrefUtils.saveSelectedAccountUserName(getBaseContext(), userName);
+
+            Intent intent = new Intent(UI_UPDATE_PUBLICATION_CONTENT);
+            intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_STRING, postJsonArray);
+            LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+            bm.sendBroadcast(intent);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error retrieving contentList: " + e.getMessage());
+        }
     }
 
 }

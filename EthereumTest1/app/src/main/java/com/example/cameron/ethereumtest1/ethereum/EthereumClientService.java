@@ -35,6 +35,8 @@ import org.ethereum.geth.TransactOpts;
 import org.ethereum.geth.Transaction;
 import java.util.ArrayList;
 import io.ipfs.kotlin.IPFS;
+
+import static com.example.cameron.ethereumtest1.data.EthereumConstants.ETH_DATA_DIRECTORY;
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.KEY_STORE;
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.PUBLICATION_REGISTER_ABI;
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.RINKEBY_NETWORK_ID;
@@ -210,7 +212,7 @@ public class EthereumClientService extends Service {
         config.setBootstrapNodes(EthereumConstants.getRinkebyBootNodes());
         try {
             if (mNode == null) {
-                mNode = Geth.newNode(getFilesDir() + "/rinkeby1", config);
+                mNode = Geth.newNode(getFilesDir() + ETH_DATA_DIRECTORY, config);
             }
             mNode.start();
             mEthereumClient = mNode.getEthereumClient();
@@ -231,6 +233,13 @@ public class EthereumClientService extends Service {
             intent.putExtra(PARAM_BLOCK_NUMBER, header.getNumber());
             LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
             bm.sendBroadcast(intent);
+//            try {
+//                Log.e("PEER", mNode.getPeersInfo().get(0).getRemoteAddress().toString());
+//                Log.e("PEER", mNode.getPeersInfo().get(0).getID().toString());
+//                Log.e("PEER", mNode.getPeersInfo().get(0).getName().toString());
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
             //Log.e("New HEAD", "Blocks received by IntentService");
             mIsReady = true;
         }
@@ -451,9 +460,13 @@ public class EthereumClientService extends Service {
         try {
             final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
-            BoundContract contract = Geth.bindContract(
+            BoundContract userContract = Geth.bindContract(
                     new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
                     USER_CONTENT_REGISTER_ABI, mEthereumClient);
+
+            BoundContract publicationContract = Geth.bindContract(
+                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
+                    PUBLICATION_REGISTER_ABI, mEthereumClient);
 
             Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
 
@@ -475,12 +488,22 @@ public class EthereumClientService extends Service {
             tOpts.setNonce(noncePending);
             final String contentHash = new IPFS().getAdd().string(content).getHash();
 
+            //publish to user feed
             Interfaces callParams = Geth.newInterfaces(1);
             Interface paramContentHash = Geth.newInterface();
             paramContentHash.setString(contentHash);
             callParams.set(0, paramContentHash);
-            final Transaction txRegisterUser = contract.transact(tOpts, "publishContent", callParams);
-            mEthereumClient.sendTransaction(mContext, txRegisterUser);
+            final Transaction txPublishContent = userContract.transact(tOpts, "publishContent", callParams);
+            mEthereumClient.sendTransaction(mContext, txPublishContent);
+
+            //publish to slush pile
+             callParams = Geth.newInterfaces(2);
+            Interface paramWhichPublication = Geth.newInterface();
+            paramWhichPublication.setBigInt(new BigInt(0));
+            callParams.set(0, paramContentHash);
+            final Transaction txPublishToPublication = publicationContract.transact(tOpts, "publishContent", callParams);
+            mEthereumClient.sendTransaction(mContext, txPublishToPublication);
+
         } catch (Exception e) {
             e.printStackTrace();
         }

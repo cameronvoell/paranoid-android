@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
         mSynchLogTextView.append("Connecting to peers...");
 
-        startIPFSDaemon();
+        //startIPFSDaemon();
         startService(new Intent(MainActivity.this, EthereumClientService.class).setAction(EthereumClientService.START_ETHEREUM_SERVICE));
 
         int selectedFragment = PrefUtils.getSelectedFragment(getBaseContext());

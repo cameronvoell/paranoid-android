@@ -117,7 +117,12 @@ public class ContentListFragment extends Fragment {
 
     private ContentItem convertJsonToContentItem(String json) {
         Gson gson = new Gson();
-        ContentItem contentItem = gson.fromJson(json, ContentItem.class);
+        ContentItem contentItem;
+        try {
+            contentItem = gson.fromJson(json, ContentItem.class);
+        } catch (Exception e) {
+            contentItem = new ContentItem("", "content not available", 0, "", "", "", "");
+        }
         return contentItem;
     }
 

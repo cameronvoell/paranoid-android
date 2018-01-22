@@ -24,6 +24,8 @@ public class EthereumConstants {
 
     public final static String KEY_STORE = "/geth_keystore";
     public final static String ETH_DATA_DIRECTORY = "/rinkeby";
+    public static final String LIGHT_SERV_PEER_NODE_ENODE_ADDRESS = "enode://780d82a16507a29c534a1e1ae5ea8e91d92868c45693200b77473242325aec8ad47f9d9da95055cad207014a7f28e5b2aff0192eb4f9ba9ff390d240cc3e4a5d@198.27.253.200:30305";
+    public static final String LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_2 = "enode://343149e4feefa15d882d9fe4ac7d88f885bd05ebb735e547f12e12080a9fa07c8014ca6fd7f373123488102fe5e34111f8509cf0b7de3f5b44339c9f25e87cb8@52.3.158.184:30303";
 
     public static String getRinkebyGenesis(Context ctx) {
         return readRawTextFile(ctx, R.raw.rinkeby);

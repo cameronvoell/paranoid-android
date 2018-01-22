@@ -33,9 +33,11 @@ import org.ethereum.geth.NodeConfig;
 import org.ethereum.geth.Signer;
 import org.ethereum.geth.TransactOpts;
 import org.ethereum.geth.Transaction;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import io.ipfs.kotlin.IPFS;
-
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.ETH_DATA_DIRECTORY;
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.KEY_STORE;
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.PUBLICATION_REGISTER_ABI;
@@ -211,6 +213,16 @@ public class EthereumClientService extends Service {
         config.setEthereumNetworkID(RINKEBY_NETWORK_ID);
         config.setBootstrapNodes(EthereumConstants.getRinkebyBootNodes());
         try {
+            OutputStreamWriter outputStreamWriter =
+                    new OutputStreamWriter(new FileOutputStream(new File(getFilesDir() + ETH_DATA_DIRECTORY + "/GethDroid", "static-nodes.json")));
+            String string = "[" +
+                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS + "\"," +
+                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_2 + "\"" +
+                    //"  \", enode://pubkey@ip:port\"\n" +
+                    "]";
+            outputStreamWriter.append(string);
+            outputStreamWriter.close();
+
             if (mNode == null) {
                 mNode = Geth.newNode(getFilesDir() + ETH_DATA_DIRECTORY, config);
             }
@@ -233,13 +245,17 @@ public class EthereumClientService extends Service {
             intent.putExtra(PARAM_BLOCK_NUMBER, header.getNumber());
             LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
             bm.sendBroadcast(intent);
-//            try {
-//                Log.e("PEER", mNode.getPeersInfo().get(0).getRemoteAddress().toString());
-//                Log.e("PEER", mNode.getPeersInfo().get(0).getID().toString());
-//                Log.e("PEER", mNode.getPeersInfo().get(0).getName().toString());
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
+            try {
+                Log.e("PEER", "Num Peers: " + mNode.getPeersInfo().size());
+                for (int i = 0; i < mNode.getPeersInfo().size(); i++) {
+                    Log.e("PEER", "Peer " + i + ": " + mNode.getPeersInfo().get(i).getID());
+                    Log.e("PEER", "Peer " + i + ": " + mNode.getPeersInfo().get(i).getRemoteAddress());
+                    Log.e("PEER", "Peer " + i + ": " + mNode.getPeersInfo().get(i).getName());
+                    Log.e("PEER", "Peer " + i + ": " + mNode.getPeersInfo().get(i).getLocalAddress());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             //Log.e("New HEAD", "Blocks received by IntentService");
             mIsReady = true;
         }

@@ -205,12 +205,11 @@ public class UserFragment extends Fragment {
     }
 
 
-
     private AdapterView.OnItemSelectedListener mSpinnerItemSelectedListener = new AdapterView.OnItemSelectedListener() {
         @Override
         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-            if (position == mSelectedAccountNum) {
-                //do Nothing
+            if (position == mSelectedAccountNum && mNumAccounts != 0) {
+                mAccountSelectionSpinner.setSelected(false);
             } else if (position == mNumAccounts) {
                 createAccount();
             } else {

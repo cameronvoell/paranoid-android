@@ -150,7 +150,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/statusBar"
         android:layout_above="@+id/selector"
-        android:background="@android:color/transparent"
+        android:background="@android:color/darker_gray"
         android:visibility="gone"
         android:orientation="vertical">
 

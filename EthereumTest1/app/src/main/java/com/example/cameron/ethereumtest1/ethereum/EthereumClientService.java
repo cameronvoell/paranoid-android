@@ -53,7 +53,7 @@ public class EthereumClientService extends Service {
 
     public static final String START_ETHEREUM_SERVICE = "com.example.cameron.ethereumtest1.ethereum.action.start";
 
-    public static final String UI_UPDATE_ETH_BLOCK = "UI.update.eth.block";
+    public static final String UI_UPDATE_ETH_BLOCK = "ui.update.eth.block";
     public static final String PARAM_BLOCK_NUMBER = "param.block.number";
 
     public static final String ETH_FETCH_ACCOUNT_BALANCE = "eth.fetch.account.balance";

@@ -217,7 +217,8 @@ public class EthereumClientService extends Service {
                     new OutputStreamWriter(new FileOutputStream(new File(getFilesDir() + ETH_DATA_DIRECTORY + "/GethDroid", "static-nodes.json")));
             String string = "[" +
                     "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS + "\"," +
-                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_2 + "\"" +
+                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_2 + "\"," +
+                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_3 + "\"" +
                     //"  \", enode://pubkey@ip:port\"\n" +
                     "]";
             outputStreamWriter.append(string);

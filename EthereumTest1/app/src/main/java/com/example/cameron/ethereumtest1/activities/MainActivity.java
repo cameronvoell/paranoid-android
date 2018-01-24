@@ -410,39 +410,31 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
     public void createNewContent(View view) {
         final Dialog dialog = new Dialog(this);
-            dialog.setContentView(R.layout.dialog_post_content_to_feed);
-            dialog.setTitle("Publish to your feed");
+        dialog.setContentView(R.layout.dialog_post_content_to_feed);
+        dialog.setTitle("Publish to your feed");
 
-            final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
-            final EditText body = (EditText) dialog.findViewById(R.id.editBody);
-            final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
-            Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
-            dialogButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString());
-                    final String json = convertContentItemToJSON(contentItem);
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //sendEthereumTransaction(ETH_TRANSACT_POST_TO_SELECTED_FEED, password.getText().toString(), json, "");
-                            startService(new Intent(MainActivity.this, EthereumClientService.class)
-                                    .putExtra(PARAM_CONTENT_STRING, json)
-                                    .putExtra(PARAM_PASSWORD, password.getText().toString())
-                                    .setAction(ETH_PUBLISH_USER_CONTENT));
-                            dialog.dismiss();
-                            animateFabMenu(null);
-                        }
-                    } ).start();
-                }
-            });
-            dialog.show();
+        final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
+        final EditText body = (EditText) dialog.findViewById(R.id.editBody);
+        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
+        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
+        dialogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString());
+                final String json = convertContentItemToJSON(contentItem);
+                startService(new Intent(MainActivity.this, EthereumClientService.class)
+                        .putExtra(PARAM_CONTENT_STRING, json)
+                        .putExtra(PARAM_PASSWORD, password.getText().toString())
+                        .setAction(ETH_PUBLISH_USER_CONTENT));
+                dialog.dismiss();
+                animateFabMenu(null);
+            }
+        });
+        dialog.show();
     }
 
     private ContentItem convertDialogInputToContentItem(String title, String text) {
         String publishedBy = PrefUtils.getSelectedAccountAddress(this);
-//        String contentTypeDictionaryAddress = "empty";
-//        String contentType = "empty";
         long publishedDate = System.currentTimeMillis();
         String primaryImageUrl = "empty";
         String primaryHttpLink = "empty";

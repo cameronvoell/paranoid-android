@@ -21,6 +21,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.activities.MainActivity;
 import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
@@ -45,7 +47,12 @@ import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.E
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_ACCOUNT_USER_NAME;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_USER_CONTENT_LIST;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_ADDRESS_STRING;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_STRING;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PASSWORD;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PUBLICATION_INDEX;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_CONTENT_INDEX;
 
 public class UserFragment extends Fragment {
 
@@ -93,6 +100,9 @@ public class UserFragment extends Fragment {
                     mRegisterButton.setVisibility(View.GONE);
                     mUsernameTextView.setText(username + " (pending confirmation)");
                     break;
+                case EthereumClientService.UI_PUBLISH_USER_CONTENT_TO_PUBLICATION_PENDING_CONFIRMATION:
+                    Toast.makeText(getContext(), "published to feed", Toast.LENGTH_SHORT).show();
+                    break;
             }
         }
     };
@@ -113,8 +123,34 @@ public class UserFragment extends Fragment {
         filter.addAction(EthereumClientService.UI_UPDATE_ACCOUNT_USER_NAME);
         filter.addAction(EthereumClientService.UI_UPDATE_USER_CONTENT_LIST);
         filter.addAction(EthereumClientService.UI_REGISTER_USER_PENDING_CONFIRMATION);
+        filter.addAction(EthereumClientService.UI_PUBLISH_USER_CONTENT_TO_PUBLICATION_PENDING_CONFIRMATION);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(getContext());
         bm.registerReceiver(mBroadcastReceiver, filter);
+
+        mListInteractionListener = new OnListFragmentInteractionListener() {
+            @Override
+            public void onListFragmentInteraction(final int position, ContentItem item) {
+                final int postIndex = mContentItems.size() - 1 - position;
+                final Dialog dialog = new Dialog(getActivity());
+                dialog.setContentView(R.layout.dialog_post_content_to_slush_pile);
+                dialog.setTitle("Publish post index " + postIndex + " to your slush feed");
+
+                final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
+                Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
+                dialogButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String s = password.getText().toString();
+                        getActivity().startService(new Intent(getActivity(), EthereumClientService.class)
+                                .putExtra(PARAM_USER_CONTENT_INDEX, postIndex)
+                                .putExtra(PARAM_PASSWORD, s)
+                                .setAction(ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION));
+                        dialog.dismiss();
+                    }
+                });
+                dialog.show();
+            }
+        };
     }
 
     @Override
@@ -287,7 +323,7 @@ public class UserFragment extends Fragment {
     }
 
     public interface OnListFragmentInteractionListener {
-        void onListFragmentInteraction(ContentItem item);
+        void onListFragmentInteraction(int position, ContentItem item);
     }
 
     /*

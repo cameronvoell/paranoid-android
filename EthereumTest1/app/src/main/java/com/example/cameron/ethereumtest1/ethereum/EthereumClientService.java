@@ -81,6 +81,11 @@ public class EthereumClientService extends Service {
     public static final String UI_UPDATE_PUBLICATION_CONTENT = "ui.update.publication.content";
     public static final String PARAM_PUBLICATION_INDEX = "param.publication.index";
 
+    public static final String ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION = "eth.publish.user.content.to.publication";
+    public static final String UI_PUBLISH_USER_CONTENT_TO_PUBLICATION_PENDING_CONFIRMATION = "ui.publish.user.content.to.publication..pending.confirmation";
+    public static final String PARAM_USER_CONTENT_INDEX = "param.user.content.index";
+
+
     private EthereumClient mEthereumClient;
     private org.ethereum.geth.Context mContext;
     private Node mNode;
@@ -128,6 +133,11 @@ public class EthereumClientService extends Service {
                 case ETH_FETCH_PUBLICATION_CONTENT:
                     int index = b.getInt(PARAM_PUBLICATION_INDEX);
                     handleFetchPublicationContent(index);
+                    break;
+                case ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION:
+                    index = b.getInt(PARAM_USER_CONTENT_INDEX);
+                    password = b.getString(PARAM_PASSWORD);
+                    handlePublishUserContentToPublication(index, password);
                     break;
                 default:
                     break;
@@ -177,6 +187,10 @@ public class EthereumClientService extends Service {
                     break;
                 case ETH_FETCH_PUBLICATION_CONTENT:
                     b.putInt(PARAM_PUBLICATION_INDEX, intent.getIntExtra(PARAM_PUBLICATION_INDEX, 0));
+                    break;
+                case ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION:
+                    b.putInt(PARAM_USER_CONTENT_INDEX, intent.getIntExtra(PARAM_USER_CONTENT_INDEX, 0));
+                    b.putString(PARAM_PASSWORD, intent.getStringExtra(PARAM_PASSWORD));
                     break;
             }
             b.putString(MESSAGE_ACTION, intent.getAction());
@@ -568,7 +582,7 @@ public class EthereumClientService extends Service {
 
             ArrayList<String> postJsonArray = new ArrayList<>();
 
-            for (long i = numPublished - 1; i >= 0; i--) {
+            for (long i = numPublished - 1; i >= 1; i--) {
                 callData = Geth.newInterfaces(2);
                 callData.set(0, publicationIndex);
                 Interface contentIndex = Geth.newInterface();
@@ -605,6 +619,56 @@ public class EthereumClientService extends Service {
         } catch (Exception e) {
             Log.e(TAG, "Error retrieving contentList: " + e.getMessage());
         }
+    }
+
+
+
+    private void handlePublishUserContentToPublication(int index, final String password) {
+
+        try {
+            final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
+
+            BoundContract publicationContract = Geth.bindContract(
+                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
+                    PUBLICATION_REGISTER_ABI, mEthereumClient);
+
+            Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
+
+            TransactOpts tOpts = new TransactOpts();
+            tOpts.setContext(mContext);
+            tOpts.setFrom(address);
+            tOpts.setSigner(new Signer() {
+                @Override
+                public Transaction sign(Address address, Transaction transaction) throws Exception {
+                    Account account = mKeyStore.getAccounts().get(PrefUtils.getSelectedAccountNum(getBaseContext()));
+                    mKeyStore.unlock(account, password);
+                    Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
+                    mKeyStore.lock(account.getAddress());
+                    return signed;
+                }
+            });
+            tOpts.setValue(new BigInt(0));
+            long noncePending  = mEthereumClient.getPendingNonceAt(mContext, address);
+            tOpts.setNonce(noncePending);
+
+            // publish to slush pile
+            Interfaces callParams = Geth.newInterfaces(2);
+            Interface paramWhichPublication = Geth.newInterface();
+            paramWhichPublication.setBigInt(new BigInt(0));
+            Interface paramUserContentIndex = Geth.newInterface();
+            paramUserContentIndex.setBigInt(Geth.newBigInt(index));
+            callParams.set(0, paramWhichPublication);
+            callParams.set(1, paramUserContentIndex);
+            final Transaction txPublishToPublication = publicationContract.transact(tOpts, "publishContent", callParams);
+            mEthereumClient.sendTransaction(mContext, txPublishToPublication);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Intent intent = new Intent(UI_PUBLISH_USER_CONTENT_TO_PUBLICATION_PENDING_CONFIRMATION);
+        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+        bm.sendBroadcast(intent);
+
     }
 
 }

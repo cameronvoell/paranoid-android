@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <TextView
+        android:id="@+id/publishInstruction"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="publish to slush pile?"/>
+
+    <EditText
+        android:id="@+id/editPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:hint="password"
+        android:inputType="textPassword"
+        android:layout_below="@id/editBody"/>
+
+    <Button
+        android:id="@+id/dialogButtonPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=" preview "
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/editPassword"
+        android:onClick="previewPost"/>
+
+    <Button
+        android:id="@+id/dialogButtonPost"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=" post "
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/dialogButtonPreview"/>
+
+</RelativeLayout>

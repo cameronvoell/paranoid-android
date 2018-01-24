@@ -34,7 +34,7 @@ public class UserFragmentContentItemListAdapter extends RecyclerView.Adapter<Use
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
         ContentItem ci = mValues.get(position).contentItem;
         holder.mItem = ci;
         holder.mTitleView.setText(ci.title);
@@ -48,7 +48,7 @@ public class UserFragmentContentItemListAdapter extends RecyclerView.Adapter<Use
                 if (null != mListener) {
                     // Notify the active callbacks interface (the activity, if the
                     // fragment is attached to one) that an item has been selected.
-                    mListener.onListFragmentInteraction(holder.mItem);
+                    mListener.onListFragmentInteraction(position, holder.mItem);
                 }
             }
         });

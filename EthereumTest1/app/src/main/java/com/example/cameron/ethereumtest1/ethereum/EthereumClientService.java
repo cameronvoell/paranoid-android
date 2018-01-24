@@ -345,8 +345,7 @@ public class EthereumClientService extends Service {
                 content.setDefaultString();
                 returnData.set(0, content);
 
-                contract.call(callOpts, returnData, "getUserContent", callData);
-                contentString = new String(returnData.get(0).getString());
+                contentString = contract.callForString(callOpts, "getUserContent", callData);
 
                 String json = "";
                 try {
@@ -357,7 +356,6 @@ public class EthereumClientService extends Service {
                 }
                 postJsonArray.add(json);
             }
-
 
             //PrefUtils.saveSelectedAccountUserName(getBaseContext(), userName);
 
@@ -481,9 +479,9 @@ public class EthereumClientService extends Service {
                     new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
                     USER_CONTENT_REGISTER_ABI, mEthereumClient);
 
-            BoundContract publicationContract = Geth.bindContract(
-                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
-                    PUBLICATION_REGISTER_ABI, mEthereumClient);
+//            BoundContract publicationContract = Geth.bindContract(
+//                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
+//                    PUBLICATION_REGISTER_ABI, mEthereumClient);
 
             Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
 
@@ -512,15 +510,20 @@ public class EthereumClientService extends Service {
             callParams.set(0, paramContentHash);
             final Transaction txPublishContent = userContract.transact(tOpts, "publishContent", callParams);
             mEthereumClient.sendTransaction(mContext, txPublishContent);
-
-            //publish to slush pile
-             callParams = Geth.newInterfaces(2);
-            Interface paramWhichPublication = Geth.newInterface();
-            paramWhichPublication.setBigInt(new BigInt(0));
-            callParams.set(0, paramContentHash);
-            final Transaction txPublishToPublication = publicationContract.transact(tOpts, "publishContent", callParams);
-            mEthereumClient.sendTransaction(mContext, txPublishToPublication);
-
+//            try {
+//                //publish to slush pile
+//                Interfaces callParams = Geth.newInterfaces(2);
+//                Interface paramWhichPublication = Geth.newInterface();
+//                paramWhichPublication.setBigInt(new BigInt(0));
+//                Interface paramContentHash = Geth.newInterface();
+//                paramContentHash.setString(contentHash);
+//                callParams.set(0, paramWhichPublication);
+//                callParams.set(1, paramContentHash);
+//                final Transaction txPublishToPublication = publicationContract.transact(tOpts, "publishContent", callParams);
+//                mEthereumClient.sendTransaction(mContext, txPublishToPublication);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -560,7 +563,7 @@ public class EthereumClientService extends Service {
             numPublishedParam.setDefaultBigInt();
             returnData.set(0, numPublishedParam);
 
-            contract.call(callOpts, returnData, "getNumPublished", callData);
+            contract.callFix(callOpts, returnData, "getNumPublished", callData);
             long numPublished = returnData.get(0).getBigInt().getInt64();
 
             ArrayList<String> postJsonArray = new ArrayList<>();
@@ -577,8 +580,9 @@ public class EthereumClientService extends Service {
                 content.setDefaultString();
                 returnData.set(0, content);
 
-                contract.call(callOpts, returnData, "getContent", callData);
-                contentString = new String(returnData.get(0).getString());
+                //contract.call(callOpts, returnData, "getContent", callData);
+                contentString = contract.callForString(callOpts, "getContent", callData);
+                //contentString = new String(returnData.get(0).getString());
 
                 String json = "";
                 try {

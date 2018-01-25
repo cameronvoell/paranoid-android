@@ -9,7 +9,7 @@ import android.widget.TextView;
 
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.model.Content;
-import com.example.cameron.ethereumtest1.fragments.ContentContractListFragment.OnListFragmentInteractionListener;
+import com.example.cameron.ethereumtest1.fragments.PublicationListFragment.OnListFragmentInteractionListener;
 
 import java.util.List;
 

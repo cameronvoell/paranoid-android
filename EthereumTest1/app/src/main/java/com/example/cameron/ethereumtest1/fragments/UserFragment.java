@@ -203,7 +203,6 @@ public class UserFragment extends Fragment {
         mAccountSelectionSpinner.setAdapter(spinnerArrayAdapter);
         mIsSpinnerInitialized = false;
         mAccountSelectionSpinner.setOnItemSelectedListener(mSpinnerItemSelectedListener);
-        mAccountSelectionSpinner.setSelection((int)mSelectedAccountNum);
     }
 
     private void loadContentList() {
@@ -248,7 +247,7 @@ public class UserFragment extends Fragment {
         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
             if (mIsSpinnerInitialized) {
                 if (position == mSelectedAccountNum && mNumAccounts != 0) {
-                    mAccountSelectionSpinner.setSelected(false);
+                    //mAccountSelectionSpinner.setSelected(false);
                 } else if (position == mNumAccounts) {
                     createAccount();
                 } else {

@@ -299,7 +299,7 @@
         android:scaleType="center"
         app:borderWidth="0dp"
         app:elevation="6dp"
-        android:onClick="updateUsername"/>
+        android:onClick="updateMetaData"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"

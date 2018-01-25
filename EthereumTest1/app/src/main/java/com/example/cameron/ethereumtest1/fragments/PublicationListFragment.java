@@ -18,7 +18,7 @@ import com.example.cameron.ethereumtest1.model.Content;
  * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
  * interface.
  */
-public class ContentContractListFragment extends Fragment {
+public class PublicationListFragment extends Fragment {
 
     private OnListFragmentInteractionListener mListener;
     private RecyclerView mRecyclerView;
@@ -27,12 +27,12 @@ public class ContentContractListFragment extends Fragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public ContentContractListFragment() {
+    public PublicationListFragment() {
     }
 
     @SuppressWarnings("unused")
-    public static ContentContractListFragment newInstance() {
-        ContentContractListFragment fragment = new ContentContractListFragment();
+    public static PublicationListFragment newInstance() {
+        PublicationListFragment fragment = new PublicationListFragment();
         return fragment;
     }
 

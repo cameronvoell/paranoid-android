@@ -28,10 +28,10 @@ import android.widget.Toast;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.adapters.MyContentContractRecyclerViewAdapter;
 import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
+import com.example.cameron.ethereumtest1.fragments.PublicationListFragment;
 import com.example.cameron.ethereumtest1.model.Content;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
-import com.example.cameron.ethereumtest1.fragments.ContentContractListFragment;
 import com.example.cameron.ethereumtest1.fragments.ContentListFragment;
 import com.example.cameron.ethereumtest1.fragments.UserFragment;
 import com.example.cameron.ethereumtest1.ipfs.IPFSDaemon;
@@ -59,7 +59,7 @@ import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_PUBLICAT
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_USER_FRAGMENT;
 
 public class MainActivity extends AppCompatActivity implements ContentListFragment.OnListFragmentInteractionListener,
-        ContentContractListFragment.OnListFragmentInteractionListener,
+        PublicationListFragment.OnListFragmentInteractionListener,
         UserFragment.OnFragmentInteractionListener {
 
     private final static String TAG = MainActivity.class.getName();
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     private TextView mSynchLogTextView;
     private TextView mAccountTextView;
     private ContentListFragment mContentListFragment;
-    private ContentContractListFragment mContentContractListFragment;
+    private PublicationListFragment mContentContractListFragment;
     private UserFragment mUserFragment;
     private ImageButton mContententListButton;
     private ImageButton mContractListButton;
@@ -264,7 +264,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                     Account newAcc = mKeyStore.newAccount(text.getText().toString());
                     String account = newAcc.getAddress().getHex();
                     mAccountTextView.setText(account.substring(0,4) + "..." + account.substring(account.length() -4,account.length() - 1));
-                    //openAccountInfo(null);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -321,7 +320,7 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
 
     public void showContentContracts(View view) {
         if (mContentContractListFragment == null)
-            mContentContractListFragment = ContentContractListFragment.newInstance();
+            mContentContractListFragment = PublicationListFragment.newInstance();
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, mContentContractListFragment);
         transaction.commit();
@@ -449,6 +448,10 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         Gson gson = new Gson();
         String json = gson.toJson(contentItem);
         return json;
+    }
+
+    public void updateMetaData(View view) {
+
     }
 }
 

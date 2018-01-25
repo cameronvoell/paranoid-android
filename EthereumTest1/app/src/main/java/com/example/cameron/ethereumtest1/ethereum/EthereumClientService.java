@@ -566,7 +566,7 @@ public class EthereumClientService extends Service {
             Interfaces callData;
             Interfaces returnData;
 
-            //Find number of articles
+            //Find number of content items
             callData = Geth.newInterfaces(1);
             Interface publicationIndex = Geth.newInterface();
             publicationIndex.setBigInt(new BigInt(index));

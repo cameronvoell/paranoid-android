@@ -72,6 +72,7 @@ public class UserFragment extends Fragment {
     private long mNumAccounts;
     private String mSelectedAddress;
     private List<UserFragmentContentItem> mContentItems;
+    private boolean mIsSpinnerInitialized;
 
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -200,8 +201,9 @@ public class UserFragment extends Fragment {
         accountArray.add("NEW ACCOUNT");
         ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, accountArray);
         mAccountSelectionSpinner.setAdapter(spinnerArrayAdapter);
+        mIsSpinnerInitialized = false;
         mAccountSelectionSpinner.setOnItemSelectedListener(mSpinnerItemSelectedListener);
-        //mAccountSelectionSpinner.setSelection((int)mSelectedAccountNum);
+        mAccountSelectionSpinner.setSelection((int)mSelectedAccountNum);
     }
 
     private void loadContentList() {
@@ -244,20 +246,24 @@ public class UserFragment extends Fragment {
     private AdapterView.OnItemSelectedListener mSpinnerItemSelectedListener = new AdapterView.OnItemSelectedListener() {
         @Override
         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-            if (position == mSelectedAccountNum && mNumAccounts != 0) {
-                mAccountSelectionSpinner.setSelected(false);
-            } else if (position == mNumAccounts) {
-                createAccount();
-            } else {
-                try {
-                    mSelectedAddress = mKeyStore.getAccounts().get(position).getAddress().getHex();
-                } catch (Exception e) {
-                    Log.e(TAG, "Error retrieving account: " + e.getMessage());;
+            if (mIsSpinnerInitialized) {
+                if (position == mSelectedAccountNum && mNumAccounts != 0) {
+                    mAccountSelectionSpinner.setSelected(false);
+                } else if (position == mNumAccounts) {
+                    createAccount();
+                } else {
+                    try {
+                        mSelectedAddress = mKeyStore.getAccounts().get(position).getAddress().getHex();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error retrieving account: " + e.getMessage());
+                        ;
+                    }
+                    mSelectedAccountNum = position;
+                    PrefUtils.saveSelectedAccount(getContext(), mSelectedAccountNum, mSelectedAddress);
+                    reloadUserInfo();
                 }
-                mSelectedAccountNum = position;
-                PrefUtils.saveSelectedAccount(getContext(), mSelectedAccountNum, mSelectedAddress);
-                reloadUserInfo();
             }
+            mIsSpinnerInitialized = true;
         }
 
         @Override

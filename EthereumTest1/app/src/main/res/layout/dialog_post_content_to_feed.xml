@@ -32,13 +32,13 @@
         android:layout_below="@id/editBody"/>
 
     <Button
-        android:id="@+id/dialogButtonPreview"
+        android:id="@+id/dialogButtonUploadPhoto"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text=" preview "
+        android:text=" upload "
         android:layout_centerHorizontal="true"
         android:layout_below="@id/editPassword"
-        android:onClick="previewPost"/>
+        android:onClick="uploadPhoto"/>
 
     <Button
         android:id="@+id/dialogButtonPost"
@@ -46,6 +46,6 @@
         android:layout_height="wrap_content"
         android:text=" post "
         android:layout_centerHorizontal="true"
-        android:layout_below="@id/dialogButtonPreview"/>
+        android:layout_below="@id/dialogButtonUploadPhoto"/>
 
 </RelativeLayout>

@@ -1,11 +1,18 @@
 package com.example.cameron.ethereumtest1.adapters;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.data.EthereumConstants;
+import com.example.cameron.ethereumtest1.fragments.UserFragment;
 import com.example.cameron.ethereumtest1.fragments.UserFragment.OnListFragmentInteractionListener;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.model.UserFragmentContentItem;
@@ -20,10 +27,12 @@ public class UserFragmentContentItemListAdapter extends RecyclerView.Adapter<Use
 
     private final List<UserFragmentContentItem> mValues;
     private final OnListFragmentInteractionListener mListener;
+    private final Context mContext;
 
-    public UserFragmentContentItemListAdapter(List<UserFragmentContentItem> items, OnListFragmentInteractionListener listener) {
+    public UserFragmentContentItemListAdapter(List<UserFragmentContentItem> items, OnListFragmentInteractionListener listener, Context context) {
         mValues = items;
         mListener = listener;
+        mContext = context;
     }
 
     @Override
@@ -36,11 +45,24 @@ public class UserFragmentContentItemListAdapter extends RecyclerView.Adapter<Use
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         ContentItem ci = mValues.get(position).contentItem;
+
+        if (!ci.primaryImageUrl.equals("empty")) {
+            holder.mImageView.setVisibility(View.VISIBLE);
+            //Loading image from url into imageView
+            Glide.with(mContext)
+                    .load(EthereumConstants.IPFS_GATEWAY_URL + ci.primaryImageUrl)
+                    .into(holder.mImageView);
+        } else {
+            holder.mImageView.setVisibility(View.GONE);
+        }
+
         holder.mItem = ci;
         holder.mTitleView.setText(ci.title);
         holder.mBodyView.setText(ci.primaryText);
         holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(ci.publishedDate)
                 + " by " + ci.publishedBy);
+
+
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -64,6 +86,7 @@ public class UserFragmentContentItemListAdapter extends RecyclerView.Adapter<Use
         public final TextView mTitleView;
         public final TextView mBodyView;
         public final TextView mDateAndAuthorView;
+        public final ImageView mImageView;
         public ContentItem mItem;
 
         public ViewHolder(View view) {
@@ -72,6 +95,7 @@ public class UserFragmentContentItemListAdapter extends RecyclerView.Adapter<Use
             mTitleView = (TextView) view.findViewById(R.id.title);
             mBodyView = (TextView) view.findViewById(R.id.body);
             mDateAndAuthorView = (TextView) view.findViewById(R.id.dateAndAuthor);
+            mImageView = (ImageView) view.findViewById(R.id.contentImage);
         }
 
         @Override

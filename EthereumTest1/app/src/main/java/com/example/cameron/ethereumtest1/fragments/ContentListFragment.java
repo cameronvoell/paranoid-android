@@ -99,7 +99,7 @@ public class ContentListFragment extends Fragment {
             Context context = view.getContext();
             mRecyclerView = (RecyclerView) view;
             mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
-            mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(Content.ITEMS, mListener));
+            mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(Content.ITEMS, mListener, getContext()));
         }
         return view;
     }
@@ -132,7 +132,7 @@ public class ContentListFragment extends Fragment {
             ContentItem ci = convertJsonToContentItem(json);
             mContentItems.add(ci);
         }
-        mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(mContentItems, mListener));
+        mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(mContentItems, mListener, getContext()));
     }
 
     private void setPublicationSpinnerOptions() {

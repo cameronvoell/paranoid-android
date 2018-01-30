@@ -218,7 +218,7 @@ public class UserFragment extends Fragment {
         //mContentItems = new DatabaseHelper(getContext()).getUserFragmentContentItems(mSelectedAddress, 0, 1);
         mContentItems = new ArrayList<>();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        mRecyclerView.setAdapter(new UserFragmentContentItemListAdapter(mContentItems, mListInteractionListener));
+        mRecyclerView.setAdapter(new UserFragmentContentItemListAdapter(mContentItems, mListInteractionListener, getContext()));
 
         if ((PrefUtils.shouldUpdateAccountContentList(getActivity()))) {
             try {
@@ -247,7 +247,7 @@ public class UserFragment extends Fragment {
             ContentItem ci = convertJsonToContentItem(json);
             mContentItems.add(new UserFragmentContentItem(0, ci, "", "", ""));
         }
-        mRecyclerView.setAdapter(new UserFragmentContentItemListAdapter(mContentItems, mListInteractionListener));
+        mRecyclerView.setAdapter(new UserFragmentContentItemListAdapter(mContentItems, mListInteractionListener, getContext()));
     }
 
 

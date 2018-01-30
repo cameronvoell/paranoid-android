@@ -52,6 +52,7 @@ import static com.example.cameron.ethereumtest1.data.EthereumConstants.KEY_STORE
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_REGISTER_USER;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_UPDATE_USER_PIC;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_ITEM;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_STRING;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PASSWORD;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_IMAGE_PATH;
@@ -423,10 +424,10 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         dialogButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString());
-                final String json = convertContentItemToJSON(contentItem);
+                ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString(), mUri);
+                //final String json = convertContentItemToJSON(contentItem);
                 startService(new Intent(MainActivity.this, EthereumClientService.class)
-                        .putExtra(PARAM_CONTENT_STRING, json)
+                        .putExtra(PARAM_CONTENT_ITEM, contentItem)
                         .putExtra(PARAM_PASSWORD, password.getText().toString())
                         .setAction(ETH_PUBLISH_USER_CONTENT));
                 dialog.dismiss();
@@ -436,11 +437,11 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         dialog.show();
     }
 
-    private ContentItem convertDialogInputToContentItem(String title, String text) {
+    private ContentItem convertDialogInputToContentItem(String title, String text, String imagePath) {
         String publishedBy = PrefUtils.getSelectedAccountAddress(this);
         long publishedDate = System.currentTimeMillis();
-        String primaryImageUrl = "empty";
         String primaryHttpLink = "empty";
+        String primaryImageUrl = imagePath;
         String primaryContentAddressedLink = "empty";
         String primaryText = text;
         ContentItem ci = new ContentItem(publishedBy, title,
@@ -448,11 +449,11 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         return ci;
     }
 
-    private String convertContentItemToJSON(ContentItem contentItem) {
-        Gson gson = new Gson();
-        String json = gson.toJson(contentItem);
-        return json;
-    }
+//    private String convertContentItemToJSON(ContentItem contentItem) {
+//        Gson gson = new Gson();
+//        String json = gson.toJson(contentItem);
+//        return json;
+//    }
 
 
     public void updateMetaData(View view) {
@@ -490,6 +491,15 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     }
 
     private String mUri;
+
+    public void uploadPhoto(View v) {
+        Intent intent = new Intent();
+        // Show only images, no videos or anything else
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        // Always show the chooser (if there are multiple options available)
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

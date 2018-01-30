@@ -15,7 +15,10 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.data.EthereumConstants;
+import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
+import com.google.gson.Gson;
+
 import org.ethereum.geth.Account;
 import org.ethereum.geth.Address;
 import org.ethereum.geth.BigInt;
@@ -70,7 +73,8 @@ public class EthereumClientService extends Service {
     public static final String ETH_FETCH_USER_CONTENT_LIST = "eth.fetch.user.content.list";
     public static final String UI_UPDATE_USER_CONTENT_LIST = "ui.update.user.content.list";
     public static final String PARAM_CONTENT_STRING = "param.content.string";
-    public static final String PARAM_ARRAY_CONTENT_STRING = "param.content.string";
+    public static final String PARAM_CONTENT_ITEM = "param.content.item";
+    public static final String PARAM_ARRAY_CONTENT_STRING = "param.array.content.string";
 
     public static final String ETH_REGISTER_USER = "eth.register.user";
     public static final String UI_REGISTER_USER_PENDING_CONFIRMATION = "ui.register.user.pending.confirmation";
@@ -132,7 +136,7 @@ public class EthereumClientService extends Service {
                     handleRegisterUser(userName, password);
                     break;
                 case ETH_PUBLISH_USER_CONTENT:
-                    String content = b.getString(PARAM_CONTENT_STRING);
+                    ContentItem content = b.getParcelable(PARAM_CONTENT_ITEM);
                     password = b.getString(PARAM_PASSWORD);
                     handlePublishUserContent(content, password);
                     break;
@@ -193,7 +197,7 @@ public class EthereumClientService extends Service {
                     b.putString(PARAM_PASSWORD, intent.getStringExtra(PARAM_PASSWORD));
                     break;
                 case ETH_PUBLISH_USER_CONTENT:
-                    b.putString(PARAM_CONTENT_STRING, intent.getStringExtra(PARAM_CONTENT_STRING));
+                    b.putParcelable(PARAM_CONTENT_ITEM, intent.getParcelableExtra(PARAM_CONTENT_ITEM));
                     b.putString(PARAM_PASSWORD, intent.getStringExtra(PARAM_PASSWORD));
                     break;
                 case ETH_FETCH_PUBLICATION_CONTENT:
@@ -362,7 +366,9 @@ public class EthereumClientService extends Service {
 
             ArrayList<String> postJsonArray = new ArrayList<>();
 
-            for (long i = numContent - 1; i >= 0; i--) {
+            long howFarBack = numContent > 5 ? numContent - 5 : 0;
+
+            for (long i = numContent - 1; i >= howFarBack; i--) {
                 callData = Geth.newInterfaces(2);
                 Interface index = Geth.newInterface();
                 index.setBigInt(Geth.newBigInt(i));
@@ -502,8 +508,14 @@ public class EthereumClientService extends Service {
         bm.sendBroadcast(intent);
     }
 
+    private String convertContentItemToJSON(ContentItem contentItem) {
+        Gson gson = new Gson();
+        String json = gson.toJson(contentItem);
+        return json;
+    }
 
-    private void handlePublishUserContent(String content, final String password) {
+
+    private void handlePublishUserContent(ContentItem content, final String password) {
         try {
             final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
@@ -529,7 +541,13 @@ public class EthereumClientService extends Service {
             tOpts.setValue(new BigInt(0));
             long noncePending  = mEthereumClient.getPendingNonceAt(mContext, address);
             tOpts.setNonce(noncePending);
-            final String contentHash = new IPFS().getAdd().string(content).getHash();
+
+           // if (content.primaryImageUrl != "empty")
+            final String imageHash = new IPFS().getAdd().file(new File(content.primaryImageUrl)).getHash();
+            content.primaryImageUrl = imageHash;
+            String contentJson = convertContentItemToJSON(content);
+
+            final String contentHash = new IPFS().getAdd().string(contentJson).getHash();
 
             //publish to user feed
             Interfaces callParams = Geth.newInterfaces(1);

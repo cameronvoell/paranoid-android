@@ -1,12 +1,16 @@
 package com.example.cameron.ethereumtest1.adapters;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.data.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.fragments.ContentListFragment.OnListFragmentInteractionListener;
 import com.example.cameron.ethereumtest1.util.DataUtils;
@@ -21,10 +25,12 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
 
     private final List<ContentItem> mValues;
     private final OnListFragmentInteractionListener mListener;
+    private final Context mContext;
 
-    public MyContentItemRecyclerViewAdapter(List<ContentItem> items, OnListFragmentInteractionListener listener) {
+    public MyContentItemRecyclerViewAdapter(List<ContentItem> items, OnListFragmentInteractionListener listener, Context context) {
         mValues = items;
         mListener = listener;
+        mContext = context;
     }
 
     @Override
@@ -36,11 +42,24 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.mItem = mValues.get(position);
-        holder.mTitleView.setText(mValues.get(position).title);
-        holder.mBodyView.setText(mValues.get(position).primaryText);
-        holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(mValues.get(position).publishedDate)
-                + " by " + mValues.get(position).publishedBy);
+        ContentItem ci = mValues.get(position);
+
+
+        if (!ci.primaryImageUrl.equals("empty")) {
+            holder.mImageView.setVisibility(View.VISIBLE);
+            //Loading image from url into imageView
+            Glide.with(mContext)
+                    .load(EthereumConstants.IPFS_GATEWAY_URL + ci.primaryImageUrl)
+                    .into(holder.mImageView);
+        } else {
+            holder.mImageView.setVisibility(View.GONE);
+        }
+
+        holder.mItem = ci;
+        holder.mTitleView.setText(ci.title);
+        holder.mBodyView.setText(ci.primaryText);
+        holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(ci.publishedDate)
+                + " by " + ci.publishedBy);
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -64,6 +83,7 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
         public final TextView mTitleView;
         public final TextView mBodyView;
         public final TextView mDateAndAuthorView;
+        public final ImageView mImageView;
         public ContentItem mItem;
 
         public ViewHolder(View view) {
@@ -72,6 +92,7 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
             mTitleView = (TextView) view.findViewById(R.id.title);
             mBodyView = (TextView) view.findViewById(R.id.body);
             mDateAndAuthorView = (TextView) view.findViewById(R.id.dateAndAuthor);
+            mImageView = (ImageView) view.findViewById(R.id.contentImage);
         }
 
         @Override

@@ -28,6 +28,8 @@ public class EthereumConstants {
     public static final String LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_2 = "enode://343149e4feefa15d882d9fe4ac7d88f885bd05ebb735e547f12e12080a9fa07c8014ca6fd7f373123488102fe5e34111f8509cf0b7de3f5b44339c9f25e87cb8@52.3.158.184:30303";
     public static final String LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_3 = "enode://1cc27a5a41130a5c8b90db5b2273dc28f7b56f3edfc0dcc57b665d451274b26541e8de49ea7a074281906a82209b9600239c981163b6ff85c3038a8e2bc5d8b8@51.15.68.93:30303";
 
+    public static final String IPFS_GATEWAY_URL = "http://ipfs.io/ipfs/";
+
     public static String getRinkebyGenesis(Context ctx) {
         return readRawTextFile(ctx, R.raw.rinkeby);
     }

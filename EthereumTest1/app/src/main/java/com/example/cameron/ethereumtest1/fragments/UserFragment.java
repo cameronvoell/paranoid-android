@@ -1,5 +1,4 @@
 package com.example.cameron.ethereumtest1.fragments;
-
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,39 +18,31 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.activities.MainActivity;
-import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
 import com.example.cameron.ethereumtest1.adapters.UserFragmentContentItemListAdapter;
-import com.example.cameron.ethereumtest1.database.DatabaseHelper;
+import com.example.cameron.ethereumtest1.data.EthereumConstants;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
-import com.example.cameron.ethereumtest1.model.Content;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.model.UserFragmentContentItem;
 import com.example.cameron.ethereumtest1.util.DataUtils;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 import com.google.gson.Gson;
-
 import org.ethereum.geth.Account;
 import org.ethereum.geth.KeyStore;
-
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_ACCOUNT_BALANCE;
-import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_ACCOUNT_USER_NAME;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_ACCOUNT_USER_INFO;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_USER_CONTENT_LIST;
-import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_ADDRESS_STRING;
-import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_STRING;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PASSWORD;
-import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PUBLICATION_INDEX;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_CONTENT_INDEX;
 
 public class UserFragment extends Fragment {
@@ -60,6 +51,7 @@ public class UserFragment extends Fragment {
     private OnFragmentInteractionListener mListener;
     private OnListFragmentInteractionListener mListInteractionListener;
 
+    private ImageView mUserIconImageView;
     private TextView mUsernameTextView;
     private TextView mEthAddressTextView;
     private TextView mEthBalanceTextView;
@@ -79,14 +71,26 @@ public class UserFragment extends Fragment {
         public void onReceive(android.content.Context context, Intent intent) {
             String action = intent.getAction();
             switch (action) {
-                case EthereumClientService.UI_UPDATE_ACCOUNT_USER_NAME:
+                case EthereumClientService.UI_UPDATE_ACCOUNT_USER_INFO:
                     String userName = intent.getStringExtra(EthereumClientService.PARAM_USER_NAME);
+                    String userIconImageUrl = intent.getStringExtra(EthereumClientService.PARAM_USER_ICON_URL);
                     if (userName.equals(getString(R.string.user_name_not_registered))) {
                         mRegisterButton.setVisibility(View.VISIBLE);
                     } else {
                         mRegisterButton.setVisibility(View.GONE);
                     }
                     mUsernameTextView.setText(userName);
+                    if (! userIconImageUrl.equals("meta")){
+                        mUserIconImageView.setVisibility(View.VISIBLE);
+                        //Loading image from url into imageView
+                        Glide.with(UserFragment.this)
+                                .load(EthereumConstants.IPFS_GATEWAY_URL + userIconImageUrl)
+                                .into(mUserIconImageView);
+                        PrefUtils.saveSelectedAccountUserIconImageURLContext(getActivity(), userIconImageUrl);
+                    } else {
+                        mUserIconImageView.setVisibility(View.GONE);
+                    }
+
                     break;
                 case EthereumClientService.UI_UPDATE_ACCOUNT_BALANCE:
                     long accountBalance = intent.getLongExtra(EthereumClientService.PARAM_BALANCE_LONG, 0);
@@ -103,6 +107,9 @@ public class UserFragment extends Fragment {
                     break;
                 case EthereumClientService.UI_PUBLISH_USER_CONTENT_TO_PUBLICATION_PENDING_CONFIRMATION:
                     Toast.makeText(getContext(), "published to feed", Toast.LENGTH_SHORT).show();
+                    break;
+                case EthereumClientService.UI_UPDATE_USER_PIC_PENDING_CONFIRMATION:
+                    Toast.makeText(getContext(), "user pic updated!", Toast.LENGTH_SHORT).show();
                     break;
             }
         }
@@ -121,10 +128,11 @@ public class UserFragment extends Fragment {
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(EthereumClientService.UI_UPDATE_ACCOUNT_BALANCE);
-        filter.addAction(EthereumClientService.UI_UPDATE_ACCOUNT_USER_NAME);
+        filter.addAction(EthereumClientService.UI_UPDATE_ACCOUNT_USER_INFO);
         filter.addAction(EthereumClientService.UI_UPDATE_USER_CONTENT_LIST);
         filter.addAction(EthereumClientService.UI_REGISTER_USER_PENDING_CONFIRMATION);
         filter.addAction(EthereumClientService.UI_PUBLISH_USER_CONTENT_TO_PUBLICATION_PENDING_CONFIRMATION);
+        filter.addAction(EthereumClientService.UI_UPDATE_USER_PIC_PENDING_CONFIRMATION);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(getContext());
         bm.registerReceiver(mBroadcastReceiver, filter);
 
@@ -159,6 +167,7 @@ public class UserFragment extends Fragment {
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_user, container, false);
 
+        mUserIconImageView = (ImageView)v.findViewById(R.id.userIcon);
         mUsernameTextView = (TextView)v.findViewById(R.id.userName);
         mEthAddressTextView = (TextView)v.findViewById(R.id.ethAddress);
         mEthBalanceTextView = (TextView)v.findViewById(R.id.ethBalance);
@@ -175,7 +184,7 @@ public class UserFragment extends Fragment {
     private void reloadUserInfo() {
         loadSelectedAccount();
         loadAccountBalance();
-        loadAccountUserName();
+        loadAccountUserInfo();
         loadContentList();
     }
 
@@ -271,13 +280,23 @@ public class UserFragment extends Fragment {
         }
     };
 
-    private void loadAccountUserName() {
+    private void loadAccountUserInfo() {
         String userName = PrefUtils.getSelectedAccountUserName(getActivity());
+        String userIconImageUrl = PrefUtils.getSelectedAccountUserIconImageUrl(getActivity());
         mUsernameTextView.setText(userName);
+        if (!userIconImageUrl.equals("meta")){
+            mUserIconImageView.setVisibility(View.VISIBLE);
+            //Loading image from url into imageView
+            Glide.with(UserFragment.this)
+                    .load(EthereumConstants.IPFS_GATEWAY_URL + userIconImageUrl)
+                    .into(mUserIconImageView);
+        } else {
+            mUserIconImageView.setVisibility(View.GONE);
+        }
         if (PrefUtils.shouldUpdateAccountUserName(getActivity())) {
             try {
                 getActivity().startService(new Intent(getContext(), EthereumClientService.class)
-                        .putExtra(PARAM_ADDRESS_STRING, mSelectedAddress).setAction(ETH_FETCH_ACCOUNT_USER_NAME));
+                        .putExtra(PARAM_ADDRESS_STRING, mSelectedAddress).setAction(ETH_FETCH_ACCOUNT_USER_INFO));
             } catch (Exception e) {
                 Log.e(TAG, "Error updating account balance: " + e.getMessage());
             }

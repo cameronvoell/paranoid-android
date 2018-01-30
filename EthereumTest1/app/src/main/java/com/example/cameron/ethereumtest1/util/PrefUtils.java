@@ -25,6 +25,7 @@ public class PrefUtils {
     private static final long ACCOUNT_UPDATE_INTERVAL_MS = 1000 * 60 * 1; //1 min
 
     private static final String PREF_SELECTED_ACCOUNT_USER_NAME = "pref_selected_account_user_name";
+    private static final String PREF_SELECTED_ACCOUNT_USER_ICON_URL = "pref_selected_account_user_icon_image_url";
     private static final String PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED = "pref_selected_account_user_name_last_checked";
 
     private static final String PREF_SELECTED_ACCOUNT_CONTENT_LIST_LAST_CHECKED = "pref_selected_account_content_list_last_checked";
@@ -85,5 +86,13 @@ public class PrefUtils {
     public static boolean shouldUpdateAccountContentList(Context ctx) {
         long lastUpdateTime = sp(ctx).getLong(PREF_SELECTED_ACCOUNT_CONTENT_LIST_LAST_CHECKED + getSelectedAccountAddress(ctx), 0);
         return System.currentTimeMillis() - lastUpdateTime > ACCOUNT_UPDATE_INTERVAL_MS;
+    }
+
+    public static String getSelectedAccountUserIconImageUrl(Context ctx) {
+        return sp(ctx).getString(PREF_SELECTED_ACCOUNT_USER_ICON_URL + getSelectedAccountAddress(ctx), "meta");
+    }
+
+    public static void saveSelectedAccountUserIconImageURLContext (Context ctx, String userIconImageUrl) {
+        sp(ctx).edit().putString(PREF_SELECTED_ACCOUNT_USER_ICON_URL + getSelectedAccountAddress(ctx), userIconImageUrl).commit();
     }
 }

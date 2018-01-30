@@ -6,10 +6,13 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
@@ -45,14 +48,13 @@ import java.util.ArrayList;
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-
 import static com.example.cameron.ethereumtest1.data.EthereumConstants.KEY_STORE;
-import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_USER_CONTENT_LIST;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_REGISTER_USER;
-import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_ADDRESS_STRING;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_UPDATE_USER_PIC;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_STRING;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PASSWORD;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_IMAGE_PATH;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_NAME;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_CONTENT_LIST;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_PUBLICATION_LIST;
@@ -94,6 +96,8 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     private long mHighest = 0;
     private boolean mLoadedSlush = false;
     private long mLastUpdated = 0;
+
+    private int PICK_IMAGE_REQUEST = 1;
 
     // handler for received data from service
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
@@ -450,8 +454,75 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         return json;
     }
 
-    public void updateMetaData(View view) {
 
+    public void updateMetaData(View view) {
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_upload_profile_pic);
+
+        final EditText passwordEditText = (EditText) dialog.findViewById(R.id.editPassword);
+
+        Button dialogUploadButton = (Button) dialog.findViewById(R.id.dialogUploadButton);
+        dialogUploadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent();
+                // Show only images, no videos or anything else
+                intent.setType("image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                // Always show the chooser (if there are multiple options available)
+                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+            }
+        });
+
+        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonSubmit);
+        dialogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startService(new Intent(MainActivity.this, EthereumClientService.class)
+                        .putExtra(PARAM_USER_IMAGE_PATH, mUri)
+                        .putExtra(PARAM_PASSWORD, passwordEditText.getText().toString())
+                        .setAction(ETH_UPDATE_USER_PIC));
+                dialog.dismiss();
+                animateFabMenu(null);
+            }
+        });
+        dialog.show();
+    }
+
+    private String mUri;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            mUri = getRealPathFromURI(data.getData());
+            Toast.makeText(getApplicationContext(), "Upload this photo " + mUri, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private String getRealPathFromURI(Uri contentURI) {
+        String filePath = "";
+        String wholeID = DocumentsContract.getDocumentId(contentURI);
+
+        // Split at colon, use second item in the array
+        String id = wholeID.split(":")[1];
+
+        String[] column = { MediaStore.Images.Media.DATA };
+
+        // where id is equal to
+        String sel = MediaStore.Images.Media._ID + "=?";
+
+        Cursor cursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                column, sel, new String[]{ id }, null);
+
+        int columnIndex = cursor.getColumnIndex(column[0]);
+
+        if (cursor.moveToFirst()) {
+            filePath = cursor.getString(columnIndex);
+        }
+        cursor.close();
+        return filePath;
     }
 }
 

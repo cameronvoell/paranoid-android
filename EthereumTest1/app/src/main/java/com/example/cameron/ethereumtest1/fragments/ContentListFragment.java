@@ -21,6 +21,7 @@ import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapt
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.model.Content;
 import com.example.cameron.ethereumtest1.model.ContentItem;
+import com.example.cameron.ethereumtest1.model.PublicationContentItem;
 import com.google.gson.Gson;
 import java.util.ArrayList;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_PUBLICATION_CONTENT;
@@ -41,7 +42,7 @@ public class ContentListFragment extends Fragment {
     private Spinner mPublicationSpinner;
     private Spinner mTagSpinner;
     private Spinner mSortBySpinner;
-    private ArrayList<ContentItem> mContentItems;
+    private ArrayList<PublicationContentItem> mContentItems;
 
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -49,8 +50,11 @@ public class ContentListFragment extends Fragment {
             String action = intent.getAction();
             switch (action) {
                 case EthereumClientService.UI_UPDATE_PUBLICATION_CONTENT:
-                    ArrayList<String> jsonArray = intent.getStringArrayListExtra(EthereumClientService.PARAM_ARRAY_CONTENT_STRING);
-                    reloadContentList(jsonArray);
+                    ArrayList<String> jsonArray = intent.getStringArrayListExtra(
+                            EthereumClientService.PARAM_ARRAY_CONTENT_STRING);
+                    ArrayList<String> revenueArray = intent.getStringArrayListExtra(
+                            EthereumClientService.PARAM_ARRAY_CONTENT_REVENUE_STRING);
+                    reloadContentList(jsonArray, revenueArray);
             }
         }
     };
@@ -126,11 +130,14 @@ public class ContentListFragment extends Fragment {
         return contentItem;
     }
 
-    private void reloadContentList(ArrayList<String> jsonArray) {
+    private void reloadContentList(ArrayList<String> jsonArray, ArrayList<String> revenueArray) {
         mContentItems = new ArrayList<>();
-        for (String json: jsonArray) {
+        for (int i = 0; i < jsonArray.size(); i++) {
+            String json = jsonArray.get(i);
+            String revenue = revenueArray.get(i);
             ContentItem ci = convertJsonToContentItem(json);
-            mContentItems.add(ci);
+            PublicationContentItem pci = new PublicationContentItem(i, ci, revenue, 0);
+            mContentItems.add(pci);
         }
         mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(mContentItems, mListener, getContext()));
     }

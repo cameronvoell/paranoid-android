@@ -9,7 +9,7 @@ import android.content.SharedPreferences;
 
 public class PrefUtils {
 
-    private final static String SHARED_PREFERENCES = "digital_desert_preferences4";
+    private final static String SHARED_PREFERENCES = "digital_desert_preferences5";
     private final static int PREF_MODE = android.content.Context.MODE_PRIVATE;
 
     private final static String PREF_SELECTED_FRAGMENT = "pref_selected_fragment";
@@ -20,7 +20,7 @@ public class PrefUtils {
     private static final String PREF_SELECTED_ACCOUNT_NUM = "pref_selected_account_num";
     private static final String PREF_SELECTED_ACCOUNT_ADDRESS = "pref_selected_account_address";
 
-    private static final String PREF_SELECTED_ACCOUNT_BALANCE = "pref_selected_account_balance";
+//    private static final String PREF_SELECTED_ACCOUNT_BALANCE = "pref_selected_account_balance";
     private static final String PREF_SELECTED_ACCOUNT_BALANCE_LAST_CHECKED = "pref_selected_account_balance";
     private static final long ACCOUNT_UPDATE_INTERVAL_MS = 1000 * 60 * 1; //1 min
 
@@ -29,6 +29,7 @@ public class PrefUtils {
     private static final String PREF_SELECTED_ACCOUNT_USER_NAME_LAST_CHECKED = "pref_selected_account_user_name_last_checked";
 
     private static final String PREF_SELECTED_ACCOUNT_CONTENT_LIST_LAST_CHECKED = "pref_selected_account_content_list_last_checked";
+    private static final String PREF_SELECTED_ACCOUNT_BALANCE_STRING = "pref.selected.account.balance.string";
 
     private static SharedPreferences sp(Context baseContext) {
         return baseContext.getSharedPreferences(SHARED_PREFERENCES, PREF_MODE);
@@ -55,8 +56,8 @@ public class PrefUtils {
         sp(ctx).edit().putString(PREF_SELECTED_ACCOUNT_ADDRESS, selectedAddress).commit();
     }
 
-    public static long getSelectedAccountBalance(Context ctx) {
-        return sp(ctx).getLong(PREF_SELECTED_ACCOUNT_BALANCE + getSelectedAccountAddress(ctx), 0);
+    public static String getSelectedAccountBalance(Context ctx) {
+        return sp(ctx).getString(PREF_SELECTED_ACCOUNT_BALANCE_STRING + getSelectedAccountAddress(ctx), "empty?");
     }
 
     public static boolean shouldUpdateAccountBalance(Context ctx) {
@@ -64,8 +65,8 @@ public class PrefUtils {
         return System.currentTimeMillis() - lastUpdateTime > ACCOUNT_UPDATE_INTERVAL_MS;
     }
 
-    public static void saveSelectedAccountBalance(Context ctx, long balance) {
-        sp(ctx).edit().putLong(PREF_SELECTED_ACCOUNT_BALANCE + getSelectedAccountAddress(ctx), balance).commit();
+    public static void saveSelectedAccountBalance(Context ctx, String balance) {
+        sp(ctx).edit().putString(PREF_SELECTED_ACCOUNT_BALANCE_STRING + getSelectedAccountAddress(ctx), balance).commit();
         sp(ctx).edit().putLong(PREF_SELECTED_ACCOUNT_BALANCE_LAST_CHECKED + getSelectedAccountAddress(ctx), System.currentTimeMillis()).commit();
     }
 

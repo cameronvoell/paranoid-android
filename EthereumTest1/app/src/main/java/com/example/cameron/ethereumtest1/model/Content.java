@@ -7,12 +7,12 @@ import java.util.Map;
 
 public class Content {
 
-    public static final List<ContentItem> ITEMS = new ArrayList<ContentItem>();
+    public static final List<PublicationContentItem> ITEMS = new ArrayList<PublicationContentItem>();
     public static final List<QualityTag.QualityTagItem> CONTRACT_ITEMS = new ArrayList<QualityTag.QualityTagItem>();
     public static final Map<String, QualityTag.QualityTagItem> CONTRACT_ITEM_MAP = new HashMap<String, QualityTag.QualityTagItem>();
 
 
-    public static void addContentItem(ContentItem item) {
+    public static void addContentItem(PublicationContentItem item) {
         ITEMS.add(item);
     }
 

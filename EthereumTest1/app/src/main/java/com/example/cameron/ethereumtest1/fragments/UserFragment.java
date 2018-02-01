@@ -93,8 +93,8 @@ public class UserFragment extends Fragment {
 
                     break;
                 case EthereumClientService.UI_UPDATE_ACCOUNT_BALANCE:
-                    long accountBalance = intent.getLongExtra(EthereumClientService.PARAM_BALANCE_LONG, 0);
-                    mEthBalanceTextView.setText(accountBalance + " WEI");
+                    String accountBalance = intent.getStringExtra(EthereumClientService.PARAM_BALANCE_WEI_STRING);
+                    mEthBalanceTextView.setText(DataUtils.formatAccountBalanceEther(accountBalance, 6));
                     break;
                 case EthereumClientService.UI_UPDATE_USER_CONTENT_LIST:
                     ArrayList<String> jsonArray = intent.getStringArrayListExtra(EthereumClientService.PARAM_ARRAY_CONTENT_STRING);
@@ -309,8 +309,8 @@ public class UserFragment extends Fragment {
     }
 
     private void loadAccountBalance() {
-        long accountBalance = PrefUtils.getSelectedAccountBalance(getActivity());
-        mEthBalanceTextView.setText(accountBalance + " WEI");
+        String accountBalance = PrefUtils.getSelectedAccountBalance(getActivity());
+        mEthBalanceTextView.setText(DataUtils.formatAccountBalanceEther(accountBalance, 6));
         if (PrefUtils.shouldUpdateAccountBalance(getActivity())) {
             try {
                 Intent intent = new Intent(getContext(), EthereumClientService.class);

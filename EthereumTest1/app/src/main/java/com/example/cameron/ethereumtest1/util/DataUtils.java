@@ -20,10 +20,27 @@ public class DataUtils {
             long hours = timePassed / (1000 * 60 * 60);
             return hours + " hours ago";
         }
-        return date.getMonth() + "/" + date.getDay() + "/" + date.getYear();
+        return (date.getMonth() + 1) + "/" + date.getDate() + "/" + (date.getYear() + 1900);
     }
 
     public static String formatEthereumAccount(String account) {
         return account.substring(0,4) + "..." + account.substring(account.length() -4,account.length() - 1);
+    }
+
+    public static String formatAccountBalanceEther(String weiBalance, int numDecimals) {
+        String weiString = String.valueOf(weiBalance);
+        String ethString = "";
+        if (weiString.length() > 18) {
+            ethString = weiString.substring(0, weiString.length() - 18) + "." + weiString.substring(weiString.length() - 18, weiString.length() - 18 + numDecimals);
+        } else {
+            ethString = "0.";
+            int zeroCounter = 18 - weiString.length();
+            for (int i=0; i<zeroCounter && i < numDecimals; i++) {
+                ethString += "0";
+            }
+            int numsRemaining = numDecimals - (ethString.length() - 2);
+            ethString += weiString.substring(0, numsRemaining);
+        }
+        return ethString + " ETH";
     }
 }

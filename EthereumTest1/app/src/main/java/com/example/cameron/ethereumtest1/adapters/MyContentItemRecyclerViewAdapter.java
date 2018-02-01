@@ -13,6 +13,7 @@ import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.data.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.fragments.ContentListFragment.OnListFragmentInteractionListener;
+import com.example.cameron.ethereumtest1.model.PublicationContentItem;
 import com.example.cameron.ethereumtest1.util.DataUtils;
 
 import java.util.List;
@@ -23,11 +24,11 @@ import java.util.List;
  */
 public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyContentItemRecyclerViewAdapter.ViewHolder> {
 
-    private final List<ContentItem> mValues;
+    private final List<PublicationContentItem> mValues;
     private final OnListFragmentInteractionListener mListener;
     private final Context mContext;
 
-    public MyContentItemRecyclerViewAdapter(List<ContentItem> items, OnListFragmentInteractionListener listener, Context context) {
+    public MyContentItemRecyclerViewAdapter(List<PublicationContentItem> items, OnListFragmentInteractionListener listener, Context context) {
         mValues = items;
         mListener = listener;
         mContext = context;
@@ -42,8 +43,10 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        ContentItem ci = mValues.get(position);
+        PublicationContentItem pci = mValues.get(position);
+        ContentItem ci = pci.contentItem;
 
+        holder.mRevenueView.setText(DataUtils.formatAccountBalanceEther(pci.contentRevenue, 4));
 
         if (!ci.primaryImageUrl.equals("empty")) {
             holder.mImageView.setVisibility(View.VISIBLE);
@@ -84,6 +87,7 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
         public final TextView mBodyView;
         public final TextView mDateAndAuthorView;
         public final ImageView mImageView;
+        public final TextView mRevenueView;
         public ContentItem mItem;
 
         public ViewHolder(View view) {
@@ -93,6 +97,7 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
             mBodyView = (TextView) view.findViewById(R.id.body);
             mDateAndAuthorView = (TextView) view.findViewById(R.id.dateAndAuthor);
             mImageView = (ImageView) view.findViewById(R.id.contentImage);
+            mRevenueView = (TextView) view.findViewById(R.id.revenue);
         }
 
         @Override

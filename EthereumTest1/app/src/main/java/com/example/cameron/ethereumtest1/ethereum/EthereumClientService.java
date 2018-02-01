@@ -16,8 +16,10 @@ import android.util.Log;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.data.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
+import com.example.cameron.ethereumtest1.util.DataUtils;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 import com.google.gson.Gson;
+import com.google.gson.internal.bind.ArrayTypeAdapter;
 
 import org.ethereum.geth.Account;
 import org.ethereum.geth.Address;
@@ -62,7 +64,7 @@ public class EthereumClientService extends Service {
     public static final String ETH_FETCH_ACCOUNT_BALANCE = "eth.fetch.account.balance";
     public static final String PARAM_ADDRESS_STRING = "param.address.string";
     public static final String UI_UPDATE_ACCOUNT_BALANCE = "ui.update.account.balance";
-    public static final String PARAM_BALANCE_LONG = "param.balance.long";
+    public static final String PARAM_BALANCE_WEI_STRING = "param.balance.wei.string";
 
     public static final String ETH_FETCH_ACCOUNT_USER_INFO = "eth.fetch.account.user.name";
     public static final String UI_UPDATE_ACCOUNT_USER_INFO = "ui.update.account.user.name";
@@ -75,6 +77,7 @@ public class EthereumClientService extends Service {
     public static final String PARAM_CONTENT_STRING = "param.content.string";
     public static final String PARAM_CONTENT_ITEM = "param.content.item";
     public static final String PARAM_ARRAY_CONTENT_STRING = "param.array.content.string";
+    public static final String PARAM_ARRAY_CONTENT_REVENUE_STRING = "param.array.content.revenue.string";
 
     public static final String ETH_REGISTER_USER = "eth.register.user";
     public static final String UI_REGISTER_USER_PENDING_CONFIRMATION = "ui.register.user.pending.confirmation";
@@ -314,11 +317,11 @@ public class EthereumClientService extends Service {
         }
 
         if (successful) {
-            PrefUtils.saveSelectedAccountBalance(getBaseContext(), balance.getInt64());
+            PrefUtils.saveSelectedAccountBalance(getBaseContext(), balance.getString(10));
             Log.e(TAG, "SUCCESSFULLY UPDATED BALANCE");
 
             Intent intent = new Intent(UI_UPDATE_ACCOUNT_BALANCE);
-            intent.putExtra(PARAM_BALANCE_LONG, balance.getInt64());
+            intent.putExtra(PARAM_BALANCE_WEI_STRING, balance.getString(10));
             LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
             bm.sendBroadcast(intent);
         }
@@ -599,7 +602,23 @@ public class EthereumClientService extends Service {
             contract.callFix(callOpts, returnData, "getNumPublished", callData);
             long numPublished = returnData.get(0).getBigInt().getInt64();
 
+            ////////////////////////////////
+            BoundContract contract2 = Geth.bindContract(
+                    new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
+                    USER_CONTENT_REGISTER_ABI, mEthereumClient);
+            CallOpts callOpts2 = Geth.newCallOpts();
+            callOpts.setContext(mContext);
+            Interfaces callData2;
+            Interfaces returnData2;
+
+            callData2 = Geth.newInterfaces(1);
+            Interface paramFetchUsernameCallParameter2 = Geth.newInterface();
+
+            //////////////////////////////////
+
             ArrayList<String> postJsonArray = new ArrayList<>();
+            ArrayList<Integer> postUniqueSupportersArray = new ArrayList<>();
+            ArrayList<String> postRevenue = new ArrayList<>();
 
             for (long i = numPublished - 1; i >= 1; i--) {
                 callData = Geth.newInterfaces(2);
@@ -613,9 +632,16 @@ public class EthereumClientService extends Service {
                 content.setDefaultString();
                 returnData.set(0, content);
 
-                //contract.call(callOpts, returnData, "getContent", callData);
                 contentString = contract.callForString(callOpts, "getContent", callData);
-                //contentString = new String(returnData.get(0).getString());
+
+                Interface revenue = Geth.newInterface();
+                revenue.setDefaultBigInt();
+                returnData.set(0, revenue);
+
+                contract.callFix(callOpts, returnData, "getContentRevenue", callData);
+                String contentRevenue = returnData.get(0).getBigInt().getString(10);
+                postRevenue.add(contentRevenue);
+
 
                 String json = "";
                 try {
@@ -624,7 +650,30 @@ public class EthereumClientService extends Service {
                     json = "CONTENT CURRENTLY UNAVAILABLE";// + e.getMessage();
                     // Log.e("oops", e.getMessage());
                 }
-                postJsonArray.add(json);
+                ContentItem ci = convertJsonToContentItem(json);
+
+
+                paramFetchUsernameCallParameter2.setAddress(new Address(ci.publishedBy));
+                callData2.set(0, paramFetchUsernameCallParameter2);
+
+                returnData2 = Geth.newInterfaces(3);
+                Interface userNameData2 = Geth.newInterface();
+                Interface metaData2 = Geth.newInterface();
+                Interface numContent2 = Geth.newInterface();
+                userNameData2.setDefaultString();
+                metaData2.setDefaultString();
+                numContent2.setDefaultBigInt();
+                returnData2.set(0, userNameData2);
+                returnData2.set(1, metaData2);
+                returnData2.set(2, numContent2);
+
+                contract2.call(callOpts2, returnData2, "userIndex", callData2);
+                String userName = returnData2.get(0).getString();
+                String metadataIconUrl = returnData2.get(1).getString();
+
+                ci.publishedBy = userName;
+                postJsonArray.add(convertContentItemToJSON(ci));
+
             }
 
 
@@ -632,6 +681,7 @@ public class EthereumClientService extends Service {
 
             Intent intent = new Intent(UI_UPDATE_PUBLICATION_CONTENT);
             intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_STRING, postJsonArray);
+            intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_REVENUE_STRING, postRevenue);
             LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
             bm.sendBroadcast(intent);
 
@@ -640,7 +690,11 @@ public class EthereumClientService extends Service {
         }
     }
 
-
+    private ContentItem convertJsonToContentItem(String json) {
+        Gson gson = new Gson();
+        ContentItem contentItem = gson.fromJson(json, ContentItem.class);
+        return contentItem;
+    }
 
     private void handlePublishUserContentToPublication(int index, final String password) {
 

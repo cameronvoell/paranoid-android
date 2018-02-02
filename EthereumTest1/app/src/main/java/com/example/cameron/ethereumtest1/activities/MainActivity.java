@@ -44,7 +44,6 @@ import com.google.gson.Gson;
 import org.ethereum.geth.Account;
 import org.ethereum.geth.Geth;
 import org.ethereum.geth.KeyStore;
-import java.util.ArrayList;
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
@@ -53,7 +52,6 @@ import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.E
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_REGISTER_USER;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_UPDATE_USER_PIC;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_ITEM;
-import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_STRING;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PASSWORD;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_IMAGE_PATH;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_NAME;
@@ -61,7 +59,8 @@ import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_CONTENT_
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_PUBLICATION_LIST;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_USER_FRAGMENT;
 
-public class MainActivity extends AppCompatActivity implements ContentListFragment.OnListFragmentInteractionListener,
+public class MainActivity extends AppCompatActivity implements
+        ContentListFragment.OnListFragmentInteractionListener,
         PublicationListFragment.OnListFragmentInteractionListener,
         UserFragment.OnFragmentInteractionListener {
 
@@ -82,21 +81,11 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
     private LinearLayout mNetworkSynchView;
     private RelativeLayout mAccountPageView;
 
-    private ArrayList<Account> mAccounts = new ArrayList<>();
     private KeyStore mKeyStore;
 
     private IPFSDaemon mIpfsDaemon = new IPFSDaemon(this);
 
-    private Content mContent;
-    private MyContentItemRecyclerViewAdapter mMyContentItemAdapter;
-    private MyContentContractRecyclerViewAdapter mMyContentContractRecyclerViewAdapter;
-
-    private boolean mShowingContracts = false;
     private boolean mIsFabOpen = false;
-    private int mCounter = 0;
-    private long mHighest = 0;
-    private boolean mLoadedSlush = false;
-    private long mLastUpdated = 0;
 
     private int PICK_IMAGE_REQUEST = 1;
 
@@ -298,18 +287,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         mAccountPageView.setVisibility(View.GONE);
     }
 
-    public void reloadFeed(View view) {
-        if (mShowingContracts) {
-            //fetchQualityTags();
-        } else {
-//            if (getSharedPreferences(SHARED_PREFERENCES, PREF_MODE).getString("selected", "").equals("slush-pile")) {
-//                //fetchFromPile();
-//            } else {
-//                //fetchFromSelectedContract();
-//            }
-        }
-    }
-
     public void showContentList(View view) {
         if (mContentListFragment == null)
             mContentListFragment = ContentListFragment.newInstance();
@@ -319,7 +296,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         mContententListButton.setColorFilter(Color.WHITE);
         mContractListButton.setColorFilter(Color.DKGRAY);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
-        mShowingContracts = false;
         PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_CONTENT_LIST);
     }
 
@@ -332,7 +308,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         mContententListButton.setColorFilter(Color.DKGRAY);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
         mContractListButton.setColorFilter(Color.WHITE);
-        mShowingContracts = true;
         PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
     }
 
@@ -345,7 +320,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
         mUserFragmentButton.setColorFilter(Color.WHITE);
         mContententListButton.setColorFilter(Color.DKGRAY);
         mContractListButton.setColorFilter(Color.DKGRAY);
-        mShowingContracts = false;
         PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_USER_FRAGMENT);;
     }
 
@@ -448,13 +422,6 @@ public class MainActivity extends AppCompatActivity implements ContentListFragme
                 publishedDate, primaryText, primaryImageUrl, primaryHttpLink, primaryContentAddressedLink);
         return ci;
     }
-
-//    private String convertContentItemToJSON(ContentItem contentItem) {
-//        Gson gson = new Gson();
-//        String json = gson.toJson(contentItem);
-//        return json;
-//    }
-
 
     public void updateMetaData(View view) {
         final Dialog dialog = new Dialog(this);

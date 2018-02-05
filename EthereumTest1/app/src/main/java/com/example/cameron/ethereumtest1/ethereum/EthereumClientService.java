@@ -240,7 +240,7 @@ public class EthereumClientService extends Service {
         }
     }
 
-    private void handleStartEthereumService() { //String param1, String param2) {
+    private void handleStartEthereumService() {
         mContext = new org.ethereum.geth.Context();
 
         final NodeConfig config = new NodeConfig();

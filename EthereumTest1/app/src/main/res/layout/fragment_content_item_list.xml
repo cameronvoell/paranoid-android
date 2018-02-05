@@ -1,42 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v7.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent"
-    android:orientation="vertical">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/darker_gray"
-        android:orientation="horizontal">
-
-        <Spinner
-            android:id="@+id/publication"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:prompt="@string/publication"/>
-
-        <Spinner
-            android:id="@+id/tag"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:prompt="@string/tag"/>
-
-        <Spinner
-            android:id="@+id/sortBy"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:prompt="@string/sort_by"/>
-
-    </LinearLayout>
-
-
-<android.support.v7.widget.RecyclerView
     android:id="@+id/recyclerView"
     android:name="com.example.cameron.ethereumtest1.activities.ContentListFragment"
     android:layout_width="match_parent"
@@ -45,5 +10,3 @@
     app:layoutManager="LinearLayoutManager"
     tools:context="com.example.cameron.ethereumtest1.fragments.ContentListFragment"
     tools:listitem="@layout/fragment_content_item" />
-
-</LinearLayout>

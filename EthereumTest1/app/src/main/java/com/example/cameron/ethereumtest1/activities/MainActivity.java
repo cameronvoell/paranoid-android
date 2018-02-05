@@ -1,6 +1,8 @@
 package com.example.cameron.ethereumtest1.activities;
 
 import android.Manifest;
+import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
@@ -29,8 +31,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.R;
-import com.example.cameron.ethereumtest1.adapters.MyContentContractRecyclerViewAdapter;
-import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
 import com.example.cameron.ethereumtest1.fragments.PublicationListFragment;
 import com.example.cameron.ethereumtest1.model.Content;
 import com.example.cameron.ethereumtest1.model.ContentItem;
@@ -39,6 +39,7 @@ import com.example.cameron.ethereumtest1.fragments.ContentListFragment;
 import com.example.cameron.ethereumtest1.fragments.UserFragment;
 import com.example.cameron.ethereumtest1.ipfs.IPFSDaemon;
 import com.example.cameron.ethereumtest1.ipfs.IPFSDaemonService;
+import com.example.cameron.ethereumtest1.util.DataUtils;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 import com.google.gson.Gson;
 import org.ethereum.geth.Account;
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements
     private ImageButton mContententListButton;
     private ImageButton mContractListButton;
     private ImageButton mUserFragmentButton;
+    private FloatingActionButton mFloatingActionButton;
     private FloatingActionButton mFloatingActionButton1;
     private FloatingActionButton mFloatingActionButton2;
     private FloatingActionButton mFloatingActionButton3;
@@ -95,8 +97,12 @@ public class MainActivity extends AppCompatActivity implements
         public void onReceive(android.content.Context context, Intent intent) {
             if (intent.getAction().equals(EthereumClientService.UI_UPDATE_ETH_BLOCK)) {
                 final long blockNumber = intent.getLongExtra(EthereumClientService.PARAM_BLOCK_NUMBER, 0);
-                mSynchInfoTextView.setText("" + blockNumber);
-                // do something
+                //mSynchInfoTextView.setText(String.valueOf(blockNumber));
+                mSynchInfoTextView.setText(DataUtils.formatBlockNumber(blockNumber));
+                ObjectAnimator colorAnim = ObjectAnimator.ofInt(mSynchInfoTextView, "textColor",
+                        Color.GREEN, Color.WHITE);
+                colorAnim.setEvaluator(new ArgbEvaluator());
+                colorAnim.start();
             }
         }
     };
@@ -122,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements
         mContententListButton.setColorFilter(Color.WHITE);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
         mContractListButton.setColorFilter(Color.DKGRAY);
+        mFloatingActionButton = (FloatingActionButton) findViewById(R.id.fab);
         mFloatingActionButton1 = (FloatingActionButton) findViewById(R.id.fab1);
         mFloatingActionButton2 = (FloatingActionButton) findViewById(R.id.fab2);
         mFloatingActionButton3 = (FloatingActionButton) findViewById(R.id.fab3);
@@ -297,6 +304,7 @@ public class MainActivity extends AppCompatActivity implements
         mContractListButton.setColorFilter(Color.DKGRAY);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
         PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_CONTENT_LIST);
+        showFAB(true);
     }
 
     public void showContentContracts(View view) {
@@ -309,6 +317,7 @@ public class MainActivity extends AppCompatActivity implements
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
         mContractListButton.setColorFilter(Color.WHITE);
         PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
+        showFAB(true);
     }
 
     public void showUserFragment(View view) {
@@ -320,7 +329,8 @@ public class MainActivity extends AppCompatActivity implements
         mUserFragmentButton.setColorFilter(Color.WHITE);
         mContententListButton.setColorFilter(Color.DKGRAY);
         mContractListButton.setColorFilter(Color.DKGRAY);
-        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_USER_FRAGMENT);;
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_USER_FRAGMENT);
+        showFAB(true);
     }
 
     @Override
@@ -501,5 +511,25 @@ public class MainActivity extends AppCompatActivity implements
         cursor.close();
         return filePath;
     }
+
+    public void scrollToTop(View view) {
+        mContentListFragment.scrollToTop();
+        showFAB(true);
+    }
+
+    public void showFAB(boolean shouldShow) {
+        if (shouldShow) {
+           mFloatingActionButton.show();
+           mFloatingActionButton1.show();
+           mFloatingActionButton2.show();
+           mFloatingActionButton3.show();
+        } else {
+            mFloatingActionButton3.hide();
+            mFloatingActionButton2.hide();
+            mFloatingActionButton1.hide();
+            mFloatingActionButton.hide();
+        }
+    }
+
 }
 

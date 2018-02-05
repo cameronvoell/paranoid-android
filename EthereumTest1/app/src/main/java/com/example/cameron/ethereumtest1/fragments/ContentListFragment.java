@@ -17,6 +17,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.activities.MainActivity;
 import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.model.Content;
@@ -88,13 +89,6 @@ public class ContentListFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_content_item_list, container, false);
 
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recyclerView);
-        mPublicationSpinner = (Spinner) view.findViewById(R.id.publication);
-        mTagSpinner = (Spinner) view.findViewById(R.id.tag);
-        mSortBySpinner = (Spinner) view.findViewById(R.id.sortBy);
-
-        setPublicationSpinnerOptions();
-        setTagSpinnerOptions();
-        setSortBySpinnerOptions();
 
         loadContentFeed();
 
@@ -104,6 +98,15 @@ public class ContentListFragment extends Fragment {
             mRecyclerView = (RecyclerView) view;
             mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
             mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(Content.ITEMS, mListener, getContext()));
+            mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy){
+                    if (dy > 0)
+                        ((MainActivity)getActivity()).showFAB(false);
+                    else if (dy < 0)
+                        ((MainActivity)getActivity()).showFAB(true);
+                }
+            });
         }
         return view;
     }
@@ -142,66 +145,6 @@ public class ContentListFragment extends Fragment {
         mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(mContentItems, mListener, getContext()));
     }
 
-    private void setPublicationSpinnerOptions() {
-        ArrayList<String> publicationOptions = new ArrayList<>();
-        publicationOptions.add("none");
-        publicationOptions.add("slush-pile");
-        publicationOptions.add("publication options");
-        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, publicationOptions);
-        mPublicationSpinner.setAdapter(spinnerArrayAdapter);
-        mPublicationSpinner.setOnItemSelectedListener(mPublicationSpinnerItemSelectedListener);
-        mPublicationSpinner.setSelection(0);
-    }
-    private void setTagSpinnerOptions() {
-        ArrayList<String> tagOptions = new ArrayList<>();
-        tagOptions.add("all");
-        tagOptions.add("tag options");
-        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, tagOptions);
-        mTagSpinner.setAdapter(spinnerArrayAdapter);
-        mTagSpinner.setOnItemSelectedListener(mPublicationSpinnerItemSelectedListener);
-        mTagSpinner.setSelection(0);
-    }
-    private void setSortBySpinnerOptions() {
-        ArrayList<String> sortByOptions = new ArrayList<>();
-        sortByOptions.add("Date Added Desc");
-        sortByOptions.add("Date Added Asc");
-        sortByOptions.add("Upvotes Desc");
-        sortByOptions.add("Upvotes Asc");
-        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, sortByOptions);
-        mSortBySpinner.setAdapter(spinnerArrayAdapter);
-        mSortBySpinner.setOnItemSelectedListener(mPublicationSpinnerItemSelectedListener);
-        mSortBySpinner.setSelection(0);
-    }
-
-    private AdapterView.OnItemSelectedListener mPublicationSpinnerItemSelectedListener = new AdapterView.OnItemSelectedListener() {
-        @Override
-        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-        }
-        @Override
-        public void onNothingSelected(AdapterView<?> parent) {
-
-        }
-    };
-
-    public void setAdapter(MyContentItemRecyclerViewAdapter adapter) {
-        mRecyclerView.setAdapter(adapter);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-//        getActivity().getWindow().getDecorView().setSystemUiVisibility(
-//                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-//                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-//                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-//                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
-//                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
-//                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
-    }
-
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -217,6 +160,10 @@ public class ContentListFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    public void scrollToTop() {
+        mRecyclerView.smoothScrollToPosition(0);
     }
 
     /**

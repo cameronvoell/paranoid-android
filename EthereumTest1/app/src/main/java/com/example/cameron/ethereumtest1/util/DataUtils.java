@@ -1,5 +1,6 @@
 package com.example.cameron.ethereumtest1.util;
 
+import java.text.DecimalFormat;
 import java.util.Date;
 
 /**
@@ -42,5 +43,12 @@ public class DataUtils {
             ethString += weiString.substring(0, numsRemaining);
         }
         return ethString + " ETH";
+    }
+
+    public static String formatBlockNumber(long blockNumber) {
+        String.valueOf(blockNumber);
+        DecimalFormat formatter = new DecimalFormat("#,###");
+        String blockNumberString = formatter.format(blockNumber);
+        return "#" + blockNumberString;
     }
 }

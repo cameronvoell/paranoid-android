@@ -192,6 +192,8 @@ public class UserFragment extends Fragment {
         mSelectedAccountNum = PrefUtils.getSelectedAccountNum(getContext());
         mSelectedAddress = PrefUtils.getSelectedAccountAddress(getContext());
         mEthAddressTextView.setText(mSelectedAddress);
+
+        mAccountSelectionSpinner.setSelection((int)mSelectedAccountNum);
     }
 
     private void refreshKeyStore() {

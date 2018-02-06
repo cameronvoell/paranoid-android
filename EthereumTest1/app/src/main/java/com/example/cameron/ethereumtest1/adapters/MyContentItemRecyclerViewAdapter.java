@@ -1,6 +1,9 @@
 package com.example.cameron.ethereumtest1.adapters;
 
+import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +16,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.activities.ViewContentActivity;
 import com.example.cameron.ethereumtest1.data.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.fragments.ContentListFragment.OnListFragmentInteractionListener;
@@ -31,15 +35,13 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_ITEM = 1;
     private final List<PublicationContentItem> mValues;
-    private final OnListFragmentInteractionListener mListener;
     private final Context mContext;
     private Spinner mPublicationSpinner;
     private Spinner mTagSpinner;
     private Spinner mSortBySpinner;
 
-    public MyContentItemRecyclerViewAdapter(List<PublicationContentItem> items, OnListFragmentInteractionListener listener, Context context) {
+    public MyContentItemRecyclerViewAdapter(List<PublicationContentItem> items, Context context) {
         mValues = items;
-        mListener = listener;
         mContext = context;
     }
 
@@ -76,6 +78,7 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
             if (!ci.primaryImageUrl.equals("empty")) {
                 holder.mImageView.setVisibility(View.VISIBLE);
                 //Loading image from url into imageView
+                //holder.mImageView.setImageDrawable(mContext.getDrawable(R.drawable.ic_account));
                 Glide.with(mContext)
                         .load(EthereumConstants.IPFS_GATEWAY_URL + ci.primaryImageUrl)
                         .into(holder.mImageView);
@@ -92,10 +95,18 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
             holder.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (null != mListener) {
-                        // Notify the active callbacks interface (the activity, if the
-                        // fragment is attached to one) that an item has been selected.
-                        mListener.onListFragmentInteraction(holder.mItem);
+                    ActivityOptions options = null;
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        Intent intent = new Intent(mContext, ViewContentActivity.class);
+                        ArrayList<ContentItem> contentItems = new ArrayList<>();
+                        contentItems.add(holder.mItem);
+                        intent.putParcelableArrayListExtra("content_items", contentItems);
+                        if (!holder.mItem.primaryImageUrl.equals("empty")) {
+                            options = ActivityOptions.makeSceneTransitionAnimation((Activity) mContext, holder.mImageView, mContext.getString(R.string.picture_transition_name));
+                            mContext.startActivity(intent, options.toBundle());
+                        } else {
+                            mContext.startActivity(intent);
+                        }
                     }
                 }
             });

@@ -97,7 +97,7 @@ public class ContentListFragment extends Fragment {
             Context context = view.getContext();
             mRecyclerView = (RecyclerView) view;
             mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
-            mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(Content.ITEMS, mListener, getContext()));
+            mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(Content.ITEMS, getContext()));
             mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
                 @Override
                 public void onScrolled(RecyclerView recyclerView, int dx, int dy){
@@ -142,7 +142,7 @@ public class ContentListFragment extends Fragment {
             PublicationContentItem pci = new PublicationContentItem(i, ci, revenue, 0);
             mContentItems.add(pci);
         }
-        mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(mContentItems, mListener, getContext()));
+        mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(mContentItems, getContext()));
     }
 
     @Override

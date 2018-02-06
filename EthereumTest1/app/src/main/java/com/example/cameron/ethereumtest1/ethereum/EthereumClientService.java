@@ -369,9 +369,9 @@ public class EthereumClientService extends Service {
 
             ArrayList<String> postJsonArray = new ArrayList<>();
 
-            long howFarBack = numContent > 5 ? numContent - 5 : 0;
+            //long howFarBack = numContent > 5 ? numContent - 5 : 0;
 
-            for (long i = numContent - 1; i >= howFarBack; i--) {
+            for (long i = numContent - 1; i >= 0; i--) {
                 callData = Geth.newInterfaces(2);
                 Interface index = Geth.newInterface();
                 index.setBigInt(Geth.newBigInt(i));
@@ -393,6 +393,7 @@ public class EthereumClientService extends Service {
                     json = "CONTENT CURRENTLY UNAVAILABLE";// + e.getMessage();
                     // Log.e("oops", e.getMessage());
                 }
+
                 postJsonArray.add(json);
             }
 

@@ -9,4 +9,8 @@
     <string name="publication">publication</string>
     <string name="tag">tag</string>
     <string name="sort_by">sort by</string>
+
+    <string name="title_activity_view_content">ViewContentActivity</string>
+    <string name="title_activity_edit_content">EditContentActivity</string>
+    <string name="picture_transition_name">content_image</string>
 </resources>

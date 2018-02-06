@@ -3,6 +3,8 @@ package com.example.cameron.ethereumtest1.activities;
 import android.Manifest;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
+import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
@@ -45,6 +47,9 @@ import com.google.gson.Gson;
 import org.ethereum.geth.Account;
 import org.ethereum.geth.Geth;
 import org.ethereum.geth.KeyStore;
+
+import java.util.ArrayList;
+
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
@@ -335,6 +340,19 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onListFragmentInteraction(ContentItem item) {
+        ActivityOptions options = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+          //  options = ActivityOptions.makeSceneTransitionAnimation((Activity) getBaseContext(), holder.thumbnail, mContext.getString(R.string.picture_transition_name));
+//            Intent intent = DetailActivity.makeIntent(mContext, album);
+//            mContext.startActivity(intent, options.toBundle());
+        }
+
+
+        Intent intent = new Intent(this, ViewContentActivity.class);
+        ArrayList<ContentItem> contentItems = new ArrayList<>();
+        contentItems.add(item);
+        intent.putParcelableArrayListExtra("content_items", contentItems);
+        startActivity(intent);
     }
 
     @Override
@@ -397,28 +415,41 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void createNewContent(View view) {
-        final Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_post_content_to_feed);
-        dialog.setTitle("Publish to your feed");
-
-        final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
-        final EditText body = (EditText) dialog.findViewById(R.id.editBody);
-        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
-        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
-        dialogButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString(), mUri);
-                //final String json = convertContentItemToJSON(contentItem);
-                startService(new Intent(MainActivity.this, EthereumClientService.class)
-                        .putExtra(PARAM_CONTENT_ITEM, contentItem)
-                        .putExtra(PARAM_PASSWORD, password.getText().toString())
-                        .setAction(ETH_PUBLISH_USER_CONTENT));
-                dialog.dismiss();
-                animateFabMenu(null);
-            }
-        });
-        dialog.show();
+        ActivityOptions options = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            Intent intent = new Intent(this, EditContentActivity.class);
+            //ArrayList<ContentItem> contentItems = new ArrayList<>();
+            //contentItems.add(holder.mItem);
+            //intent.putParcelableArrayListExtra("content_items", contentItems);
+//            if (!holder.mItem.primaryImageUrl.equals("empty")) {
+//                options = ActivityOptions.makeSceneTransitionAnimation((Activity) mContext, holder.mImageView, mContext.getString(R.string.picture_transition_name));
+//                mContext.startActivity(intent, options.toBundle());
+           // } else {
+                startActivity(intent);
+            //}
+        }
+//        final Dialog dialog = new Dialog(this);
+//        dialog.setContentView(R.layout.dialog_post_content_to_feed);
+//        dialog.setTitle("Publish to your feed");
+//
+//        final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
+//        final EditText body = (EditText) dialog.findViewById(R.id.editBody);
+//        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
+//        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
+//        dialogButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString(), mUri);
+//                //final String json = convertContentItemToJSON(contentItem);
+//                startService(new Intent(MainActivity.this, EthereumClientService.class)
+//                        .putExtra(PARAM_CONTENT_ITEM, contentItem)
+//                        .putExtra(PARAM_PASSWORD, password.getText().toString())
+//                        .setAction(ETH_PUBLISH_USER_CONTENT));
+//                dialog.dismiss();
+//                animateFabMenu(null);
+//            }
+//        });
+//        dialog.show();
     }
 
     private ContentItem convertDialogInputToContentItem(String title, String text, String imagePath) {

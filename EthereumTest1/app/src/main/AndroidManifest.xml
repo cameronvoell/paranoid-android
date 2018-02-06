@@ -17,7 +17,8 @@
 
         <activity
             android:name=".activities.MainActivity"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:theme="@style/AppTheme.Main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,7 +29,17 @@
         <service
             android:name=".ethereum.EthereumClientService"
             android:enabled="true"
-            android:exported="true"/>
+            android:exported="true" />
+
+        <activity
+            android:name=".activities.ViewContentActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_view_content"
+            android:theme="@style/AppTheme.Detail" />
+        <activity android:name=".activities.EditContentActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_edit_content"
+            android:theme="@style/AppTheme.Detail"/>
     </application>
 
 </manifest>

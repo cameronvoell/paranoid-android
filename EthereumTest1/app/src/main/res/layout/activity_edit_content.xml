@@ -16,7 +16,7 @@
             android:id="@+id/image_content"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="fitXY"
+            android:scaleType="centerCrop"
             android:src="@android:drawable/ic_menu_gallery"
             android:transitionName="@string/picture_transition_name"/>
 
@@ -38,6 +38,27 @@
             android:src="@android:drawable/ic_menu_close_clear_cancel"
             android:onClick="close"/>
 
+        <Button
+            android:id="@+id/publishButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="publish"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="32dp"
+            android:onClick="publishPost"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="save draft"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@id/publishButton"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="32dp"
+            android:onClick="saveDraft"/>
+
     </RelativeLayout>
 
     <LinearLayout
@@ -46,25 +67,73 @@
         android:layout_weight="5"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/contentTitle"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColor="@android:color/black"
-            android:text="edit title"
-            android:textSize="50sp"
-            android:textStyle="bold" />
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/contentBody"
-            android:background="@android:color/darker_gray"
+            <TextView
+                android:id="@+id/contentTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="left"
+                android:layout_margin="@dimen/text_margin"
+                android:textColor="@android:color/black"
+                android:text="click to edit title"
+                android:textSize="50sp"
+                android:textStyle="bold"
+                android:onClick="showEditTitle"/>
+
+            <EditText
+                android:id="@+id/editTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/text_margin"
+                android:textSize="50sp"
+                android:textStyle="bold"
+                android:hint="click to edit title"
+                android:visibility="gone"/>
+            <Button
+                android:id="@+id/editTitleButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="save"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:visibility="gone"
+                android:onClick="saveTitle"
+                android:layout_below="@id/editTitle"/>
+
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="edit body"
-            android:textColor="@android:color/black"
-            android:textSize="24sp" />
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/contentBody"
+                android:background="@android:color/darker_gray"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="click to edit body"
+                android:textColor="@android:color/black"
+                android:textSize="24sp"
+                android:onClick="editBody"/>
+
+            <WebView
+                android:id="@+id/bodyWeb"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/text_margin"
+                android:visibility="gone"
+                android:focusable="true"
+                android:clickable="true"
+                android:onClick="editBody"/>
+
+        </RelativeLayout>
+
 
     </LinearLayout>
 

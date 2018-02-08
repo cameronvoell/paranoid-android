@@ -415,53 +415,10 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void createNewContent(View view) {
-        ActivityOptions options = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             Intent intent = new Intent(this, EditContentActivity.class);
-            //ArrayList<ContentItem> contentItems = new ArrayList<>();
-            //contentItems.add(holder.mItem);
-            //intent.putParcelableArrayListExtra("content_items", contentItems);
-//            if (!holder.mItem.primaryImageUrl.equals("empty")) {
-//                options = ActivityOptions.makeSceneTransitionAnimation((Activity) mContext, holder.mImageView, mContext.getString(R.string.picture_transition_name));
-//                mContext.startActivity(intent, options.toBundle());
-           // } else {
                 startActivity(intent);
-            //}
         }
-//        final Dialog dialog = new Dialog(this);
-//        dialog.setContentView(R.layout.dialog_post_content_to_feed);
-//        dialog.setTitle("Publish to your feed");
-//
-//        final EditText title = (EditText) dialog.findViewById(R.id.editTitle);
-//        final EditText body = (EditText) dialog.findViewById(R.id.editBody);
-//        final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
-//        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
-//        dialogButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                ContentItem contentItem = convertDialogInputToContentItem(title.getText().toString(), body.getText().toString(), mUri);
-//                //final String json = convertContentItemToJSON(contentItem);
-//                startService(new Intent(MainActivity.this, EthereumClientService.class)
-//                        .putExtra(PARAM_CONTENT_ITEM, contentItem)
-//                        .putExtra(PARAM_PASSWORD, password.getText().toString())
-//                        .setAction(ETH_PUBLISH_USER_CONTENT));
-//                dialog.dismiss();
-//                animateFabMenu(null);
-//            }
-//        });
-//        dialog.show();
-    }
-
-    private ContentItem convertDialogInputToContentItem(String title, String text, String imagePath) {
-        String publishedBy = PrefUtils.getSelectedAccountAddress(this);
-        long publishedDate = System.currentTimeMillis();
-        String primaryHttpLink = "empty";
-        String primaryImageUrl = imagePath;
-        String primaryContentAddressedLink = "empty";
-        String primaryText = text;
-        ContentItem ci = new ContentItem(publishedBy, title,
-                publishedDate, primaryText, primaryImageUrl, primaryHttpLink, primaryContentAddressedLink);
-        return ci;
     }
 
     public void updateMetaData(View view) {

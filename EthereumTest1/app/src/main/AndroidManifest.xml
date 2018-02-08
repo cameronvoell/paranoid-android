@@ -36,10 +36,12 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_view_content"
             android:theme="@style/AppTheme.Detail" />
-        <activity android:name=".activities.EditContentActivity"
+        <activity
+            android:name=".activities.EditContentActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_edit_content"
-            android:theme="@style/AppTheme.Detail"/>
+            android:theme="@style/AppTheme.Detail" />
+        <activity android:name=".activities.EditContentBodyActivity"></activity>
     </application>
 
 </manifest>

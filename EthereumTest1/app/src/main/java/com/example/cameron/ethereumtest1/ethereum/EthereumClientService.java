@@ -98,6 +98,9 @@ public class EthereumClientService extends Service {
     public static final String UI_PUBLISH_USER_CONTENT_TO_PUBLICATION_PENDING_CONFIRMATION = "ui.publish.user.content.to.publication..pending.confirmation";
     public static final String PARAM_USER_CONTENT_INDEX = "param.user.content.index";
 
+    public static final String IPFS_FETCH_DRAFT_IMAGE_URL = "eth.update.draft.photo.url";
+    public static final String UI_UPDATE_DRAFT_PHOTO_URL = "ui.update.draft.photo.url";
+    public static final String PARAM_DRAFT_PHOTO_URL = "param.draft.photo.url";
 
     private EthereumClient mEthereumClient;
     private org.ethereum.geth.Context mContext;
@@ -157,6 +160,10 @@ public class EthereumClientService extends Service {
                     password = b.getString(PARAM_PASSWORD);
                     handleUpdateUserPic(picPath, password);
                     break;
+                case IPFS_FETCH_DRAFT_IMAGE_URL:
+                    String draftImagePath = b.getString(PARAM_DRAFT_PHOTO_URL);
+                    handleFetchDraftImageURL(draftImagePath);
+                    break;
                 default:
                     break;
             }
@@ -213,6 +220,9 @@ public class EthereumClientService extends Service {
                 case ETH_UPDATE_USER_PIC:
                     b.putString(PARAM_USER_IMAGE_PATH, intent.getStringExtra(PARAM_USER_IMAGE_PATH));
                     b.putString(PARAM_PASSWORD, intent.getStringExtra(PARAM_PASSWORD));
+                    break;
+                case IPFS_FETCH_DRAFT_IMAGE_URL:
+                    b.putString(PARAM_DRAFT_PHOTO_URL, intent.getStringExtra(PARAM_DRAFT_PHOTO_URL));
                     break;
             }
             b.putString(MESSAGE_ACTION, intent.getAction());
@@ -787,6 +797,15 @@ public class EthereumClientService extends Service {
         }
         Intent intent = new Intent(UI_UPDATE_USER_PIC_PENDING_CONFIRMATION);
         //intent.putExtra(PARAM_USER_NAME, userName);
+        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+        bm.sendBroadcast(intent);
+    }
+
+    private void handleFetchDraftImageURL(String draftImagePath) {
+        File f = new File(draftImagePath);
+        final String contentHash = new IPFS().getAdd().file(f).getHash();
+        Intent intent = new Intent(UI_UPDATE_DRAFT_PHOTO_URL);
+        intent.putExtra(PARAM_DRAFT_PHOTO_URL, contentHash);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
     }

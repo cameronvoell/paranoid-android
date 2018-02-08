@@ -79,7 +79,7 @@
                 android:layout_margin="@dimen/text_margin"
                 android:textColor="@android:color/black"
                 android:text="click to edit title"
-                android:textSize="50sp"
+                android:textSize="36sp"
                 android:textStyle="bold"
                 android:onClick="showEditTitle"/>
 

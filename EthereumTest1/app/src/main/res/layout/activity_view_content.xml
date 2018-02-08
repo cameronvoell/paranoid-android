@@ -36,7 +36,7 @@
             android:layout_margin="@dimen/text_margin"
             android:layout_below="@id/image_content_activity"
             android:textColor="@android:color/black"
-            android:textSize="50sp"
+            android:textSize="36sp"
             android:textStyle="bold" />
 
         <WebView

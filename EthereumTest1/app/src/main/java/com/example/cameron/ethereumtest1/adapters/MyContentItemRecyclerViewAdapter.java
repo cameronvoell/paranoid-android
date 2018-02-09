@@ -23,6 +23,8 @@ import com.example.cameron.ethereumtest1.fragments.ContentListFragment.OnListFra
 import com.example.cameron.ethereumtest1.model.PublicationContentItem;
 import com.example.cameron.ethereumtest1.util.DataUtils;
 
+import org.jsoup.Jsoup;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,7 +90,8 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
 
             holder.mItem = ci;
             holder.mTitleView.setText(ci.title);
-            holder.mBodyView.setText(ci.primaryText);
+            String textFromHtml = Jsoup.parse(ci.primaryText).text();
+            holder.mBodyView.setText(textFromHtml);
             holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(ci.publishedDate)
                     + " by " + ci.publishedBy);
 

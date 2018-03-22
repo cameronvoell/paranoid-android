@@ -2,28 +2,31 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/darker_gray"
+    android:background="@color/lightGray"
     android:orientation="horizontal">
 
     <Spinner
         android:id="@+id/publication"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_weight="4"
+        android:layout_margin="0dp"
         android:prompt="@string/publication"/>
 
     <Spinner
         android:id="@+id/tag"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_weight="3"
+        android:layout_margin="0dp"
         android:prompt="@string/tag"/>
 
     <Spinner
         android:id="@+id/sortBy"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_margin="0dp"
+        android:layout_weight="3"
         android:prompt="@string/sort_by"/>
 
 </LinearLayout>

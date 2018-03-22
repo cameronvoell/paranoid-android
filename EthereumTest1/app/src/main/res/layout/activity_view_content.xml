@@ -39,13 +39,22 @@
             android:textSize="36sp"
             android:textStyle="bold" />
 
+        <TextView
+            android:id="@+id/dateAndAuthor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/text_margin"
+            android:textSize="20sp"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@id/contentTitle"/>
+
         <WebView
             android:id="@+id/contentBody"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@android:color/black"
             android:layout_margin="@dimen/text_margin"
-            android:layout_below="@id/contentTitle"
+            android:layout_below="@id/dateAndAuthor"
             android:textSize="14sp" />
 
     </RelativeLayout>

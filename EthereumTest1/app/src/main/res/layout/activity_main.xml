@@ -11,7 +11,7 @@
     <RelativeLayout
         android:id="@+id/statusBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:background="@color/carInterior">
 
         <RelativeLayout
@@ -47,8 +47,8 @@
         </RelativeLayout>
 
         <ImageView
-            android:layout_width="56dp"
-            android:layout_height="56dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_centerInParent="true"
             android:src="@mipmap/ic_white_tent"
             android:onClick="scrollToTop"/>
@@ -159,7 +159,7 @@
     <LinearLayout
         android:id="@id/selector"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="48dp"
         android:layout_alignParentBottom="true"
         android:background="@color/carInterior"
         android:orientation="horizontal">
@@ -256,7 +256,7 @@
         android:layout_height="56dp"
         android:layout_gravity="bottom|end"
         android:layout_alignParentRight="true"
-        app:backgroundTint="@android:color/darker_gray"
+        app:backgroundTint="@color/lightGray"
         android:tint="@color/carInterior"
         android:src="@drawable/ic_steer_color"
         android:scaleType="center"

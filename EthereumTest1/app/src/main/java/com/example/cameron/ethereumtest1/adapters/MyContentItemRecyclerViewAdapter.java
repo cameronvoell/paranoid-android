@@ -171,7 +171,7 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
 
     private void setPublicationSpinnerOptions() {
         ArrayList<String> publicationOptions = new ArrayList<>();
-        publicationOptions.add("none");
+        publicationOptions.add("publication");
         publicationOptions.add("slush-pile");
         publicationOptions.add("publication options");
         ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(mContext, R.layout.spinner_dropdown_content_list, publicationOptions);
@@ -181,7 +181,7 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
     }
     private void setTagSpinnerOptions() {
         ArrayList<String> tagOptions = new ArrayList<>();
-        tagOptions.add("all");
+        tagOptions.add("tag");
         tagOptions.add("tag options");
         ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(mContext, R.layout.spinner_dropdown_content_list, tagOptions);
         mTagSpinner.setAdapter(spinnerArrayAdapter);
@@ -190,10 +190,10 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
     }
     private void setSortBySpinnerOptions() {
         ArrayList<String> sortByOptions = new ArrayList<>();
-        sortByOptions.add("Date Added Desc");
-        sortByOptions.add("Date Added Asc");
-        sortByOptions.add("Upvotes Desc");
-        sortByOptions.add("Upvotes Asc");
+        sortByOptions.add("date  ↓");
+        sortByOptions.add("date  ↑");
+        sortByOptions.add("upvotes  ↓");
+        sortByOptions.add("upvotes  ↑ ");
         ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(mContext, R.layout.spinner_dropdown_content_list, sortByOptions);
         mSortBySpinner.setAdapter(spinnerArrayAdapter);
         mSortBySpinner.setOnItemSelectedListener(mPublicationSpinnerItemSelectedListener);

@@ -5,6 +5,7 @@
     <color name="colorAccent">#FF4081</color>
     <color name="starrySky">#363D5A</color>
     <color name="carInterior">#1a1a1a</color>
+    <color name="lightGray">#D5D5D5</color>
 
     <color name="black_overlay">#66000000</color>
 </resources>

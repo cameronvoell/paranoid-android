@@ -18,6 +18,7 @@ import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.data.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
+import com.example.cameron.ethereumtest1.util.DataUtils;
 
 import org.w3c.dom.Text;
 
@@ -33,6 +34,7 @@ public class ViewContentActivity extends AppCompatActivity {
 
     private ContentItem mContentItem;
     private TextView mTitleTextView;
+    private TextView mDateAndAuthorTextView;
     private WebView mBodyWebView;
 
 
@@ -47,8 +49,13 @@ public class ViewContentActivity extends AppCompatActivity {
         mContentItem = (ContentItem) items.get(0);
 
         mTitleTextView = (TextView) findViewById(R.id.contentTitle);
+        mDateAndAuthorTextView = (TextView) findViewById(R.id.dateAndAuthor);
         mBodyWebView = (WebView) findViewById(R.id.contentBody);
+
         mTitleTextView.setText(mContentItem.title);
+        String dateAndPublishedBy = "Published " + DataUtils.convertTimeStampToDateString(mContentItem.publishedDate)
+                + " by " + mContentItem.publishedBy;
+        mDateAndAuthorTextView.setText(dateAndPublishedBy);
         mBodyWebView.loadData(mContentItem.primaryText, "text/html; charset=UTF-8", null);
 
         ImageView imageView = (ImageView) findViewById(R.id.image_content_activity);

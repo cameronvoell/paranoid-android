@@ -12,7 +12,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <service
-            android:name=".ipfs.IPFSDaemonService"
+            android:name=".ipfs_daemon.IPFSDaemonService"
             android:exported="false" />
 
         <activity

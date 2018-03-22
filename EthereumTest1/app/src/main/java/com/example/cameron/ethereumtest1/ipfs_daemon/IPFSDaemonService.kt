@@ -1,4 +1,4 @@
-package com.example.cameron.ethereumtest1.ipfs
+package com.example.cameron.ethereumtest1.ipfs_daemon
 
 import android.app.IntentService
 import android.app.NotificationManager

@@ -17,7 +17,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.activities.ViewContentActivity;
-import com.example.cameron.ethereumtest1.data.EthereumConstants;
+import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.fragments.ContentListFragment.OnListFragmentInteractionListener;
 import com.example.cameron.ethereumtest1.model.PublicationContentItem;

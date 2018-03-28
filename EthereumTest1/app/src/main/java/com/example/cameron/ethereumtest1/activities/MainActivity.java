@@ -52,7 +52,7 @@ import java.util.ArrayList;
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-import static com.example.cameron.ethereumtest1.data.EthereumConstants.KEY_STORE;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.KEY_STORE;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_REGISTER_USER;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_UPDATE_USER_PIC;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PASSWORD;

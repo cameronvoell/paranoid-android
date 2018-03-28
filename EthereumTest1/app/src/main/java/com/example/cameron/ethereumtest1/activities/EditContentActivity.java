@@ -1,13 +1,10 @@
 package com.example.cameron.ethereumtest1.activities;
 
-import android.animation.ArgbEvaluator;
-import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
@@ -26,17 +23,15 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.commonsware.cwac.anddown.AndDown;
 import com.example.cameron.ethereumtest1.R;
-import com.example.cameron.ethereumtest1.data.EthereumConstants;
+import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.model.ContentItem;
-import com.example.cameron.ethereumtest1.util.DataUtils;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_ITEM;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_DRAFT_PHOTO_URL;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PASSWORD;
-import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_IMAGE_PATH;
 
 public class EditContentActivity extends AppCompatActivity implements View.OnTouchListener {
 

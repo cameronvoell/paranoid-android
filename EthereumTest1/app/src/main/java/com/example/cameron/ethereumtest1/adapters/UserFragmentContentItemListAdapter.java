@@ -5,14 +5,12 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
-import com.example.cameron.ethereumtest1.data.EthereumConstants;
-import com.example.cameron.ethereumtest1.fragments.UserFragment;
+import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.fragments.UserFragment.OnListFragmentInteractionListener;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.model.UserFragmentContentItem;

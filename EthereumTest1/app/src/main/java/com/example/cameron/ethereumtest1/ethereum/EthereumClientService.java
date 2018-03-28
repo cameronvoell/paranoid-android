@@ -14,12 +14,10 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
-import com.example.cameron.ethereumtest1.data.EthereumConstants;
+
 import com.example.cameron.ethereumtest1.model.ContentItem;
-import com.example.cameron.ethereumtest1.util.DataUtils;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 import com.google.gson.Gson;
-import com.google.gson.internal.bind.ArrayTypeAdapter;
 
 import org.ethereum.geth.Account;
 import org.ethereum.geth.Address;
@@ -43,12 +41,12 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import io.ipfs.kotlin.IPFS;
-import static com.example.cameron.ethereumtest1.data.EthereumConstants.ETH_DATA_DIRECTORY;
-import static com.example.cameron.ethereumtest1.data.EthereumConstants.KEY_STORE;
-import static com.example.cameron.ethereumtest1.data.EthereumConstants.PUBLICATION_REGISTER_ABI;
-import static com.example.cameron.ethereumtest1.data.EthereumConstants.RINKEBY_NETWORK_ID;
-import static com.example.cameron.ethereumtest1.data.EthereumConstants.USER_CONTENT_REGISTER_ABI;
-import static com.example.cameron.ethereumtest1.data.EthereumConstants.getRinkebyGenesis;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.ETH_DATA_DIRECTORY;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.KEY_STORE;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.PUBLICATION_REGISTER_ABI;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.RINKEBY_NETWORK_ID;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.USER_CONTENT_REGISTER_ABI;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.getRinkebyGenesis;
 
 public class EthereumClientService extends Service {
 

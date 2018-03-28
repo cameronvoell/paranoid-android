@@ -1,30 +1,21 @@
 package com.example.cameron.ethereumtest1.activities;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Parcelable;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.os.Handler;
-import android.view.MotionEvent;
 import android.view.View;
-import android.webkit.MimeTypeMap;
 import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
-import com.example.cameron.ethereumtest1.data.EthereumConstants;
+import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.util.DataUtils;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
-
-import us.feras.mdv.MarkdownView;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.

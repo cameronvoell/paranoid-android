@@ -262,7 +262,9 @@ public class EthereumClientService extends Service {
             String string = "[" +
                     "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS + "\"," +
                     "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_2 + "\"," +
-                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_3 + "\"" +
+                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_3 + "\"," +
+                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_4 + "\"," +
+                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_5 + "\"" +
                     //"  \", enode://pubkey@ip:port\"\n" +
                     "]";
             outputStreamWriter.append(string);
@@ -628,7 +630,7 @@ public class EthereumClientService extends Service {
             ArrayList<String> postJsonArray = new ArrayList<>();
             ArrayList<Integer> postUniqueSupportersArray = new ArrayList<>();
             ArrayList<String> postRevenue = new ArrayList<>();
-
+            int counter = 0;
             for (long i = numPublished - 1; i >= 1; i--) {
                 callData = Geth.newInterfaces(2);
                 callData.set(0, publicationIndex);

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.21;
 
 contract UserContentRegister {
     
@@ -41,16 +41,15 @@ contract UserContentRegister {
     }
     
     function updateContentLinks(uint256 contentIndex, string links) public  {
-        assert(!registered[msg.sender]);
+        assert(registered[msg.sender]);
         assert(contentIndex < userIndex[msg.sender].numContent);
         userIndex[msg.sender].contentLinks[contentIndex] = links;
     }
     
     function updateMyUserName(string newUsername) public {
-        if (registered[msg.sender] && !_checkUserNameTaken[newUsername]) {
-            userIndex[msg.sender].userName = newUsername;
-            _checkUserNameTaken[newUsername] = true;
-        }
+        assert(registered[msg.sender] && !_checkUserNameTaken[newUsername]);
+        userIndex[msg.sender].userName = newUsername;
+        _checkUserNameTaken[newUsername] = true;
     }
     
     function updateMetaData(string _metaData) public {
@@ -66,21 +65,22 @@ contract UserContentRegister {
     function getUserContent(address whichUser, uint256 index) public constant returns (string content) {
         return userIndex[whichUser].contentIndex[index];
     }
-
-    function getUserContentBytes(address whichUser, uint256 index) public constant returns (bytes32, bytes32) {
-        bytes memory totalMemory = bytes(userIndex[whichUser].contentIndex[index]);
-        return (bytesToBytes32(totalMemory, 0), bytesToBytes32(totalMemory, 32));
+    
+    function getUserContentBytes(address whichUser, uint256 index) public constant returns (bytes32) {
+        return stringToBytes32(userIndex[whichUser].contentIndex[index]);
     }
     
-    function bytesToBytes32(bytes b, uint offset) private constant returns (bytes32) {
-        bytes32 out;
-        for (uint i = 0; i < 32 && offset + i < b.length; i++) {
-            out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
+    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
+        assembly {
+            result := mload(add(source, 32))
         }
-         return out;
     }
-
+    
     function getContentLinks(address whichUser, uint256 index) public constant returns (string) {
         return userIndex[whichUser].contentLinks[index];
+    }
+    
+    function getNumContent(address whichUser) public constant returns (uint256) {
+        return userIndex[whichUser].numContent;
     }
 }

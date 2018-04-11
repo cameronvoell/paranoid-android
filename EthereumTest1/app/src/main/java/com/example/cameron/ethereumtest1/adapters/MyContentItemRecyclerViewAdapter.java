@@ -38,7 +38,6 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
     private static final int TYPE_ITEM = 1;
     private final List<PublicationContentItem> mValues;
     private final Context mContext;
-    private Spinner mPublicationSpinner;
     private Spinner mTagSpinner;
     private Spinner mSortBySpinner;
 
@@ -53,10 +52,8 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
         if (viewType == TYPE_HEADER) {
             View view = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.header_content_list, parent, false);
-            mPublicationSpinner = (Spinner) view.findViewById(R.id.publication);
             mTagSpinner = (Spinner) view.findViewById(R.id.tag);
             mSortBySpinner = (Spinner) view.findViewById(R.id.sortBy);
-            setPublicationSpinnerOptions();
             setSortBySpinnerOptions();
             setTagSpinnerOptions();
             return new ViewHolder(view);
@@ -169,16 +166,6 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
         }
     };
 
-    private void setPublicationSpinnerOptions() {
-        ArrayList<String> publicationOptions = new ArrayList<>();
-        publicationOptions.add("publication");
-        publicationOptions.add("slush-pile");
-        publicationOptions.add("publication options");
-        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(mContext, R.layout.spinner_dropdown_content_list, publicationOptions);
-        mPublicationSpinner.setAdapter(spinnerArrayAdapter);
-        mPublicationSpinner.setOnItemSelectedListener(mPublicationSpinnerItemSelectedListener);
-        mPublicationSpinner.setSelection(0);
-    }
     private void setTagSpinnerOptions() {
         ArrayList<String> tagOptions = new ArrayList<>();
         tagOptions.add("tag");

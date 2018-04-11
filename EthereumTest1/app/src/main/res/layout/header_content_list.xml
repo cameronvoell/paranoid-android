@@ -6,17 +6,10 @@
     android:orientation="horizontal">
 
     <Spinner
-        android:id="@+id/publication"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="4"
-        android:layout_margin="0dp"
-        android:prompt="@string/publication"/>
-
-    <Spinner
         android:id="@+id/tag"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:paddingLeft="@dimen/small_text_margin"
         android:layout_weight="3"
         android:layout_margin="0dp"
         android:prompt="@string/tag"/>

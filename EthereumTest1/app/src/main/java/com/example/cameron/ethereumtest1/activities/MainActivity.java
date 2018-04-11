@@ -75,9 +75,10 @@ public class MainActivity extends AppCompatActivity implements
     private ContentListFragment mContentListFragment;
     private PublicationListFragment mContentContractListFragment;
     private UserFragment mUserFragment;
-    private ImageButton mContententListButton;
-    private ImageButton mContractListButton;
+    private ImageButton mContentListButton;
     private ImageButton mUserFragmentButton;
+    private ImageButton mEthereumButton;
+    private ImageButton mIPFSButton;
     private FloatingActionButton mFloatingActionButton;
     private FloatingActionButton mFloatingActionButton1;
     private FloatingActionButton mFloatingActionButton2;
@@ -124,12 +125,15 @@ public class MainActivity extends AppCompatActivity implements
 
         mNetworkSynchView = (LinearLayout) findViewById(R.id.networkSynch);
         mAccountPageView = (RelativeLayout) findViewById(R.id.accountPage);
-        mContententListButton = (ImageButton) findViewById(R.id.button_content_list);
-        mContractListButton = (ImageButton) findViewById(R.id.button_contract_list);
+        mContentListButton = (ImageButton) findViewById(R.id.button_content_list);
         mUserFragmentButton = (ImageButton) findViewById(R.id.user_fragment_button);
-        mContententListButton.setColorFilter(Color.WHITE);
+        mEthereumButton = (ImageButton) findViewById(R.id.button_ethereum);
+        mIPFSButton = (ImageButton) findViewById(R.id.button_ipfs);
+
+        mContentListButton.setColorFilter(Color.WHITE);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
-        mContractListButton.setColorFilter(Color.DKGRAY);
+        mEthereumButton.setColorFilter(Color.DKGRAY);
+        mIPFSButton.setColorFilter(Color.DKGRAY);
         mFloatingActionButton = (FloatingActionButton) findViewById(R.id.fab);
         mFloatingActionButton1 = (FloatingActionButton) findViewById(R.id.fab1);
         mFloatingActionButton2 = (FloatingActionButton) findViewById(R.id.fab2);
@@ -163,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements
                 showContentList(null);
                 break;
             case SELECTED_PUBLICATION_LIST:
-                showContentContracts(null);
+                showEthereum(null);
                 break;
             case SELECTED_USER_FRAGMENT:
                 showUserFragment(null);
@@ -302,23 +306,11 @@ public class MainActivity extends AppCompatActivity implements
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, mContentListFragment);
         transaction.commit();
-        mContententListButton.setColorFilter(Color.WHITE);
-        mContractListButton.setColorFilter(Color.DKGRAY);
+        mContentListButton.setColorFilter(Color.WHITE);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
+        mEthereumButton.setColorFilter(Color.DKGRAY);
+        mIPFSButton.setColorFilter(Color.DKGRAY);
         PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_CONTENT_LIST);
-        showFAB(true);
-    }
-
-    public void showContentContracts(View view) {
-        if (mContentContractListFragment == null)
-            mContentContractListFragment = PublicationListFragment.newInstance();
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mContentContractListFragment);
-        transaction.commit();
-        mContententListButton.setColorFilter(Color.DKGRAY);
-        mUserFragmentButton.setColorFilter(Color.DKGRAY);
-        mContractListButton.setColorFilter(Color.WHITE);
-        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
         showFAB(true);
     }
 
@@ -328,10 +320,39 @@ public class MainActivity extends AppCompatActivity implements
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, mUserFragment);
         transaction.commit();
+        mContentListButton.setColorFilter(Color.DKGRAY);
         mUserFragmentButton.setColorFilter(Color.WHITE);
-        mContententListButton.setColorFilter(Color.DKGRAY);
-        mContractListButton.setColorFilter(Color.DKGRAY);
+        mEthereumButton.setColorFilter(Color.DKGRAY);
+        mIPFSButton.setColorFilter(Color.DKGRAY);
         PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_USER_FRAGMENT);
+        showFAB(true);
+    }
+
+    public void showEthereum(View view) {
+        if (mContentContractListFragment == null)
+            mContentContractListFragment = PublicationListFragment.newInstance();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mContentContractListFragment);
+        transaction.commit();
+        mContentListButton.setColorFilter(Color.DKGRAY);
+        mUserFragmentButton.setColorFilter(Color.DKGRAY);
+        mEthereumButton.setColorFilter(Color.WHITE);
+        mIPFSButton.setColorFilter(Color.DKGRAY);
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
+        showFAB(true);
+    }
+
+    public void showIPFS(View view) {
+        if (mContentContractListFragment == null)
+            mContentContractListFragment = PublicationListFragment.newInstance();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mContentContractListFragment);
+        transaction.commit();
+        mContentListButton.setColorFilter(Color.DKGRAY);
+        mUserFragmentButton.setColorFilter(Color.DKGRAY);
+        mEthereumButton.setColorFilter(Color.DKGRAY);
+        mIPFSButton.setColorFilter(Color.WHITE);
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
         showFAB(true);
     }
 

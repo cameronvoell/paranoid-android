@@ -23,12 +23,12 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.R;
@@ -46,9 +46,7 @@ import com.google.gson.Gson;
 import org.ethereum.geth.Account;
 import org.ethereum.geth.Geth;
 import org.ethereum.geth.KeyStore;
-
 import java.util.ArrayList;
-
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
@@ -63,36 +61,38 @@ import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_PUBLICAT
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_USER_FRAGMENT;
 
 public class MainActivity extends AppCompatActivity implements
-        ContentListFragment.OnListFragmentInteractionListener,
-        PublicationListFragment.OnListFragmentInteractionListener,
-        UserFragment.OnFragmentInteractionListener {
+        ContentListFragment.OnListFragmentInteractionListener {
 
     private final static String TAG = MainActivity.class.getName();
 
+    private int PICK_IMAGE_REQUEST = 1;
+
     private TextView mSynchInfoTextView;
-    private TextView mSynchLogTextView;
     private TextView mAccountTextView;
+    private ImageButton mSwitchAccountButton;
+
     private ContentListFragment mContentListFragment;
-    private PublicationListFragment mContentContractListFragment;
     private UserFragment mUserFragment;
+    private PublicationListFragment mContentContractListFragment;
+
     private ImageButton mContentListButton;
     private ImageButton mUserFragmentButton;
     private ImageButton mEthereumButton;
     private ImageButton mIPFSButton;
+
     private FloatingActionButton mFloatingActionButton;
     private FloatingActionButton mFloatingActionButton1;
     private FloatingActionButton mFloatingActionButton2;
     private FloatingActionButton mFloatingActionButton3;
-    private LinearLayout mNetworkSynchView;
-    private RelativeLayout mAccountPageView;
 
     private KeyStore mKeyStore;
 
     private IPFSDaemon mIpfsDaemon = new IPFSDaemon(this);
 
     private boolean mIsFabOpen = false;
+    private int mNumAccounts = 0;
+    private long mSelectedAccount;
 
-    private int PICK_IMAGE_REQUEST = 1;
 
     // handler for received data from service
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
@@ -100,16 +100,15 @@ public class MainActivity extends AppCompatActivity implements
         public void onReceive(android.content.Context context, Intent intent) {
             if (intent.getAction().equals(EthereumClientService.UI_UPDATE_ETH_BLOCK)) {
                 final long blockNumber = intent.getLongExtra(EthereumClientService.PARAM_BLOCK_NUMBER, 0);
-                //mSynchInfoTextView.setText(String.valueOf(blockNumber));
                 mSynchInfoTextView.setText(DataUtils.formatBlockNumber(blockNumber));
                 ObjectAnimator colorAnim = ObjectAnimator.ofInt(mSynchInfoTextView, "textColor",
                         Color.GREEN, Color.WHITE);
                 colorAnim.setEvaluator(new ArgbEvaluator());
+                colorAnim.setDuration(15000);
                 colorAnim.start();
             }
         }
     };
-    private long mSelectedAccount;
 
     /*
      * Lifecycle Methods
@@ -119,12 +118,10 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mSynchLogTextView = (TextView) findViewById(R.id.synchLog);
         mSynchInfoTextView = (TextView) findViewById(R.id.synchInfo);
         mAccountTextView = (TextView) findViewById(R.id.accountInfo);
+        mSwitchAccountButton = (ImageButton) findViewById(R.id.account_switch);
 
-        mNetworkSynchView = (LinearLayout) findViewById(R.id.networkSynch);
-        mAccountPageView = (RelativeLayout) findViewById(R.id.accountPage);
         mContentListButton = (ImageButton) findViewById(R.id.button_content_list);
         mUserFragmentButton = (ImageButton) findViewById(R.id.user_fragment_button);
         mEthereumButton = (ImageButton) findViewById(R.id.button_ethereum);
@@ -145,8 +142,8 @@ public class MainActivity extends AppCompatActivity implements
         bm.registerReceiver(mBroadcastReceiver, filter);
 
         mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
-        long numAccounts = mKeyStore.getAccounts().size();
-        if (numAccounts > 0) {
+        mNumAccounts = (int)mKeyStore.getAccounts().size();
+        if (mNumAccounts > 0) {
             mSelectedAccount = PrefUtils.getSelectedAccountNum(getBaseContext());
         }
         try {
@@ -156,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements
             Log.e(TAG, "Error retrieving account" + e.getMessage());
         }
 
-        mSynchLogTextView.append("Connecting to peers...");
+        mSwitchAccountButton.setOnClickListener(mSwitchAccountOnClickListener);
 
         startIPFSDaemon();
         startService(new Intent(MainActivity.this, EthereumClientService.class).setAction(EthereumClientService.START_ETHEREUM_SERVICE));
@@ -177,6 +174,47 @@ public class MainActivity extends AppCompatActivity implements
                 break;
         }
     }
+
+    View.OnClickListener mSwitchAccountOnClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            PopupMenu popupMenu = new PopupMenu(MainActivity.this, mSwitchAccountButton);
+            if (mNumAccounts > 0) {
+                try {
+                    for (int i = 0; i < mNumAccounts; i++) {
+                        popupMenu.getMenu().add(i, i, i, DataUtils.formatEthereumAccount(mKeyStore.getAccounts().get(i).getAddress().getHex()));
+                    }
+                } catch (Exception e) {
+
+                }
+            }
+            popupMenu.getMenu().add(mNumAccounts, mNumAccounts, mNumAccounts, "NEW ACCOUNT");
+            popupMenu.setOnMenuItemClickListener(mSwitchAccountPopupListener);
+            popupMenu.show();
+        }
+    };
+
+    PopupMenu.OnMenuItemClickListener mSwitchAccountPopupListener = new PopupMenu.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item) {
+            Toast.makeText(MainActivity.this, "switch to " + item.getTitle(), Toast.LENGTH_SHORT).show();
+            if (item.getTitle().equals("NEW ACCOUNT")) {
+                createAccount();
+            } else {
+                String selectedAddress = "error";
+                try {
+                    selectedAddress = mKeyStore.getAccounts().get(item.getItemId()).getAddress().getHex();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                int selectedAccountNum = item.getItemId();
+                PrefUtils.saveSelectedAccount(MainActivity.this, selectedAccountNum, selectedAddress);
+                mAccountTextView.setText(DataUtils.formatEthereumAccount(selectedAddress));
+                if (mUserFragment != null) mUserFragment.reloadUserInfo();
+            }
+            return true;
+        }
+    };
 
     @Override
     public void onResume() {
@@ -247,16 +285,10 @@ public class MainActivity extends AppCompatActivity implements
         }
     };
 
-    private ContentItem convertJsonToContentItem(String json) {
-        Gson gson = new Gson();
-        ContentItem contentItem = gson.fromJson(json, ContentItem.class);
-        return contentItem;
-    }
-
     /*
      * Methods for Managing Ethereum Accounts
      */
-    public void createAccount(View view) {
+    public void createAccount() {
         final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_new_account);
         dialog.setTitle("Enter New Account Password");
@@ -280,91 +312,12 @@ public class MainActivity extends AppCompatActivity implements
         dialog.show();
     }
 
-    public KeyStore getKeyStore() {
-        return mKeyStore;
-    }
-
-    /*
-     * UI Response Methods
-     */
-    public void closeNetworkSynch(View view) {
-        mNetworkSynchView.setVisibility(View.GONE);
-    }
-
-    public void openNetworkSynch(View view) {
-        closeAccountPage(null);
-        mNetworkSynchView.setVisibility(View.VISIBLE);
-    }
-
-    public void closeAccountPage(View view) {
-        mAccountPageView.setVisibility(View.GONE);
-    }
-
-    public void showContentList(View view) {
-        if (mContentListFragment == null)
-            mContentListFragment = ContentListFragment.newInstance();
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mContentListFragment);
-        transaction.commit();
-        mContentListButton.setColorFilter(Color.WHITE);
-        mUserFragmentButton.setColorFilter(Color.DKGRAY);
-        mEthereumButton.setColorFilter(Color.DKGRAY);
-        mIPFSButton.setColorFilter(Color.DKGRAY);
-        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_CONTENT_LIST);
-        showFAB(true);
-    }
-
-    public void showUserFragment(View view) {
-        if (mUserFragment == null)
-            mUserFragment = UserFragment.newInstance("","");
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mUserFragment);
-        transaction.commit();
-        mContentListButton.setColorFilter(Color.DKGRAY);
-        mUserFragmentButton.setColorFilter(Color.WHITE);
-        mEthereumButton.setColorFilter(Color.DKGRAY);
-        mIPFSButton.setColorFilter(Color.DKGRAY);
-        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_USER_FRAGMENT);
-        showFAB(true);
-    }
-
-    public void showEthereum(View view) {
-        if (mContentContractListFragment == null)
-            mContentContractListFragment = PublicationListFragment.newInstance();
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mContentContractListFragment);
-        transaction.commit();
-        mContentListButton.setColorFilter(Color.DKGRAY);
-        mUserFragmentButton.setColorFilter(Color.DKGRAY);
-        mEthereumButton.setColorFilter(Color.WHITE);
-        mIPFSButton.setColorFilter(Color.DKGRAY);
-        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
-        showFAB(true);
-    }
-
-    public void showIPFS(View view) {
-        if (mContentContractListFragment == null)
-            mContentContractListFragment = PublicationListFragment.newInstance();
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mContentContractListFragment);
-        transaction.commit();
-        mContentListButton.setColorFilter(Color.DKGRAY);
-        mUserFragmentButton.setColorFilter(Color.DKGRAY);
-        mEthereumButton.setColorFilter(Color.DKGRAY);
-        mIPFSButton.setColorFilter(Color.WHITE);
-        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
-        showFAB(true);
-    }
-
     @Override
     public void onListFragmentInteraction(ContentItem item) {
         ActivityOptions options = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-          //  options = ActivityOptions.makeSceneTransitionAnimation((Activity) getBaseContext(), holder.thumbnail, mContext.getString(R.string.picture_transition_name));
-//            Intent intent = DetailActivity.makeIntent(mContext, album);
-//            mContext.startActivity(intent, options.toBundle());
-        }
 
+        }
 
         Intent intent = new Intent(this, ViewContentActivity.class);
         ArrayList<ContentItem> contentItems = new ArrayList<>();
@@ -373,34 +326,8 @@ public class MainActivity extends AppCompatActivity implements
         startActivity(intent);
     }
 
-    @Override
-    public void onListFragmentInteraction(Content.QualityTag.QualityTagItem item) {
-//        SharedPreferences sp = getSharedPreferences(SHARED_PREFERENCES, PREF_MODE);
-//        sp.edit().putString("selected", item.name).commit();
-    }
-
-    public void animateFabMenu(View v) {
-        if (mIsFabOpen) {
-            mIsFabOpen=false;
-            mFloatingActionButton1.animate().translationY(0);
-            mFloatingActionButton2.animate().translationY(0);
-            mFloatingActionButton3.animate().translationY(0);
-        } else {
-            mIsFabOpen = true;
-            mFloatingActionButton1.animate().translationY(-getResources().getDimension(R.dimen.standard_60));
-            mFloatingActionButton2.animate().translationY(-getResources().getDimension(R.dimen.standard_120));
-            mFloatingActionButton3.animate().translationY(-getResources().getDimension(R.dimen.standard_180));
-        }
-    }
-
-
     public void previewPost(View view) {
         Toast.makeText(getApplicationContext(), "Not yet implemented!", Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-
     }
 
     public void registerUser(View view) {
@@ -473,6 +400,10 @@ public class MainActivity extends AppCompatActivity implements
         dialog.show();
     }
 
+    /*
+     * Code used for selecting a photo to upload
+     */
+
     private String mUri;
 
     public void uploadPhoto(View v) {
@@ -518,6 +449,66 @@ public class MainActivity extends AppCompatActivity implements
         return filePath;
     }
 
+    /*
+     * UI Response Methods
+     */
+
+    public void showContentList(View view) {
+        if (mContentListFragment == null)
+            mContentListFragment = ContentListFragment.newInstance();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mContentListFragment);
+        transaction.commit();
+        mContentListButton.setColorFilter(Color.WHITE);
+        mUserFragmentButton.setColorFilter(Color.DKGRAY);
+        mEthereumButton.setColorFilter(Color.DKGRAY);
+        mIPFSButton.setColorFilter(Color.DKGRAY);
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_CONTENT_LIST);
+        showFAB(true);
+    }
+
+    public void showUserFragment(View view) {
+        if (mUserFragment == null)
+            mUserFragment = UserFragment.newInstance("","");
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mUserFragment);
+        transaction.commit();
+        mContentListButton.setColorFilter(Color.DKGRAY);
+        mUserFragmentButton.setColorFilter(Color.WHITE);
+        mEthereumButton.setColorFilter(Color.DKGRAY);
+        mIPFSButton.setColorFilter(Color.DKGRAY);
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_USER_FRAGMENT);
+        showFAB(true);
+    }
+
+    public void showEthereum(View view) {
+        if (mContentContractListFragment == null)
+            mContentContractListFragment = PublicationListFragment.newInstance();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mContentContractListFragment);
+        transaction.commit();
+        mContentListButton.setColorFilter(Color.DKGRAY);
+        mUserFragmentButton.setColorFilter(Color.DKGRAY);
+        mEthereumButton.setColorFilter(Color.WHITE);
+        mIPFSButton.setColorFilter(Color.DKGRAY);
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
+        showFAB(true);
+    }
+
+    public void showIPFS(View view) {
+        if (mContentContractListFragment == null)
+            mContentContractListFragment = PublicationListFragment.newInstance();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mContentContractListFragment);
+        transaction.commit();
+        mContentListButton.setColorFilter(Color.DKGRAY);
+        mUserFragmentButton.setColorFilter(Color.DKGRAY);
+        mEthereumButton.setColorFilter(Color.DKGRAY);
+        mIPFSButton.setColorFilter(Color.WHITE);
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
+        showFAB(true);
+    }
+
     public void scrollToTop(View view) {
         mContentListFragment.scrollToTop();
         showFAB(true);
@@ -534,6 +525,20 @@ public class MainActivity extends AppCompatActivity implements
             mFloatingActionButton2.hide();
             mFloatingActionButton1.hide();
             mFloatingActionButton.hide();
+        }
+    }
+
+    public void animateFabMenu(View v) {
+        if (mIsFabOpen) {
+            mIsFabOpen=false;
+            mFloatingActionButton1.animate().translationY(0);
+            mFloatingActionButton2.animate().translationY(0);
+            mFloatingActionButton3.animate().translationY(0);
+        } else {
+            mIsFabOpen = true;
+            mFloatingActionButton1.animate().translationY(-getResources().getDimension(R.dimen.standard_60));
+            mFloatingActionButton2.animate().translationY(-getResources().getDimension(R.dimen.standard_120));
+            mFloatingActionButton3.animate().translationY(-getResources().getDimension(R.dimen.standard_180));
         }
     }
 

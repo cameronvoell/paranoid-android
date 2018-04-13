@@ -46,20 +46,6 @@
                 android:onClick="registerUser"
                 android:visibility="gone"/>
 
-            <Spinner
-                android:id="@+id/accountSelectionSpinner"
-                android:layout_width="48dp"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"/>
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_margin="8dp"
-                android:layout_alignLeft="@id/accountSelectionSpinner"
-                android:src="@drawable/ic_switch_account"
-                android:id="@+id/imageButton" />
-
         </RelativeLayout>
 
         <TextView

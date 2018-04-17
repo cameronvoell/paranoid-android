@@ -85,6 +85,9 @@ public class MainActivity extends AppCompatActivity implements
     private FloatingActionButton mFloatingActionButton2;
     private FloatingActionButton mFloatingActionButton3;
 
+    View.OnClickListener mSwitchAccountOnClickListener;
+    PopupMenu.OnMenuItemClickListener mSwitchAccountPopupListener;
+
     private KeyStore mKeyStore;
 
     private IPFSDaemon mIpfsDaemon = new IPFSDaemon(this);
@@ -153,6 +156,7 @@ public class MainActivity extends AppCompatActivity implements
             Log.e(TAG, "Error retrieving account" + e.getMessage());
         }
 
+        refreshAccounts();
         mSwitchAccountButton.setOnClickListener(mSwitchAccountOnClickListener);
 
         startIPFSDaemon();
@@ -175,46 +179,49 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    View.OnClickListener mSwitchAccountOnClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            PopupMenu popupMenu = new PopupMenu(MainActivity.this, mSwitchAccountButton);
-            if (mNumAccounts > 0) {
-                try {
-                    for (int i = 0; i < mNumAccounts; i++) {
-                        popupMenu.getMenu().add(i, i, i, DataUtils.formatEthereumAccount(mKeyStore.getAccounts().get(i).getAddress().getHex()));
+    private void refreshAccounts() {
+        mSwitchAccountPopupListener = new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if (item.getTitle().equals("NEW ACCOUNT")) {
+                    createAccount();
+                } else {
+                    String selectedAddress = "error";
+                    try {
+                        selectedAddress = mKeyStore.getAccounts().get(item.getItemId()).getAddress().getHex();
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
+                    int selectedAccountNum = item.getItemId();
+                    PrefUtils.saveSelectedAccount(MainActivity.this, selectedAccountNum, selectedAddress);
+                    mAccountTextView.setText(DataUtils.formatEthereumAccount(selectedAddress));
+                    if (mUserFragment != null) mUserFragment.reloadUserInfo();
+                    Toast.makeText(MainActivity.this, "switch to " + item.getTitle(), Toast.LENGTH_SHORT).show();
 
                 }
+                return true;
             }
-            popupMenu.getMenu().add(mNumAccounts, mNumAccounts, mNumAccounts, "NEW ACCOUNT");
-            popupMenu.setOnMenuItemClickListener(mSwitchAccountPopupListener);
-            popupMenu.show();
-        }
-    };
+        };
 
-    PopupMenu.OnMenuItemClickListener mSwitchAccountPopupListener = new PopupMenu.OnMenuItemClickListener() {
-        @Override
-        public boolean onMenuItemClick(MenuItem item) {
-            Toast.makeText(MainActivity.this, "switch to " + item.getTitle(), Toast.LENGTH_SHORT).show();
-            if (item.getTitle().equals("NEW ACCOUNT")) {
-                createAccount();
-            } else {
-                String selectedAddress = "error";
-                try {
-                    selectedAddress = mKeyStore.getAccounts().get(item.getItemId()).getAddress().getHex();
-                } catch (Exception e) {
-                    e.printStackTrace();
+        mSwitchAccountOnClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PopupMenu popupMenu = new PopupMenu(MainActivity.this, mSwitchAccountButton);
+                if (mNumAccounts > 0) {
+                    try {
+                        for (int i = 0; i < mNumAccounts; i++) {
+                            popupMenu.getMenu().add(i, i, i, DataUtils.formatEthereumAccount(mKeyStore.getAccounts().get(i).getAddress().getHex()));
+                        }
+                    } catch (Exception e) {
+
+                    }
                 }
-                int selectedAccountNum = item.getItemId();
-                PrefUtils.saveSelectedAccount(MainActivity.this, selectedAccountNum, selectedAddress);
-                mAccountTextView.setText(DataUtils.formatEthereumAccount(selectedAddress));
-                if (mUserFragment != null) mUserFragment.reloadUserInfo();
+                popupMenu.getMenu().add(mNumAccounts, mNumAccounts, mNumAccounts, "NEW ACCOUNT");
+                popupMenu.setOnMenuItemClickListener(mSwitchAccountPopupListener);
+                popupMenu.show();
             }
-            return true;
-        }
-    };
+        };
+    }
 
     @Override
     public void onResume() {
@@ -302,7 +309,11 @@ public class MainActivity extends AppCompatActivity implements
                 try {
                     Account newAcc = mKeyStore.newAccount(text.getText().toString());
                     String account = newAcc.getAddress().getHex();
+                    mNumAccounts = (int)mKeyStore.getAccounts().size();
+                    PrefUtils.saveSelectedAccount(MainActivity.this, mNumAccounts - 1, account);
                     mAccountTextView.setText(account.substring(0,4) + "..." + account.substring(account.length() -4,account.length() - 1));
+                    refreshAccounts();
+                    if (mUserFragment != null) mUserFragment.reloadUserInfo();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

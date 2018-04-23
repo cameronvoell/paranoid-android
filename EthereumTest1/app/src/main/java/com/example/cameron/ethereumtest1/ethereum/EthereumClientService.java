@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.model.ContentItem;
+import com.example.cameron.ethereumtest1.model.EthereumTransaction;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 import com.google.gson.Gson;
 
@@ -274,7 +275,8 @@ public class EthereumClientService extends Service {
                     "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_2 + "\"," +
                     "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_3 + "\"," +
                     "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_4 + "\"," +
-                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_5 + "\"" +
+                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_5 + "\"," +
+                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_6 + "\"" +
                     //"  \", enode://pubkey@ip:port\"\n" +
                     "]";
             outputStreamWriter.append(string);
@@ -390,9 +392,9 @@ public class EthereumClientService extends Service {
 
             ArrayList<String> postJsonArray = new ArrayList<>();
 
-            //long howFarBack = numContent > 5 ? numContent - 5 : 0;
+            long howFarBack = numContent > 5 ? numContent - 5 : 0;
 
-            for (long i = numContent - 1; i >= 0; i--) {
+            for (long i = numContent - 1; i >= 0 && i >= howFarBack; i--) {
                 callData = Geth.newInterfaces(2);
                 Interface index = Geth.newInterface();
                 index.setBigInt(Geth.newBigInt(i));
@@ -525,6 +527,7 @@ public class EthereumClientService extends Service {
             callParams.set(1, paramMetaData);
             final Transaction txRegisterUser = contract.transact(tOpts, "registerNewUser", callParams);
             transactionHash = txRegisterUser.getHash();
+
             mEthereumClient.sendTransaction(mContext, txRegisterUser);
         } catch (Exception e) {
             e.printStackTrace();
@@ -533,41 +536,44 @@ public class EthereumClientService extends Service {
         intent.putExtra(PARAM_USER_NAME, userName);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
-        pollForTransactionConfirmation(transactionHash);
+        //pollForTransactionConfirmation(transactionHash, );
     }
 
-    private void pollForTransactionConfirmation(Hash transactionId) {
+    private void pollForTransactionConfirmation(Hash txHash, EthereumTransaction tx) {
         long timestamp = System.currentTimeMillis();
         Receipt receipt = null;
-        try {
-            receipt = mEthereumClient.getTransactionReceipt(mContext, transactionId);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        while (receipt == null && System.currentTimeMillis() - timestamp < 60000) {
+        if (tx != null && txHash != null) {
             try {
-                Thread.sleep(2000);
-                receipt = mEthereumClient.getTransactionReceipt(mContext, transactionId);
+                receipt = mEthereumClient.getTransactionReceipt(mContext, txHash);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-        if (receipt != null) { //receipt found
-            try {
-                Transaction tx = null;
-                int attempts = 0;
-                long blockNumberContainingTransaction = 0;
-                while (tx == null || attempts >= 20) {
-                    Block b = mEthereumClient.getBlockByNumber(mContext, mBlockNumber - attempts);
-                    tx = b.getTransaction(transactionId);
-                    b.getTime();//TODO send time?
-                    blockNumberContainingTransaction = mBlockNumber - attempts;
-                    attempts++;
+            while (receipt == null && System.currentTimeMillis() - timestamp < 60000) {
+                try {
+                    Thread.sleep(2000);
+                    receipt = mEthereumClient.getTransactionReceipt(mContext, txHash);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                DatabaseHelper db = new DatabaseHelper(getApplicationContext());
-                db.saveTransactionInfo(blockNumberContainingTransaction, transactionId.getHex(), "postContent");
-            } catch (Exception e) {
-                e.printStackTrace();
+            }
+            if (receipt != null) { //receipt found
+                try {
+                    Transaction ethTx = null;
+                    int attempts = 0;
+                    while (ethTx == null || attempts >= 20) {
+                        Block b = mEthereumClient.getBlockByNumber(mContext, mBlockNumber - attempts);
+                        ethTx = b.getTransaction(txHash);
+                        tx.txTimestamp = b.getTime();
+                        tx.blockNumber = mBlockNumber - attempts;
+                        tx.confirmed = true;
+                        tx.gasCost = ethTx.getGas();
+                        attempts++;
+                    }
+                    DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
+                    helper.saveTransactionInfo(tx);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -581,6 +587,7 @@ public class EthereumClientService extends Service {
 
     private void handlePublishUserContent(ContentItem content, final String password) {
         Hash transactionHash = null;
+        EthereumTransaction ethereumTransaction = null;
         try {
             final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
@@ -621,6 +628,10 @@ public class EthereumClientService extends Service {
             callParams.set(0, paramContentHash);
             final Transaction txPublishContent = userContract.transact(tOpts, "publishContent", callParams);
             transactionHash = txPublishContent.getHash();
+            DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
+            ethereumTransaction = new EthereumTransaction(address.getHex(), txPublishContent.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_REGISTER,
+                    contentJson, System.currentTimeMillis(), 0, false, 0);
+            helper.saveTransactionInfo(ethereumTransaction);
             mEthereumClient.sendTransaction(mContext, txPublishContent);
 
         } catch (Exception e) {
@@ -629,7 +640,7 @@ public class EthereumClientService extends Service {
         Intent intent = new Intent(UI_PUBLISH_USER_CONTENT_PENDING_CONFIRMATION);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
-        pollForTransactionConfirmation(transactionHash);
+        pollForTransactionConfirmation(transactionHash, ethereumTransaction);
     }
 
     private void handleFetchPublicationContent(int index) {
@@ -684,7 +695,7 @@ public class EthereumClientService extends Service {
             ArrayList<Integer> postUniqueSupportersArray = new ArrayList<>();
             ArrayList<String> postRevenue = new ArrayList<>();
             int counter = 0;
-            for (long i = numPublished - 1; i >= 1; i--) {
+            for (long i = numPublished - 1; i >= 10 && counter <= 15; i--) {
                 callData = Geth.newInterfaces(2);
                 callData.set(0, publicationIndex);
                 Interface contentIndex = Geth.newInterface();
@@ -715,8 +726,8 @@ public class EthereumClientService extends Service {
                     // Log.e("oops", e.getMessage());
                 }
                 ContentItem ci = convertJsonToContentItem(json);
-
-
+                if (ci == null) continue;
+                counter++;
                 paramFetchUsernameCallParameter2.setAddress(new Address(ci.publishedBy));
                 callData2.set(0, paramFetchUsernameCallParameter2);
 
@@ -755,6 +766,9 @@ public class EthereumClientService extends Service {
     }
 
     private ContentItem convertJsonToContentItem(String json) {
+        if (json.equals("CONTENT CURRENTLY UNAVAILABLE")) {
+            return null;
+        }
         Gson gson = new Gson();
         ContentItem contentItem = gson.fromJson(json, ContentItem.class);
         return contentItem;
@@ -854,7 +868,7 @@ public class EthereumClientService extends Service {
         //intent.putExtra(PARAM_USER_NAME, userName);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
-        pollForTransactionConfirmation(transactionId);
+        //pollForTransactionConfirmation(transactionId);
     }
 
     private void handleFetchDraftImageURL(String draftImagePath) {

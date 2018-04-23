@@ -32,8 +32,8 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.fragments.EthTransactionListFragment;
 import com.example.cameron.ethereumtest1.fragments.PublicationListFragment;
-import com.example.cameron.ethereumtest1.model.Content;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.fragments.ContentListFragment;
@@ -42,7 +42,6 @@ import com.example.cameron.ethereumtest1.ipfs_daemon.IPFSDaemon;
 import com.example.cameron.ethereumtest1.ipfs_daemon.IPFSDaemonService;
 import com.example.cameron.ethereumtest1.util.DataUtils;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
-import com.google.gson.Gson;
 import org.ethereum.geth.Account;
 import org.ethereum.geth.Geth;
 import org.ethereum.geth.KeyStore;
@@ -57,11 +56,12 @@ import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.P
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_IMAGE_PATH;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_NAME;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_CONTENT_LIST;
-import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_PUBLICATION_LIST;
+import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_TRANSACTION_FRAGMENT;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_USER_FRAGMENT;
 
 public class MainActivity extends AppCompatActivity implements
-        ContentListFragment.OnListFragmentInteractionListener {
+        ContentListFragment.OnListFragmentInteractionListener,
+        EthTransactionListFragment.OnFragmentInteractionListener {
 
     private final static String TAG = MainActivity.class.getName();
 
@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements
     private ContentListFragment mContentListFragment;
     private UserFragment mUserFragment;
     private PublicationListFragment mContentContractListFragment;
+    private EthTransactionListFragment mEthTransactionListFragment;
 
     private ImageButton mContentListButton;
     private ImageButton mUserFragmentButton;
@@ -167,12 +168,11 @@ public class MainActivity extends AppCompatActivity implements
             case SELECTED_CONTENT_LIST:
                 showContentList(null);
                 break;
-            case SELECTED_PUBLICATION_LIST:
-                showEthereum(null);
-                break;
             case SELECTED_USER_FRAGMENT:
                 showUserFragment(null);
                 break;
+            case SELECTED_TRANSACTION_FRAGMENT:
+                showEthereum(null);
             default:
                 Log.e("ERROR", "ERROR");
                 break;
@@ -493,16 +493,16 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void showEthereum(View view) {
-        if (mContentContractListFragment == null)
-            mContentContractListFragment = PublicationListFragment.newInstance();
+        if (mEthTransactionListFragment == null)
+            mEthTransactionListFragment = EthTransactionListFragment.newInstance("", "");
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mContentContractListFragment);
+        transaction.replace(R.id.fragment_container, mEthTransactionListFragment);
         transaction.commit();
         mContentListButton.setColorFilter(Color.DKGRAY);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
         mEthereumButton.setColorFilter(Color.WHITE);
         mIPFSButton.setColorFilter(Color.DKGRAY);
-        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_TRANSACTION_FRAGMENT);
         showFAB(true);
     }
 
@@ -516,7 +516,7 @@ public class MainActivity extends AppCompatActivity implements
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
         mEthereumButton.setColorFilter(Color.DKGRAY);
         mIPFSButton.setColorFilter(Color.WHITE);
-        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
+        //PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
         showFAB(true);
     }
 
@@ -553,5 +553,9 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
+    }
 }
 

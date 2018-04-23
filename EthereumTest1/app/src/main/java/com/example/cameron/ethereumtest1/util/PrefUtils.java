@@ -14,8 +14,8 @@ public class PrefUtils {
 
     private final static String PREF_SELECTED_FRAGMENT = "pref_selected_fragment";
     public final static int SELECTED_CONTENT_LIST = 0;
-    public final static int SELECTED_PUBLICATION_LIST = 1;
-    public final static int SELECTED_USER_FRAGMENT = 2;
+    public final static int SELECTED_USER_FRAGMENT = 1;
+    public final static int SELECTED_TRANSACTION_FRAGMENT = 2;
 
     private static final String PREF_SELECTED_ACCOUNT_NUM = "pref_selected_account_num";
     private static final String PREF_SELECTED_ACCOUNT_ADDRESS = "pref_selected_account_address";

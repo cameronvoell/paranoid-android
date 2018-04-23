@@ -7,13 +7,25 @@ import java.util.ArrayList;
  */
 
 public class EthereumTransaction {
-    String ETH_ID;
-    String TX_ID;
-    long timestamp;
-    long blockNumber;
-    int ACTION;
-    ArrayList<String> INPUTS;
-    long gasCost;
-    float ethPrice;
-    int ERROR_ID;
+    public String ethAddress;
+    public String ethTxId;
+    public int txActionId;
+    public String txContent;
+    public long txTimestamp;
+    public long blockNumber;
+    public boolean confirmed;
+    public long gasCost;
+
+    public EthereumTransaction(String ethAddress, String ethTxId, int txActionId,
+                               String txContent, long txTimestamp, long blockNumber, boolean confirmed,
+                               long gasCost) {
+        this.ethAddress = ethAddress;
+        this.ethTxId = ethTxId;
+        this.txActionId = txActionId;
+        this.txContent = txContent;
+        this.txTimestamp = txTimestamp;
+        this.blockNumber = blockNumber;
+        this.confirmed = confirmed;
+        this.gasCost = gasCost;
+    }
 }

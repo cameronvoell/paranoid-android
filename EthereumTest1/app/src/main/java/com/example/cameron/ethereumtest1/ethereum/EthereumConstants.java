@@ -29,6 +29,7 @@ public class EthereumConstants {
     public static final String LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_3 = "enode://1cc27a5a41130a5c8b90db5b2273dc28f7b56f3edfc0dcc57b665d451274b26541e8de49ea7a074281906a82209b9600239c981163b6ff85c3038a8e2bc5d8b8@51.15.68.93:30303";
     public static final String LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_4 = "enode://0c75981d2af89ec22ad9696b6df5b95c468dd5403e5e3c7b915e6efc6d707fafca17c35d52ad4783a813f5bfbc191b10d86d9a043077ebeeae48ca44ca525ade@157.131.181.20:30305";
     public static final String LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_5 = "enode://3dce588e0177ab2464dacc3619195881e6bf6040de696c81ee1338207875f7ebe784e5d2d73aa4f52c0497d48b06d6dfda81e20f11d74e681b9b1751d60031e7@183.131.7.106:30303";
+    public static final String LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_6 = "enode://a24ac7c5484ef4ed0c5eb2d36620ba4e4aa13b8c84684e1b4aab0cebea2ae45cb4d375b77eab56516d34bfbd3c1a833fc51296ff084b770b94fb9028c4d25ccf@52.169.42.101:30303";
 
     public static final String IPFS_GATEWAY_URL = "http://ipfs.io/ipfs/";
 

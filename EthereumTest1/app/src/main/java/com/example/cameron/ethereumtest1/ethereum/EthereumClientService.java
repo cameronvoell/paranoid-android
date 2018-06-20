@@ -908,7 +908,7 @@ public class EthereumClientService extends Service {
             long nonce = mEthereumClient.getPendingNonceAt(mContext, from);
             Address to = new Address(recipient);
             BigInt amount = new BigInt(Convert.toWei(amountString, Convert.Unit.ETHER).longValue());
-            long gasLimit = 2000000l;
+            long gasLimit = 100000l;
             BigInt gasPrice = new BigInt(Convert.toWei("40", Convert.Unit.GWEI).longValue());
             byte[] data = new byte[0];
 
@@ -927,6 +927,8 @@ public class EthereumClientService extends Service {
                 }
             };
             Transaction signedTransaction = signer.sign(from, txSendEth);
+            ethereumTransaction = new EthereumTransaction(from.getHex(), signedTransaction.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_SEND_ETH,
+                    recipient + ":" + amountString, System.currentTimeMillis(), 0, false, 0);
             transactionId = signedTransaction.getHash();
             mEthereumClient.sendTransaction(mContext, signedTransaction);
         } catch (Exception e) {

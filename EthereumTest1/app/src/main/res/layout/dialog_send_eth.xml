@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:text="Send Eth"/>
+
+    <EditText
+        android:id="@+id/editRecipient"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:hint="recipient address"
+        android:inputType="text"
+        android:layout_below="@id/title"/>
+
+    <EditText
+        android:id="@+id/editAmount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:hint="how much ETH"
+        android:inputType="numberDecimal"
+        android:layout_below="@id/editRecipient"/>
+
+    <EditText
+        android:id="@+id/editPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:hint="password"
+        android:inputType="text"
+        android:layout_below="@id/editAmount"/>
+
+    <Button
+        android:id="@+id/dialogButtonSubmit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=" submit "
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/editPassword"/>
+
+</RelativeLayout>

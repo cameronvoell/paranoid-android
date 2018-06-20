@@ -49,6 +49,10 @@ import java.util.ArrayList;
 import io.ipfs.kotlin.IPFS;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
+
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_SEND_ETH;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_AMOUNT;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_RECIPIENT;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.KEY_STORE;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_REGISTER_USER;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_UPDATE_USER_PIC;
@@ -375,6 +379,32 @@ public class MainActivity extends AppCompatActivity implements
             Intent intent = new Intent(this, EditContentActivity.class);
                 startActivity(intent);
         }
+    }
+
+
+
+    public void sendEth(View view) {
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_send_eth);
+
+        final EditText recipientEditText = (EditText) dialog.findViewById(R.id.editRecipient);
+        final EditText amountEditText = (EditText) dialog.findViewById(R.id.editAmount);
+        final EditText passwordEditText = (EditText) dialog.findViewById(R.id.editPassword);
+
+        Button dialogSubmitButton = (Button) dialog.findViewById(R.id.dialogButtonSubmit);
+        dialogSubmitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startService(new Intent(MainActivity.this, EthereumClientService.class)
+                        .putExtra(PARAM_RECIPIENT, recipientEditText.getText().toString())
+                        .putExtra(PARAM_AMOUNT, amountEditText.getText().toString())
+                        .putExtra(PARAM_PASSWORD, passwordEditText.getText().toString())
+                        .setAction(ETH_SEND_ETH));
+                dialog.dismiss();
+                animateFabMenu(null);
+            }
+        });
+        dialog.show();
     }
 
     public void updateMetaData(View view) {

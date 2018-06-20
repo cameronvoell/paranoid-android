@@ -78,6 +78,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final int TX_ACTION_ID_REGISTER = 0;
     public static final int TX_ACTION_ID_UPDATE_PROFILE_META_DATA = 1;
     public static final int TX_ACTION_ID_POST_USER_CONTENT = 2;
+    public static final int TX_ACTION_ID_SEND_ETH = 3;
 
     public static final String TABLE_ETH_TRANSACTIONS = "table_eth_transactions";
     public static final String CREATE_TABLE_ETH_TRANSACTIONS = "CREATE TABLE " + TABLE_ETH_TRANSACTIONS

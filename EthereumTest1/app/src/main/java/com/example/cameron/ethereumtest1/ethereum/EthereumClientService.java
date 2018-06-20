@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.model.EthereumTransaction;
+import com.example.cameron.ethereumtest1.util.Convert;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 import com.google.gson.Gson;
 
@@ -105,6 +106,10 @@ public class EthereumClientService extends Service {
     public static final String UI_UPDATE_DRAFT_PHOTO_URL = "ui.update.draft.photo.url";
     public static final String PARAM_DRAFT_PHOTO_URL = "param.draft.photo.url";
 
+    public static final String ETH_SEND_ETH = "eth.send.eth";
+    public static final String PARAM_RECIPIENT = "param.recipient";
+    public static final String PARAM_AMOUNT = "param.amount";
+
     private static final String POLL_FOR_TRANSACTION_RECEIPT = "poll.for.transaction.receipt";
     private static final String PARAM_TX_ID = "param.tx.id";
 
@@ -173,6 +178,12 @@ public class EthereumClientService extends Service {
                     String draftImagePath = b.getString(PARAM_DRAFT_PHOTO_URL);
                     handleFetchDraftImageURL(draftImagePath);
                     break;
+                case ETH_SEND_ETH:
+                    String recipient = b.getString(PARAM_RECIPIENT);
+                    String amount = b.getString(PARAM_AMOUNT);
+                    password = b.getString(PARAM_PASSWORD);
+                    handleSendEth(recipient, amount, password);
+                    break;
                 default:
                     break;
             }
@@ -232,6 +243,11 @@ public class EthereumClientService extends Service {
                     break;
                 case IPFS_FETCH_DRAFT_IMAGE_URL:
                     b.putString(PARAM_DRAFT_PHOTO_URL, intent.getStringExtra(PARAM_DRAFT_PHOTO_URL));
+                    break;
+                case ETH_SEND_ETH:
+                    b.putString(PARAM_RECIPIENT, intent.getStringExtra(PARAM_RECIPIENT));
+                    b.putString(PARAM_AMOUNT, intent.getStringExtra(PARAM_AMOUNT));
+                    b.putString(PARAM_PASSWORD, intent.getStringExtra(PARAM_PASSWORD));
                     break;
             }
             b.putString(MESSAGE_ACTION, intent.getAction());
@@ -878,6 +894,49 @@ public class EthereumClientService extends Service {
         intent.putExtra(PARAM_DRAFT_PHOTO_URL, contentHash);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
+    }
+
+    private void handleSendEth(String recipient, String amountString, final String password) {
+        Hash transactionId = null;
+        EthereumTransaction ethereumTransaction = null;
+        try {
+            final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
+
+            Address from = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
+
+
+            long nonce = mEthereumClient.getPendingNonceAt(mContext, from);
+            Address to = new Address(recipient);
+            BigInt amount = new BigInt(Convert.toWei(amountString, Convert.Unit.ETHER).longValue());
+            long gasLimit = 2000000l;
+            BigInt gasPrice = new BigInt(Convert.toWei("40", Convert.Unit.GWEI).longValue());
+            byte[] data = new byte[0];
+
+            Transaction txSendEth = Geth.newTransaction(nonce, to, amount, gasLimit , gasPrice, data);
+            ethereumTransaction = new EthereumTransaction(from.getHex(), txSendEth.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_SEND_ETH,
+                    recipient + ":" + amountString, System.currentTimeMillis(), 0, false, 0);
+            Signer signer = new Signer() {
+                @Override
+                public Transaction sign(Address address, Transaction transaction) throws Exception {
+                    Account account = mKeyStore.getAccounts().get(PrefUtils.getSelectedAccountNum(getBaseContext()));
+                    mKeyStore.unlock(account, password);
+                    Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
+                    String from = account.getAddress().getHex();
+                    mKeyStore.lock(account.getAddress());
+                    return signed;
+                }
+            };
+            Transaction signedTransaction = signer.sign(from, txSendEth);
+            transactionId = signedTransaction.getHash();
+            mEthereumClient.sendTransaction(mContext, signedTransaction);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//        Intent intent = new Intent(UI_UPDATE_USER_PIC_PENDING_CONFIRMATION);
+//        //intent.putExtra(PARAM_USER_NAME, userName);
+//        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+//        bm.sendBroadcast(intent);
+        pollForTransactionConfirmation(transactionId, ethereumTransaction);
     }
 
 }

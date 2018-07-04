@@ -49,27 +49,27 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-        if (viewType == TYPE_HEADER) {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.header_content_list, parent, false);
-            mTagSpinner = (Spinner) view.findViewById(R.id.tag);
-            mSortBySpinner = (Spinner) view.findViewById(R.id.sortBy);
-            setSortBySpinnerOptions();
-            setTagSpinnerOptions();
-            return new ViewHolder(view);
-        } else {
+//        if (viewType == TYPE_HEADER) {
+//            View view = LayoutInflater.from(parent.getContext())
+//                    .inflate(R.layout.header_content_list, parent, false);
+//            mTagSpinner = (Spinner) view.findViewById(R.id.tag);
+//            mSortBySpinner = (Spinner) view.findViewById(R.id.sortBy);
+//            setSortBySpinnerOptions();
+//            setTagSpinnerOptions();
+//            return new ViewHolder(view);
+//        } else {
             View view = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.fragment_content_item, parent, false);
             return new ViewHolder(view);
-        }
+//        }
     }
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        if (position == 0) {
-
-        } else {
-            PublicationContentItem pci = mValues.get(position - 1);
+//        if (position == 0) {
+//
+//        } else {
+            PublicationContentItem pci = mValues.get(position);
             ContentItem ci = pci.contentItem;
 
             holder.mRevenueView.setText(DataUtils.formatAccountBalanceEther(pci.contentRevenue, 4));
@@ -110,22 +110,22 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
                     }
                 }
             });
-        }
+    //    }
     }
 
     @Override
     public int getItemCount() {
-        return mValues.size() + 1;
+        return mValues.size();
     }
 
     private PublicationContentItem getItem(int position) {
-        return mValues.get(position - 1);
+        return mValues.get(position);
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (position == 0)
-            return TYPE_HEADER;
+//        if (position == 0)
+//            return TYPE_HEADER;
 
         return TYPE_ITEM;
     }

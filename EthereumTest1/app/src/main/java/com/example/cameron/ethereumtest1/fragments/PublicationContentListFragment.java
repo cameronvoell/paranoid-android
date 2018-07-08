@@ -111,7 +111,6 @@ public class PublicationContentListFragment extends Fragment {
 
     private void loadContentFeed() {
         try {
-            if (mContentItems == null) mContentItems = new ArrayList<PublicationContentItem>();
             getActivity().startService(new Intent(getContext(), EthereumClientService.class)
                     .putExtra(PARAM_PUBLICATION_INDEX, 0)
                     .setAction(ETH_FETCH_PUBLICATION_CONTENT));
@@ -132,7 +131,7 @@ public class PublicationContentListFragment extends Fragment {
     }
 
     private void reloadContentList(ArrayList<String> jsonArray, ArrayList<String> revenueArray) {
-        if (mContentItems == null) mContentItems = new ArrayList<PublicationContentItem>();
+        mContentItems = new ArrayList<PublicationContentItem>();
         for (int i = 0; i < jsonArray.size(); i++) {
             String json = jsonArray.get(i);
             String revenue = revenueArray.get(i);

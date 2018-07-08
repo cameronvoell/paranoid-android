@@ -1,5 +1,7 @@
 package com.example.cameron.ethereumtest1.util;
 
+import com.example.cameron.ethereumtest1.database.DatabaseHelper;
+
 import java.text.DecimalFormat;
 import java.util.Date;
 
@@ -26,6 +28,27 @@ public class DataUtils {
 
     public static String formatEthereumAccount(String account) {
         return account.substring(0,4) + "..." + account.substring(account.length() -4,account.length() - 1);
+    }
+
+    public static String formatTransactionHash(String account) {
+        return "tx:" + account.substring(0,4) + "..." + account.substring(account.length() -4,account.length() - 1);
+    }
+
+    public static String convertActionIdForDisplay(int actionId) {
+        switch (actionId) {
+            case DatabaseHelper.TX_ACTION_ID_SEND_ETH:
+                return "SEND ETH";
+            case DatabaseHelper.TX_ACTION_ID_REGISTER:
+                return "REGISTER";
+            case DatabaseHelper.TX_ACTION_ID_UPDATE_USER_PIC:
+                return "UPDATE PIC";
+            case DatabaseHelper.TX_ACTION_ID_PUBLISH_USER_CONTENT:
+                return "PUBLISH USER";
+            case DatabaseHelper.TX_ACTION_ID_PUBLISH_TO_PUBLICATION:
+            default:
+                return "PUBLISH PUBLICATION";
+
+        }
     }
 
     public static String formatAccountBalanceEther(String weiBalance, int numDecimals) {

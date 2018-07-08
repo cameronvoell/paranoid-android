@@ -35,8 +35,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String KEY_CONFIRMED = "confirmed";
     public static final String KEY_GAS_COST = "gas_cost";
 
-    public static final int TX_ACTION_ID_REGISTER = 0;
-    public static final int TX_ACTION_ID_SEND_ETH = 1;
+    public static final int TX_ACTION_ID_SEND_ETH = 0;
+    public static final int TX_ACTION_ID_REGISTER = 1;
+    public static final int TX_ACTION_ID_UPDATE_USER_PIC = 2;
+    public static final int TX_ACTION_ID_PUBLISH_USER_CONTENT= 3;
+    public static final int TX_ACTION_ID_PUBLISH_TO_PUBLICATION= 4;
 
     public static final String TABLE_ETH_TRANSACTIONS = "table_eth_transactions";
     public static final String CREATE_TABLE_ETH_TRANSACTIONS = "CREATE TABLE " + TABLE_ETH_TRANSACTIONS
@@ -85,8 +88,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public Cursor getTransactionCursor(String address) {
+        String ORDER_BY = " ORDER BY " + KEY_BLOCK_NUMBER + " DESC";
+
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("SELECT * FROM " + TABLE_ETH_TRANSACTIONS + " WHERE " + KEY_ETH_ADDRESS +  " = " + "\"" + address + "\"", null);
+        return db.rawQuery("SELECT * FROM " + TABLE_ETH_TRANSACTIONS + " WHERE " + KEY_ETH_ADDRESS +  " = " + "\"" + address + "\"" + ORDER_BY, null);
     }
 
 }

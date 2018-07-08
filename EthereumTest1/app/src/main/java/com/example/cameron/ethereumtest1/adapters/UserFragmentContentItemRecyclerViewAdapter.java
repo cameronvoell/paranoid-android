@@ -15,6 +15,9 @@ import com.example.cameron.ethereumtest1.fragments.UserFragment.OnListFragmentIn
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.model.UserFragmentContentItem;
 import com.example.cameron.ethereumtest1.util.DataUtils;
+
+import org.jsoup.Jsoup;
+
 import java.util.List;
 
 /**
@@ -56,7 +59,8 @@ public class UserFragmentContentItemRecyclerViewAdapter extends RecyclerView.Ada
 
         holder.mItem = ci;
         holder.mTitleView.setText(ci.title);
-        holder.mBodyView.setText(ci.primaryText);
+        String textFromHtml = Jsoup.parse(ci.primaryText).text();
+        holder.mBodyView.setText(textFromHtml);
         holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(ci.publishedDate)
                 + " by " + ci.publishedBy);
 

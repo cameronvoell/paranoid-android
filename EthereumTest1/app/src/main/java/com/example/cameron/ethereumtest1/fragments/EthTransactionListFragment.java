@@ -5,14 +5,17 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.database.DatabaseHelper;
@@ -38,15 +41,6 @@ public class EthTransactionListFragment extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment EthTransactionListFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static EthTransactionListFragment newInstance(String param1, String param2) {
         EthTransactionListFragment fragment = new EthTransactionListFragment();
         return fragment;
@@ -63,17 +57,39 @@ public class EthTransactionListFragment extends Fragment {
         mCursorAdapter = new CursorAdapter(getContext(), new DatabaseHelper(getContext()).getTransactionCursor(PrefUtils.getSelectedAccountAddress(getContext()))) {
             @Override
             public View newView(Context context, Cursor cursor, ViewGroup parent) {
-                return inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
+                return inflater.inflate(R.layout.transaction_list_item, parent, false);
             }
 
             @Override
             public void bindView(View view, Context context, Cursor cursor) {
-                TextView textViewOne = (TextView) view.findViewById(android.R.id.text1);
-                TextView textViewTwo = (TextView) view.findViewById(android.R.id.text2);
-                String address = DataUtils.formatEthereumAccount(cursor.getString(cursor.getColumnIndex( DatabaseHelper.KEY_ETH_ADDRESS)));
-                String tx = cursor.getString( cursor.getColumnIndex( DatabaseHelper.KEY_ETH_TX_ID ) );
-                textViewOne.setText(address);
-                textViewTwo.setText(tx);
+                TextView textViewOne = (TextView) view.findViewById(R.id.text1);
+                TextView textViewTwo = (TextView) view.findViewById(R.id.text2);
+                TextView textView3 = (TextView) view.findViewById(R.id.text3);
+                TextView textView4 = (TextView) view.findViewById(R.id.text4);
+                CheckBox checkBox = (CheckBox) view.findViewById(R.id.confirmedCheckBox);
+
+                String transactionHash = DataUtils.formatTransactionHash(cursor.getString(
+                        cursor.getColumnIndex( DatabaseHelper.KEY_ETH_TX_ID )));
+                String actionDisplay = DataUtils.convertActionIdForDisplay(cursor.getInt(
+                        cursor.getColumnIndex( DatabaseHelper.KEY_TX_ACTION_ID )));
+                String content = cursor.getString(
+                        cursor.getColumnIndex(DatabaseHelper.KEY_TX_CONTENT));
+                String timestamp = cursor.getString(
+                        cursor.getColumnIndex(DatabaseHelper.KEY_TX_TIMESTAMP));
+                String blockNumber = DataUtils.formatBlockNumber(cursor.getLong(
+                        cursor.getColumnIndex(DatabaseHelper.KEY_BLOCK_NUMBER)));
+                long gasCost = cursor.getInt(
+                        cursor.getColumnIndex(DatabaseHelper.KEY_GAS_COST));
+                boolean confirmed = cursor.getInt(
+                        cursor.getColumnIndex(DatabaseHelper.KEY_CONFIRMED)) > 0;
+
+
+
+                textViewOne.setText(actionDisplay);
+                textViewTwo.setText("block:" + blockNumber + "; gas:" + gasCost);
+                textView3.setText(transactionHash);
+                //textView4.setText(timestamp);
+                checkBox.setChecked(confirmed);
             }
         };
 
@@ -84,8 +100,9 @@ public class EthTransactionListFragment extends Fragment {
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                TextView textViewTwo = (TextView) view.findViewById(android.R.id.text2);
-                String tx = textViewTwo.getText().toString();
+//                TextView textViewTwo = (TextView) view.findViewById(R.id.text2);
+//                String tx = textViewTwo.getText().toString();
+                mCursorAdapter.getItem(position)
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://rinkeby.etherscan.io/tx/" + tx));
                 startActivity(browserIntent);
             }
@@ -109,16 +126,6 @@ public class EthTransactionListFragment extends Fragment {
         mListener = null;
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);

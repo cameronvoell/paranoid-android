@@ -136,11 +136,11 @@ public class EthereumClientService extends Service {
                     break;
                 case ETH_FETCH_ACCOUNT_BALANCE:
                     String addressString = b.getString(PARAM_ADDRESS_STRING);
-                    handleUpdateAccountBalance(addressString);
+                    handleFetchAccountBalance(addressString);
                     break;
                 case ETH_FETCH_ACCOUNT_USER_INFO:
                     addressString = b.getString(PARAM_ADDRESS_STRING);
-                    handleUpdateAccountUserInfo(addressString);
+                    handleFetchAccountUserInfo(addressString);
                     break;
                 case ETH_FETCH_USER_CONTENT_LIST:
                     addressString = b.getString(PARAM_ADDRESS_STRING);
@@ -332,7 +332,7 @@ public class EthereumClientService extends Service {
         }
     };
 
-    private void handleUpdateAccountBalance(String addressString) {
+    private void handleFetchAccountBalance(String addressString) {
         BigInt balance = new BigInt(0);
         boolean successful = false;
         while (!mIsReady) {
@@ -439,215 +439,6 @@ public class EthereumClientService extends Service {
             Log.e(TAG, "Error retrieving contentList: " + e.getMessage());
         }
 
-    }
-
-    private void handleUpdateAccountUserInfo(String addressString) {
-        String userName = "";
-        while (!mIsReady) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        try {
-            BoundContract contract = Geth.bindContract(
-                    new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
-                    USER_CONTENT_REGISTER_ABI, mEthereumClient);
-            CallOpts callOpts = Geth.newCallOpts();
-            callOpts.setContext(mContext);
-            Interfaces callData;
-            Interfaces returnData;
-
-            callData = Geth.newInterfaces(1);
-            Interface paramFetchUsernameCallParameter = Geth.newInterface();
-            paramFetchUsernameCallParameter.setAddress(new Address(addressString));
-            callData.set(0, paramFetchUsernameCallParameter);
-
-            returnData = Geth.newInterfaces(3);
-            Interface userNameData = Geth.newInterface();
-            Interface metaData = Geth.newInterface();
-            Interface numContent = Geth.newInterface();
-            userNameData.setDefaultString();
-            metaData.setDefaultString();
-            numContent.setDefaultBigInt();
-            returnData.set(0, userNameData);
-            returnData.set(1, metaData);
-            returnData.set(2, numContent);
-
-            contract.call(callOpts, returnData, "userIndex", callData);
-            userName = returnData.get(0).getString();
-            String metadataIconUrl = returnData.get(1).getString();
-
-            if (!TextUtils.isEmpty(userName)) {
-                Log.e(TAG, "SUCCESSFULLY UPDATED USER NAME");
-            } else {
-                userName = "not yet registered...";
-                Log.e(TAG, "NO USER NAME FOUND FOR " + addressString);
-            }
-            PrefUtils.saveSelectedAccountUserName(getBaseContext(), userName);
-
-            Intent intent = new Intent(UI_UPDATE_ACCOUNT_USER_INFO);
-            intent.putExtra(PARAM_USER_NAME, userName);
-            intent.putExtra(PARAM_USER_ICON_URL, metadataIconUrl);
-            LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
-            bm.sendBroadcast(intent);
-        } catch (Exception e) {
-            Log.e(TAG, "Error retrieving username: " + e.getMessage());
-        }
-    }
-
-
-
-    private void handleRegisterUser(String userName, final String password) {
-        Hash transactionHash = null;
-        try {
-            final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
-
-            BoundContract contract = Geth.bindContract(
-                    new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
-                    USER_CONTENT_REGISTER_ABI, mEthereumClient);
-
-            Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
-
-            TransactOpts tOpts = new TransactOpts();
-            tOpts.setContext(mContext);
-            tOpts.setFrom(address);
-            tOpts.setSigner(new Signer() {
-                @Override
-                public Transaction sign(Address address, Transaction transaction) throws Exception {
-                    Account account = mKeyStore.getAccounts().get(PrefUtils.getSelectedAccountNum(getBaseContext()));
-                    mKeyStore.unlock(account, password);
-                    Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
-                    mKeyStore.lock(account.getAddress());
-                    return signed;
-                }
-            });
-            tOpts.setValue(new BigInt(0));
-            long noncePending  = mEthereumClient.getPendingNonceAt(mContext, address);
-            tOpts.setNonce(noncePending);
-            Interfaces callParams = Geth.newInterfaces(2);
-            Interface paramUsername = Geth.newInterface();
-            paramUsername.setString(userName);
-            callParams.set(0, paramUsername);
-            Interface paramMetaData = Geth.newInterface();
-            paramMetaData.setString("meta");
-            callParams.set(1, paramMetaData);
-            final Transaction txRegisterUser = contract.transact(tOpts, "registerNewUser", callParams);
-            transactionHash = txRegisterUser.getHash();
-
-            mEthereumClient.sendTransaction(mContext, txRegisterUser);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Intent intent = new Intent(UI_REGISTER_USER_PENDING_CONFIRMATION);
-        intent.putExtra(PARAM_USER_NAME, userName);
-        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
-        bm.sendBroadcast(intent);
-    }
-
-    private void pollForTransactionConfirmation(Hash txHash, DBEthereumTransaction tx) {
-        long timestamp = System.currentTimeMillis();
-        Receipt receipt = null;
-        if (tx != null && txHash != null) {
-            try {
-                receipt = mEthereumClient.getTransactionReceipt(mContext, txHash);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            while (receipt == null && System.currentTimeMillis() - timestamp < 60000) {
-                try {
-                    Thread.sleep(2000);
-                    receipt = mEthereumClient.getTransactionReceipt(mContext, txHash);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            if (receipt != null) { //receipt found
-                try {
-                    Transaction ethTx = null;
-                    int attempts = 0;
-                    while (ethTx == null || attempts >= 20) {
-                        Block b = mEthereumClient.getBlockByNumber(mContext, mBlockNumber - attempts);
-                        ethTx = b.getTransaction(txHash);
-                        tx.txTimestamp = b.getTime();
-                        tx.blockNumber = mBlockNumber - attempts;
-                        tx.confirmed = true;
-                        tx.gasCost = ethTx.getGas();
-                        attempts++;
-                    }
-                    DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
-                    helper.saveTransactionInfo(tx);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private String convertContentItemToJSON(ContentItem contentItem) {
-        Gson gson = new Gson();
-        String json = gson.toJson(contentItem);
-        return json;
-    }
-
-
-    private void handlePublishUserContent(ContentItem content, final String password) {
-        Hash transactionHash = null;
-        DBEthereumTransaction ethereumTransaction = null;
-        try {
-            final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
-
-            BoundContract userContract = Geth.bindContract(
-                    new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
-                    USER_CONTENT_REGISTER_ABI, mEthereumClient);
-
-            Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
-
-            TransactOpts tOpts = new TransactOpts();
-            tOpts.setContext(mContext);
-            tOpts.setFrom(address);
-            tOpts.setSigner(new Signer() {
-                @Override
-                public Transaction sign(Address address, Transaction transaction) throws Exception {
-                    Account account = mKeyStore.getAccounts().get(PrefUtils.getSelectedAccountNum(getBaseContext()));
-                    mKeyStore.unlock(account, password);
-                    Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
-                    mKeyStore.lock(account.getAddress());
-                    return signed;
-                }
-            });
-            tOpts.setValue(new BigInt(0));
-            long noncePending  = mEthereumClient.getPendingNonceAt(mContext, address);
-            tOpts.setNonce(noncePending);
-
-           // if (content.primaryImageUrl != "empty")
-            final String imageHash = new IPFS().getAdd().file(new File(content.primaryImageUrl)).getHash();
-            content.primaryImageUrl = imageHash;
-            String contentJson = convertContentItemToJSON(content);
-
-            final String contentHash = new IPFS().getAdd().string(contentJson).getHash();
-
-            //publish to user feed
-            Interfaces callParams = Geth.newInterfaces(1);
-            Interface paramContentHash = Geth.newInterface();
-            paramContentHash.setString(contentHash);
-            callParams.set(0, paramContentHash);
-            final Transaction txPublishContent = userContract.transact(tOpts, "publishContent", callParams);
-            transactionHash = txPublishContent.getHash();
-            DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
-            ethereumTransaction = new DBEthereumTransaction(address.getHex(), txPublishContent.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_REGISTER,
-                    contentJson, System.currentTimeMillis(), 0, false, 0);
-            helper.saveTransactionInfo(ethereumTransaction);
-            mEthereumClient.sendTransaction(mContext, txPublishContent);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Intent intent = new Intent(UI_PUBLISH_USER_CONTENT_PENDING_CONFIRMATION);
-        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
-        bm.sendBroadcast(intent);
-        pollForTransactionConfirmation(transactionHash, ethereumTransaction);
     }
 
     private void handleFetchPublicationContent(int index) {
@@ -769,23 +560,124 @@ public class EthereumClientService extends Service {
         }
     }
 
-    private ContentItem convertJsonToContentItem(String json) {
-        if (json.equals("CONTENT CURRENTLY UNAVAILABLE")) {
-            return null;
-        }
-        Gson gson = new Gson();
-        ContentItem contentItem = gson.fromJson(json, ContentItem.class);
-        return contentItem;
+    private void handleFetchDraftImageURL(String draftImagePath) {
+        File f = new File(draftImagePath);
+        final String contentHash = new IPFS().getAdd().file(f).getHash();
+        Intent intent = new Intent(UI_UPDATE_DRAFT_PHOTO_URL);
+        intent.putExtra(PARAM_DRAFT_PHOTO_URL, contentHash);
+        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+        bm.sendBroadcast(intent);
     }
 
-    private void handlePublishUserContentToPublication(int index, final String password) {
+    private void handleFetchAccountUserInfo(String addressString) {
+        String userName = "";
+        while (!mIsReady) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            BoundContract contract = Geth.bindContract(
+                    new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
+                    USER_CONTENT_REGISTER_ABI, mEthereumClient);
+            CallOpts callOpts = Geth.newCallOpts();
+            callOpts.setContext(mContext);
+            Interfaces callData;
+            Interfaces returnData;
 
+            callData = Geth.newInterfaces(1);
+            Interface paramFetchUsernameCallParameter = Geth.newInterface();
+            paramFetchUsernameCallParameter.setAddress(new Address(addressString));
+            callData.set(0, paramFetchUsernameCallParameter);
+
+            returnData = Geth.newInterfaces(3);
+            Interface userNameData = Geth.newInterface();
+            Interface metaData = Geth.newInterface();
+            Interface numContent = Geth.newInterface();
+            userNameData.setDefaultString();
+            metaData.setDefaultString();
+            numContent.setDefaultBigInt();
+            returnData.set(0, userNameData);
+            returnData.set(1, metaData);
+            returnData.set(2, numContent);
+
+            contract.call(callOpts, returnData, "userIndex", callData);
+            userName = returnData.get(0).getString();
+            String metadataIconUrl = returnData.get(1).getString();
+
+            if (!TextUtils.isEmpty(userName)) {
+                Log.e(TAG, "SUCCESSFULLY UPDATED USER NAME");
+            } else {
+                userName = "not yet registered...";
+                Log.e(TAG, "NO USER NAME FOUND FOR " + addressString);
+            }
+            PrefUtils.saveSelectedAccountUserName(getBaseContext(), userName);
+
+            Intent intent = new Intent(UI_UPDATE_ACCOUNT_USER_INFO);
+            intent.putExtra(PARAM_USER_NAME, userName);
+            intent.putExtra(PARAM_USER_ICON_URL, metadataIconUrl);
+            LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+            bm.sendBroadcast(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Error retrieving username: " + e.getMessage());
+        }
+    }
+
+    /*
+     *  Methods that send Transactions to the Ethereum Blockckain
+     */
+
+    private void handleSendEth(String recipient, String amountString, final String password) {
+        Hash transactionHash = null;
+        DBEthereumTransaction ethereumTransaction = null;
         try {
             final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
-            BoundContract publicationContract = Geth.bindContract(
-                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
-                    PUBLICATION_REGISTER_ABI, mEthereumClient);
+            Address from = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
+
+
+            long nonce = mEthereumClient.getPendingNonceAt(mContext, from);
+            Address to = new Address(recipient);
+            BigInt amount = new BigInt(Convert.toWei(amountString, Convert.Unit.ETHER).longValue());
+            long gasLimit = 100000l;
+            BigInt gasPrice = new BigInt(Convert.toWei("40", Convert.Unit.GWEI).longValue());
+            byte[] data = new byte[0];
+
+            Transaction txSendEth = Geth.newTransaction(nonce, to, amount, gasLimit , gasPrice, data);
+            Signer signer = new Signer() {
+                @Override
+                public Transaction sign(Address address, Transaction transaction) throws Exception {
+                    Account account = mKeyStore.getAccounts().get(PrefUtils.getSelectedAccountNum(getBaseContext()));
+                    mKeyStore.unlock(account, password);
+                    Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
+                    String from = account.getAddress().getHex();
+                    mKeyStore.lock(account.getAddress());
+                    return signed;
+                }
+            };
+            Transaction signedTransaction = signer.sign(from, txSendEth);
+            transactionHash = signedTransaction.getHash();
+            ethereumTransaction = new DBEthereumTransaction(from.getHex(), transactionHash.getHex(), DatabaseHelper.TX_ACTION_ID_SEND_ETH,
+                    recipient + ":" + amountString, System.currentTimeMillis(), 0, false, 0);
+            mEthereumClient.sendTransaction(mContext, signedTransaction);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        pollForTransactionConfirmation(transactionHash, ethereumTransaction);
+    }
+
+    private void handleRegisterUser(String userName, final String password) {
+        Hash transactionHash = null;
+        DBEthereumTransaction ethereumTransaction = null;
+        try {
+            final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
+
+            BoundContract contract = Geth.bindContract(
+                    new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
+                    USER_CONTENT_REGISTER_ABI, mEthereumClient);
 
             Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
 
@@ -805,28 +697,31 @@ public class EthereumClientService extends Service {
             tOpts.setValue(new BigInt(0));
             long noncePending  = mEthereumClient.getPendingNonceAt(mContext, address);
             tOpts.setNonce(noncePending);
-
-            // publish to slush pile
             Interfaces callParams = Geth.newInterfaces(2);
-            Interface paramWhichPublication = Geth.newInterface();
-            paramWhichPublication.setBigInt(new BigInt(0));
-            Interface paramUserContentIndex = Geth.newInterface();
-            paramUserContentIndex.setBigInt(Geth.newBigInt(index));
-            callParams.set(0, paramWhichPublication);
-            callParams.set(1, paramUserContentIndex);
-            final Transaction txPublishToPublication = publicationContract.transact(tOpts, "publishContent", callParams);
-            mEthereumClient.sendTransaction(mContext, txPublishToPublication);
+            Interface paramUsername = Geth.newInterface();
+            paramUsername.setString(userName);
+            callParams.set(0, paramUsername);
+            Interface paramMetaData = Geth.newInterface();
+            paramMetaData.setString("meta");
+            callParams.set(1, paramMetaData);
+            final Transaction txRegisterUser = contract.transact(tOpts, "registerNewUser", callParams);
+            transactionHash = txRegisterUser.getHash();
+            ethereumTransaction = new DBEthereumTransaction(address.getHex().toString(), transactionHash.getHex().toString(), DatabaseHelper.TX_ACTION_ID_REGISTER, userName, System.currentTimeMillis(), 0, false, 0);
+            mEthereumClient.sendTransaction(mContext, txRegisterUser);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Intent intent = new Intent(UI_PUBLISH_USER_CONTENT_TO_PUBLICATION_PENDING_CONFIRMATION);
+        Intent intent = new Intent(UI_REGISTER_USER_PENDING_CONFIRMATION);
+        intent.putExtra(PARAM_USER_NAME, userName);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
+        pollForTransactionConfirmation(transactionHash, ethereumTransaction);
     }
 
     private void handleUpdateUserPic(final String picPath, final String password) {
-        Hash transactionId = null;
+        Hash transactionHash = null;
+        DBEthereumTransaction ethereumTransaction = null;
         try {
             final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
@@ -863,7 +758,8 @@ public class EthereumClientService extends Service {
             paramMetaData.setString(contentHash);
             callParams.set(0, paramMetaData);
             final Transaction txRegisterUser = contract.transact(tOpts, "updateMetaData", callParams);
-            transactionId = txRegisterUser.getHash();
+            transactionHash = txRegisterUser.getHash();
+            ethereumTransaction = new DBEthereumTransaction(address.getHex(), transactionHash.getHex(), DatabaseHelper.TX_ACTION_ID_UPDATE_USER_PIC, contentHash, 0, 0, false, 0);
             mEthereumClient.sendTransaction(mContext, txRegisterUser);
         } catch (Exception e) {
             e.printStackTrace();
@@ -871,57 +767,173 @@ public class EthereumClientService extends Service {
         Intent intent = new Intent(UI_UPDATE_USER_PIC_PENDING_CONFIRMATION);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
+        pollForTransactionConfirmation(transactionHash, ethereumTransaction);
     }
 
-    private void handleFetchDraftImageURL(String draftImagePath) {
-        File f = new File(draftImagePath);
-        final String contentHash = new IPFS().getAdd().file(f).getHash();
-        Intent intent = new Intent(UI_UPDATE_DRAFT_PHOTO_URL);
-        intent.putExtra(PARAM_DRAFT_PHOTO_URL, contentHash);
-        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
-        bm.sendBroadcast(intent);
-    }
-
-    private void handleSendEth(String recipient, String amountString, final String password) {
-        Hash transactionId = null;
+    private void handlePublishUserContent(ContentItem content, final String password) {
+        Hash transactionHash = null;
         DBEthereumTransaction ethereumTransaction = null;
         try {
             final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
-            Address from = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
+            BoundContract userContract = Geth.bindContract(
+                    new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
+                    USER_CONTENT_REGISTER_ABI, mEthereumClient);
 
+            Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
 
-            long nonce = mEthereumClient.getPendingNonceAt(mContext, from);
-            Address to = new Address(recipient);
-            BigInt amount = new BigInt(Convert.toWei(amountString, Convert.Unit.ETHER).longValue());
-            long gasLimit = 100000l;
-            BigInt gasPrice = new BigInt(Convert.toWei("40", Convert.Unit.GWEI).longValue());
-            byte[] data = new byte[0];
-
-            Transaction txSendEth = Geth.newTransaction(nonce, to, amount, gasLimit , gasPrice, data);
-            ethereumTransaction = new DBEthereumTransaction(from.getHex(), txSendEth.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_SEND_ETH,
-                    recipient + ":" + amountString, System.currentTimeMillis(), 0, false, 0);
-            Signer signer = new Signer() {
+            TransactOpts tOpts = new TransactOpts();
+            tOpts.setContext(mContext);
+            tOpts.setFrom(address);
+            tOpts.setSigner(new Signer() {
                 @Override
                 public Transaction sign(Address address, Transaction transaction) throws Exception {
                     Account account = mKeyStore.getAccounts().get(PrefUtils.getSelectedAccountNum(getBaseContext()));
                     mKeyStore.unlock(account, password);
                     Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
-                    String from = account.getAddress().getHex();
                     mKeyStore.lock(account.getAddress());
                     return signed;
                 }
-            };
-            Transaction signedTransaction = signer.sign(from, txSendEth);
-            ethereumTransaction = new DBEthereumTransaction(from.getHex(), signedTransaction.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_SEND_ETH,
-                    recipient + ":" + amountString, System.currentTimeMillis(), 0, false, 0);
-            transactionId = signedTransaction.getHash();
-            mEthereumClient.sendTransaction(mContext, signedTransaction);
+            });
+            tOpts.setValue(new BigInt(0));
+            long noncePending  = mEthereumClient.getPendingNonceAt(mContext, address);
+            tOpts.setNonce(noncePending);
+
+            // if (content.primaryImageUrl != "empty")
+            final String imageHash = new IPFS().getAdd().file(new File(content.primaryImageUrl)).getHash();
+            content.primaryImageUrl = imageHash;
+            String contentJson = convertContentItemToJSON(content);
+
+            final String contentHash = new IPFS().getAdd().string(contentJson).getHash();
+
+            //publish to user feed
+            Interfaces callParams = Geth.newInterfaces(1);
+            Interface paramContentHash = Geth.newInterface();
+            paramContentHash.setString(contentHash);
+            callParams.set(0, paramContentHash);
+            final Transaction txPublishContent = userContract.transact(tOpts, "publishContent", callParams);
+
+            transactionHash = txPublishContent.getHash();
+            ethereumTransaction = new DBEthereumTransaction(address.getHex(), txPublishContent.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_PUBLISH_USER_CONTENT,
+                    contentJson, System.currentTimeMillis(), 0, false, 0);
+            mEthereumClient.sendTransaction(mContext, txPublishContent);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+        Intent intent = new Intent(UI_PUBLISH_USER_CONTENT_PENDING_CONFIRMATION);
+        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+        bm.sendBroadcast(intent);
+        pollForTransactionConfirmation(transactionHash, ethereumTransaction);
+    }
 
-        pollForTransactionConfirmation(transactionId, ethereumTransaction);
+    private void handlePublishUserContentToPublication(int index, final String password) {
+        Hash transactionHash = null;
+        DBEthereumTransaction ethereumTransaction = null;
+        try {
+            final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
+
+            BoundContract publicationContract = Geth.bindContract(
+                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
+                    PUBLICATION_REGISTER_ABI, mEthereumClient);
+
+            Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
+
+            TransactOpts tOpts = new TransactOpts();
+            tOpts.setContext(mContext);
+            tOpts.setFrom(address);
+            tOpts.setSigner(new Signer() {
+                @Override
+                public Transaction sign(Address address, Transaction transaction) throws Exception {
+                    Account account = mKeyStore.getAccounts().get(PrefUtils.getSelectedAccountNum(getBaseContext()));
+                    mKeyStore.unlock(account, password);
+                    Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
+                    mKeyStore.lock(account.getAddress());
+                    return signed;
+                }
+            });
+            tOpts.setValue(new BigInt(0));
+            long noncePending  = mEthereumClient.getPendingNonceAt(mContext, address);
+            tOpts.setNonce(noncePending);
+
+            // publish to slush pile
+            Interfaces callParams = Geth.newInterfaces(2);
+            Interface paramWhichPublication = Geth.newInterface();
+            paramWhichPublication.setBigInt(new BigInt(0));
+            Interface paramUserContentIndex = Geth.newInterface();
+            paramUserContentIndex.setBigInt(Geth.newBigInt(index));
+            callParams.set(0, paramWhichPublication);
+            callParams.set(1, paramUserContentIndex);
+            final Transaction txPublishToPublication = publicationContract.transact(tOpts, "publishContent", callParams);
+
+            transactionHash = txPublishToPublication.getHash();
+            ethereumTransaction = new DBEthereumTransaction(address.getHex().toString(), transactionHash.getHex().toString(), DatabaseHelper.TX_ACTION_ID_PUBLISH_TO_PUBLICATION, "" + index, System.currentTimeMillis(), 0, false, 0);
+
+            mEthereumClient.sendTransaction(mContext, txPublishToPublication);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Intent intent = new Intent(UI_PUBLISH_USER_CONTENT_TO_PUBLICATION_PENDING_CONFIRMATION);
+        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+        bm.sendBroadcast(intent);
+        pollForTransactionConfirmation(transactionHash, ethereumTransaction);
+    }
+
+    private void pollForTransactionConfirmation(Hash txHash, DBEthereumTransaction tx) {
+        long timestamp = System.currentTimeMillis();
+        Receipt receipt = null;
+        if (tx != null && txHash != null) {
+            try {
+                receipt = mEthereumClient.getTransactionReceipt(mContext, txHash);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            while (receipt == null && System.currentTimeMillis() - timestamp < 60000) {
+                try {
+                    Thread.sleep(2000);
+                    receipt = mEthereumClient.getTransactionReceipt(mContext, txHash);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if (receipt != null) { //receipt found
+                try {
+                    Transaction ethTx = null;
+                    int attempts = 0;
+                    long currentBlockNumber = mBlockNumber;
+                    while (ethTx == null && attempts <= 20) {
+                        Block b = mEthereumClient.getBlockByNumber(mContext, currentBlockNumber - attempts);
+                        ethTx = b.getTransaction(txHash);
+                        if (ethTx != null) {
+                            tx.txTimestamp = b.getTime();
+                            tx.blockNumber = currentBlockNumber - attempts;
+                            tx.confirmed = true;
+                            tx.gasCost = ethTx.getGas();
+                        }
+                        attempts++;
+                    }
+                    DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
+                    helper.saveTransactionInfo(tx);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private String convertContentItemToJSON(ContentItem contentItem) {
+        Gson gson = new Gson();
+        String json = gson.toJson(contentItem);
+        return json;
+    }
+
+    private ContentItem convertJsonToContentItem(String json) {
+        if (json.equals("CONTENT CURRENTLY UNAVAILABLE")) {
+            return null;
+        }
+        Gson gson = new Gson();
+        ContentItem contentItem = gson.fromJson(json, ContentItem.class);
+        return contentItem;
     }
 
 }

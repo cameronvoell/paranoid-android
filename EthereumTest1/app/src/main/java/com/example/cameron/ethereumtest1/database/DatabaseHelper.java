@@ -88,7 +88,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public Cursor getTransactionCursor(String address) {
-        String ORDER_BY = " ORDER BY " + KEY_BLOCK_NUMBER + " DESC";
+        String ORDER_BY = " ORDER BY " + KEY_TX_TIMESTAMP + " DESC";
 
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM " + TABLE_ETH_TRANSACTIONS + " WHERE " + KEY_ETH_ADDRESS +  " = " + "\"" + address + "\"" + ORDER_BY, null);

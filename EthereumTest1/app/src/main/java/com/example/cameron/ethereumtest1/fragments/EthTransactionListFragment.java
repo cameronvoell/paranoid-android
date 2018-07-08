@@ -100,9 +100,8 @@ public class EthTransactionListFragment extends Fragment {
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                TextView textViewTwo = (TextView) view.findViewById(R.id.text2);
-//                String tx = textViewTwo.getText().toString();
-                mCursorAdapter.getItem(position)
+                Cursor txCursor = ((Cursor)(mCursorAdapter.getItem(position)));
+                String tx = txCursor.getString(txCursor.getColumnIndex(DatabaseHelper.KEY_ETH_TX_ID));
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://rinkeby.etherscan.io/tx/" + tx));
                 startActivity(browserIntent);
             }

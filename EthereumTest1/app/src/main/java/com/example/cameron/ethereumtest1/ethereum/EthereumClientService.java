@@ -661,6 +661,8 @@ public class EthereumClientService extends Service {
             transactionHash = signedTransaction.getHash();
             ethereumTransaction = new DBEthereumTransaction(from.getHex(), transactionHash.getHex(), DatabaseHelper.TX_ACTION_ID_SEND_ETH,
                     recipient + ":" + amountString, System.currentTimeMillis(), 0, false, 0);
+            DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
+            helper.saveTransactionInfo(ethereumTransaction);
             mEthereumClient.sendTransaction(mContext, signedTransaction);
         } catch (Exception e) {
             e.printStackTrace();
@@ -707,6 +709,8 @@ public class EthereumClientService extends Service {
             final Transaction txRegisterUser = contract.transact(tOpts, "registerNewUser", callParams);
             transactionHash = txRegisterUser.getHash();
             ethereumTransaction = new DBEthereumTransaction(address.getHex().toString(), transactionHash.getHex().toString(), DatabaseHelper.TX_ACTION_ID_REGISTER, userName, System.currentTimeMillis(), 0, false, 0);
+            DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
+            helper.saveTransactionInfo(ethereumTransaction);
             mEthereumClient.sendTransaction(mContext, txRegisterUser);
 
         } catch (Exception e) {
@@ -759,7 +763,9 @@ public class EthereumClientService extends Service {
             callParams.set(0, paramMetaData);
             final Transaction txRegisterUser = contract.transact(tOpts, "updateMetaData", callParams);
             transactionHash = txRegisterUser.getHash();
-            ethereumTransaction = new DBEthereumTransaction(address.getHex(), transactionHash.getHex(), DatabaseHelper.TX_ACTION_ID_UPDATE_USER_PIC, contentHash, 0, 0, false, 0);
+            ethereumTransaction = new DBEthereumTransaction(address.getHex(), transactionHash.getHex(), DatabaseHelper.TX_ACTION_ID_UPDATE_USER_PIC, contentHash, System.currentTimeMillis(), 0, false, 0);
+            DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
+            helper.saveTransactionInfo(ethereumTransaction);
             mEthereumClient.sendTransaction(mContext, txRegisterUser);
         } catch (Exception e) {
             e.printStackTrace();
@@ -816,6 +822,8 @@ public class EthereumClientService extends Service {
             transactionHash = txPublishContent.getHash();
             ethereumTransaction = new DBEthereumTransaction(address.getHex(), txPublishContent.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_PUBLISH_USER_CONTENT,
                     contentJson, System.currentTimeMillis(), 0, false, 0);
+            DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
+            helper.saveTransactionInfo(ethereumTransaction);
             mEthereumClient.sendTransaction(mContext, txPublishContent);
 
         } catch (Exception e) {
@@ -868,7 +876,8 @@ public class EthereumClientService extends Service {
 
             transactionHash = txPublishToPublication.getHash();
             ethereumTransaction = new DBEthereumTransaction(address.getHex().toString(), transactionHash.getHex().toString(), DatabaseHelper.TX_ACTION_ID_PUBLISH_TO_PUBLICATION, "" + index, System.currentTimeMillis(), 0, false, 0);
-
+            DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
+            helper.saveTransactionInfo(ethereumTransaction);
             mEthereumClient.sendTransaction(mContext, txPublishToPublication);
         } catch (Exception e) {
             e.printStackTrace();

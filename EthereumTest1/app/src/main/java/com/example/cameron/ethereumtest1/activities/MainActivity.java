@@ -33,10 +33,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.fragments.EthTransactionListFragment;
-import com.example.cameron.ethereumtest1.fragments.PublicationListFragment;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
-import com.example.cameron.ethereumtest1.fragments.ContentListFragment;
+import com.example.cameron.ethereumtest1.fragments.PublicationContentListFragment;
 import com.example.cameron.ethereumtest1.fragments.UserFragment;
 import com.example.cameron.ethereumtest1.ipfs_daemon.IPFSDaemon;
 import com.example.cameron.ethereumtest1.ipfs_daemon.IPFSDaemonService;
@@ -64,7 +63,7 @@ import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_TRANSACT
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_USER_FRAGMENT;
 
 public class MainActivity extends AppCompatActivity implements
-        ContentListFragment.OnListFragmentInteractionListener,
+        PublicationContentListFragment.OnListFragmentInteractionListener,
         EthTransactionListFragment.OnFragmentInteractionListener {
 
     private final static String TAG = MainActivity.class.getName();
@@ -75,9 +74,8 @@ public class MainActivity extends AppCompatActivity implements
     private TextView mAccountTextView;
     private ImageButton mSwitchAccountButton;
 
-    private ContentListFragment mContentListFragment;
+    private PublicationContentListFragment mPublicationContentListFragment;
     private UserFragment mUserFragment;
-    private PublicationListFragment mContentContractListFragment;
     private EthTransactionListFragment mEthTransactionListFragment;
 
     private ImageButton mContentListButton;
@@ -183,6 +181,25 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                Log.v("PERMISSION","Permission is granted");
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+            }
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(this);
+        bm.unregisterReceiver(mBroadcastReceiver);
+    }
+
     private void refreshAccounts() {
         mSwitchAccountPopupListener = new PopupMenu.OnMenuItemClickListener() {
             @Override
@@ -227,25 +244,6 @@ public class MainActivity extends AppCompatActivity implements
         };
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                Log.v("PERMISSION","Permission is granted");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-            }
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(this);
-        bm.unregisterReceiver(mBroadcastReceiver);
-    }
-
     /*
      * Methods for managing IPFS Connectivity
      */
@@ -267,7 +265,6 @@ public class MainActivity extends AppCompatActivity implements
         @Override
         public void run() {
             startService(new Intent(MainActivity.this, IPFSDaemonService.class));
-
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -329,11 +326,6 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onListFragmentInteraction(ContentItem item) {
-        ActivityOptions options = null;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-
-        }
-
         Intent intent = new Intent(this, ViewContentActivity.class);
         ArrayList<ContentItem> contentItems = new ArrayList<>();
         contentItems.add(item);
@@ -495,10 +487,10 @@ public class MainActivity extends AppCompatActivity implements
      */
 
     public void showContentList(View view) {
-        if (mContentListFragment == null)
-            mContentListFragment = ContentListFragment.newInstance();
+        if (mPublicationContentListFragment == null)
+            mPublicationContentListFragment = PublicationContentListFragment.newInstance();
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mContentListFragment);
+        transaction.replace(R.id.fragment_container, mPublicationContentListFragment);
         transaction.commit();
         mContentListButton.setColorFilter(Color.WHITE);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
@@ -537,21 +529,12 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void showIPFS(View view) {
-        if (mContentContractListFragment == null)
-            mContentContractListFragment = PublicationListFragment.newInstance();
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mContentContractListFragment);
-        transaction.commit();
-        mContentListButton.setColorFilter(Color.DKGRAY);
-        mUserFragmentButton.setColorFilter(Color.DKGRAY);
-        mEthereumButton.setColorFilter(Color.DKGRAY);
-        mIPFSButton.setColorFilter(Color.WHITE);
-        //PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
+        //TODO: implement IPFS fragment
         showFAB(true);
     }
 
     public void scrollToTop(View view) {
-        mContentListFragment.scrollToTop();
+        mPublicationContentListFragment.scrollToTop();
         showFAB(true);
     }
 

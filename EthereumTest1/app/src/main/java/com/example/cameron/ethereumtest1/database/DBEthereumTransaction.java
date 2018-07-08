@@ -1,12 +1,7 @@
-package com.example.cameron.ethereumtest1.model;
+package com.example.cameron.ethereumtest1.database;
 
-import java.util.ArrayList;
+public class DBEthereumTransaction {
 
-/**
- * Created by cameron on 4/16/18.
- */
-
-public class EthereumTransaction {
     public String ethAddress;
     public String ethTxId;
     public int txActionId;
@@ -16,7 +11,7 @@ public class EthereumTransaction {
     public boolean confirmed;
     public long gasCost;
 
-    public EthereumTransaction(String ethAddress, String ethTxId, int txActionId,
+    public DBEthereumTransaction(String ethAddress, String ethTxId, int txActionId,
                                String txContent, long txTimestamp, long blockNumber, boolean confirmed,
                                long gasCost) {
         this.ethAddress = ethAddress;

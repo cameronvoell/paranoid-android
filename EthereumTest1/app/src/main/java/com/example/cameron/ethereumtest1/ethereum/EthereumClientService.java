@@ -15,9 +15,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.cameron.ethereumtest1.database.DBEthereumTransaction;
 import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.model.ContentItem;
-import com.example.cameron.ethereumtest1.model.EthereumTransaction;
 import com.example.cameron.ethereumtest1.util.Convert;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 import com.google.gson.Gson;
@@ -78,7 +78,6 @@ public class EthereumClientService extends Service {
 
     public static final String ETH_FETCH_USER_CONTENT_LIST = "eth.fetch.user.content.list";
     public static final String UI_UPDATE_USER_CONTENT_LIST = "ui.update.user.content.list";
-    public static final String PARAM_CONTENT_STRING = "param.content.string";
     public static final String PARAM_CONTENT_ITEM = "param.content.item";
     public static final String PARAM_ARRAY_CONTENT_STRING = "param.array.content.string";
     public static final String PARAM_ARRAY_CONTENT_REVENUE_STRING = "param.array.content.revenue.string";
@@ -109,9 +108,6 @@ public class EthereumClientService extends Service {
     public static final String ETH_SEND_ETH = "eth.send.eth";
     public static final String PARAM_RECIPIENT = "param.recipient";
     public static final String PARAM_AMOUNT = "param.amount";
-
-    private static final String POLL_FOR_TRANSACTION_RECEIPT = "poll.for.transaction.receipt";
-    private static final String PARAM_TX_ID = "param.tx.id";
 
     private EthereumClient mEthereumClient;
     private org.ethereum.geth.Context mContext;
@@ -332,7 +328,6 @@ public class EthereumClientService extends Service {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            //Log.e("New HEAD", "Blocks received by IntentService");
             mIsReady = true;
         }
     };
@@ -429,14 +424,11 @@ public class EthereumClientService extends Service {
                     json = new IPFS().getGet().cat(contentString);
 
                 } catch (Exception e) {
-                    json = "CONTENT CURRENTLY UNAVAILABLE";// + e.getMessage();
-                    // Log.e("oops", e.getMessage());
+                    json = "CONTENT CURRENTLY UNAVAILABLE";
                 }
 
                 postJsonArray.add(json);
             }
-
-            //PrefUtils.saveSelectedAccountUserName(getBaseContext(), userName);
 
             Intent intent = new Intent(UI_UPDATE_USER_CONTENT_LIST);
             intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_STRING, postJsonArray);
@@ -552,10 +544,9 @@ public class EthereumClientService extends Service {
         intent.putExtra(PARAM_USER_NAME, userName);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
-        //pollForTransactionConfirmation(transactionHash, );
     }
 
-    private void pollForTransactionConfirmation(Hash txHash, EthereumTransaction tx) {
+    private void pollForTransactionConfirmation(Hash txHash, DBEthereumTransaction tx) {
         long timestamp = System.currentTimeMillis();
         Receipt receipt = null;
         if (tx != null && txHash != null) {
@@ -603,7 +594,7 @@ public class EthereumClientService extends Service {
 
     private void handlePublishUserContent(ContentItem content, final String password) {
         Hash transactionHash = null;
-        EthereumTransaction ethereumTransaction = null;
+        DBEthereumTransaction ethereumTransaction = null;
         try {
             final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
@@ -645,7 +636,7 @@ public class EthereumClientService extends Service {
             final Transaction txPublishContent = userContract.transact(tOpts, "publishContent", callParams);
             transactionHash = txPublishContent.getHash();
             DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
-            ethereumTransaction = new EthereumTransaction(address.getHex(), txPublishContent.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_REGISTER,
+            ethereumTransaction = new DBEthereumTransaction(address.getHex(), txPublishContent.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_REGISTER,
                     contentJson, System.currentTimeMillis(), 0, false, 0);
             helper.saveTransactionInfo(ethereumTransaction);
             mEthereumClient.sendTransaction(mContext, txPublishContent);
@@ -767,9 +758,6 @@ public class EthereumClientService extends Service {
 
             }
 
-
-            //PrefUtils.saveSelectedAccountUserName(getBaseContext(), userName);
-
             Intent intent = new Intent(UI_UPDATE_PUBLICATION_CONTENT);
             intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_STRING, postJsonArray);
             intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_REVENUE_STRING, postRevenue);
@@ -881,10 +869,8 @@ public class EthereumClientService extends Service {
             e.printStackTrace();
         }
         Intent intent = new Intent(UI_UPDATE_USER_PIC_PENDING_CONFIRMATION);
-        //intent.putExtra(PARAM_USER_NAME, userName);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
-        //pollForTransactionConfirmation(transactionId);
     }
 
     private void handleFetchDraftImageURL(String draftImagePath) {
@@ -898,7 +884,7 @@ public class EthereumClientService extends Service {
 
     private void handleSendEth(String recipient, String amountString, final String password) {
         Hash transactionId = null;
-        EthereumTransaction ethereumTransaction = null;
+        DBEthereumTransaction ethereumTransaction = null;
         try {
             final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
@@ -913,7 +899,7 @@ public class EthereumClientService extends Service {
             byte[] data = new byte[0];
 
             Transaction txSendEth = Geth.newTransaction(nonce, to, amount, gasLimit , gasPrice, data);
-            ethereumTransaction = new EthereumTransaction(from.getHex(), txSendEth.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_SEND_ETH,
+            ethereumTransaction = new DBEthereumTransaction(from.getHex(), txSendEth.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_SEND_ETH,
                     recipient + ":" + amountString, System.currentTimeMillis(), 0, false, 0);
             Signer signer = new Signer() {
                 @Override
@@ -927,17 +913,14 @@ public class EthereumClientService extends Service {
                 }
             };
             Transaction signedTransaction = signer.sign(from, txSendEth);
-            ethereumTransaction = new EthereumTransaction(from.getHex(), signedTransaction.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_SEND_ETH,
+            ethereumTransaction = new DBEthereumTransaction(from.getHex(), signedTransaction.getHash().getHex(), DatabaseHelper.TX_ACTION_ID_SEND_ETH,
                     recipient + ":" + amountString, System.currentTimeMillis(), 0, false, 0);
             transactionId = signedTransaction.getHash();
             mEthereumClient.sendTransaction(mContext, signedTransaction);
         } catch (Exception e) {
             e.printStackTrace();
         }
-//        Intent intent = new Intent(UI_UPDATE_USER_PIC_PENDING_CONFIRMATION);
-//        //intent.putExtra(PARAM_USER_NAME, userName);
-//        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
-//        bm.sendBroadcast(intent);
+
         pollForTransactionConfirmation(transactionId, ethereumTransaction);
     }
 

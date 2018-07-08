@@ -8,5 +8,5 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
     app:layoutManager="LinearLayoutManager"
-    tools:context="com.example.cameron.ethereumtest1.fragments.ContentListFragment"
+    tools:context="com.example.cameron.ethereumtest1.fragments.PublicationContentListFragment"
     tools:listitem="@layout/fragment_content_item" />

@@ -19,7 +19,7 @@ import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.activities.ViewContentActivity;
 import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
-import com.example.cameron.ethereumtest1.fragments.ContentListFragment.OnListFragmentInteractionListener;
+import com.example.cameron.ethereumtest1.fragments.PublicationContentListFragment.OnListFragmentInteractionListener;
 import com.example.cameron.ethereumtest1.model.PublicationContentItem;
 import com.example.cameron.ethereumtest1.util.DataUtils;
 
@@ -32,7 +32,7 @@ import java.util.List;
  * {@link RecyclerView.Adapter} that can display a {@link ContentItem} and makes a call to the
  * specified {@link OnListFragmentInteractionListener}.
  */
-public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyContentItemRecyclerViewAdapter.ViewHolder> {
+public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<PublicationItemRecyclerViewAdapter.ViewHolder> {
 
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_ITEM = 1;
@@ -41,7 +41,7 @@ public class MyContentItemRecyclerViewAdapter extends RecyclerView.Adapter<MyCon
     private Spinner mTagSpinner;
     private Spinner mSortBySpinner;
 
-    public MyContentItemRecyclerViewAdapter(List<PublicationContentItem> items, Context context) {
+    public PublicationItemRecyclerViewAdapter(List<PublicationContentItem> items, Context context) {
         mValues = items;
         mContext = context;
     }

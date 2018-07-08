@@ -13,14 +13,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.activities.MainActivity;
-import com.example.cameron.ethereumtest1.adapters.MyContentItemRecyclerViewAdapter;
+import com.example.cameron.ethereumtest1.adapters.PublicationItemRecyclerViewAdapter;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
-import com.example.cameron.ethereumtest1.model.Content;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.model.PublicationContentItem;
 import com.google.gson.Gson;
@@ -34,7 +31,7 @@ import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.P
  * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
  * interface.
  */
-public class ContentListFragment extends Fragment {
+public class PublicationContentListFragment extends Fragment {
 
     private final static String TAG = UserFragment.class.getName();
 
@@ -64,11 +61,11 @@ public class ContentListFragment extends Fragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public ContentListFragment() {
+    public PublicationContentListFragment() {
     }
 
-    public static ContentListFragment newInstance() {
-        ContentListFragment fragment = new ContentListFragment();
+    public static PublicationContentListFragment newInstance() {
+        PublicationContentListFragment fragment = new PublicationContentListFragment();
         return fragment;
     }
 
@@ -97,7 +94,8 @@ public class ContentListFragment extends Fragment {
             Context context = view.getContext();
             mRecyclerView = (RecyclerView) view;
             mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
-            mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(Content.ITEMS, getContext()));
+            if (mContentItems == null) mContentItems = new ArrayList<PublicationContentItem>();
+            mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(mContentItems, getContext()));
             mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
                 @Override
                 public void onScrolled(RecyclerView recyclerView, int dx, int dy){
@@ -113,7 +111,7 @@ public class ContentListFragment extends Fragment {
 
     private void loadContentFeed() {
         try {
-            mContentItems = new ArrayList<>();
+            if (mContentItems == null) mContentItems = new ArrayList<PublicationContentItem>();
             getActivity().startService(new Intent(getContext(), EthereumClientService.class)
                     .putExtra(PARAM_PUBLICATION_INDEX, 0)
                     .setAction(ETH_FETCH_PUBLICATION_CONTENT));
@@ -134,7 +132,7 @@ public class ContentListFragment extends Fragment {
     }
 
     private void reloadContentList(ArrayList<String> jsonArray, ArrayList<String> revenueArray) {
-        mContentItems = new ArrayList<>();
+        if (mContentItems == null) mContentItems = new ArrayList<PublicationContentItem>();
         for (int i = 0; i < jsonArray.size(); i++) {
             String json = jsonArray.get(i);
             String revenue = revenueArray.get(i);
@@ -142,7 +140,7 @@ public class ContentListFragment extends Fragment {
             PublicationContentItem pci = new PublicationContentItem(i, ci, revenue, 0);
             mContentItems.add(pci);
         }
-        mRecyclerView.setAdapter(new MyContentItemRecyclerViewAdapter(mContentItems, getContext()));
+        mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(mContentItems, getContext()));
     }
 
     @Override

@@ -19,7 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
-import com.example.cameron.ethereumtest1.adapters.UserFragmentContentItemListAdapter;
+import com.example.cameron.ethereumtest1.adapters.UserFragmentContentItemRecyclerViewAdapter;
 import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.model.ContentItem;
@@ -226,7 +226,7 @@ public class UserFragment extends Fragment {
         //mContentItems = new DatabaseHelper(getContext()).getUserFragmentContentItems(mSelectedAddress, 0, 1);
         mContentItems = new ArrayList<>();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        mRecyclerView.setAdapter(new UserFragmentContentItemListAdapter(mContentItems, mListInteractionListener, getContext()));
+        mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(mContentItems, mListInteractionListener, getContext()));
 
         if ((PrefUtils.shouldUpdateAccountContentList(getActivity()))) {
             try {
@@ -254,7 +254,7 @@ public class UserFragment extends Fragment {
             ContentItem ci = convertJsonToContentItem(json);
             mContentItems.add(new UserFragmentContentItem(0, ci, "", "", ""));
         }
-        mRecyclerView.setAdapter(new UserFragmentContentItemListAdapter(mContentItems, mListInteractionListener, getContext()));
+        mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(mContentItems, mListInteractionListener, getContext()));
     }
 
     @Override

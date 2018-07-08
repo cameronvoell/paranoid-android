@@ -21,13 +21,13 @@ import java.util.List;
  * Created by cameron on 10/26/17.
  */
 
-public class UserFragmentContentItemListAdapter extends RecyclerView.Adapter<UserFragmentContentItemListAdapter.ViewHolder> {
+public class UserFragmentContentItemRecyclerViewAdapter extends RecyclerView.Adapter<UserFragmentContentItemRecyclerViewAdapter.ViewHolder> {
 
     private final List<UserFragmentContentItem> mValues;
     private final OnListFragmentInteractionListener mListener;
     private final Context mContext;
 
-    public UserFragmentContentItemListAdapter(List<UserFragmentContentItem> items, OnListFragmentInteractionListener listener, Context context) {
+    public UserFragmentContentItemRecyclerViewAdapter(List<UserFragmentContentItem> items, OnListFragmentInteractionListener listener, Context context) {
         mValues = items;
         mListener = listener;
         mContext = context;

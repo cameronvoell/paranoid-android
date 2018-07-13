@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.database.DBPublicationContentItem;
 import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.util.DataUtils;
@@ -23,7 +24,7 @@ import java.util.ArrayList;
  */
 public class ViewContentActivity extends AppCompatActivity {
 
-    private ContentItem mContentItem;
+    private DBPublicationContentItem mContentItem;
     private TextView mTitleTextView;
     private TextView mDateAndAuthorTextView;
     private WebView mBodyWebView;
@@ -37,7 +38,7 @@ public class ViewContentActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         ArrayList<Parcelable> items = intent.getParcelableArrayListExtra("content_items");
-        mContentItem = (ContentItem) items.get(0);
+        mContentItem = (DBPublicationContentItem) items.get(0);
 
         mTitleTextView = (TextView) findViewById(R.id.contentTitle);
         mDateAndAuthorTextView = (TextView) findViewById(R.id.dateAndAuthor);
@@ -45,13 +46,13 @@ public class ViewContentActivity extends AppCompatActivity {
 
         mTitleTextView.setText(mContentItem.title);
         String dateAndPublishedBy = "Published " + DataUtils.convertTimeStampToDateString(mContentItem.publishedDate)
-                + " by " + mContentItem.publishedBy;
+                + " by " + mContentItem.publishedByEthAddress;
         mDateAndAuthorTextView.setText(dateAndPublishedBy);
         mBodyWebView.loadData(mContentItem.primaryText, "text/html; charset=UTF-8", null);
 
         ImageView imageView = (ImageView) findViewById(R.id.image_content_activity);
         Glide.with(getBaseContext())
-                .load(EthereumConstants.IPFS_GATEWAY_URL + mContentItem.primaryImageUrl)
+                .load(EthereumConstants.IPFS_GATEWAY_URL + mContentItem.imageIPFS)
                 .into(imageView);
     }
 

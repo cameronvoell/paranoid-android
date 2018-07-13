@@ -217,7 +217,7 @@ public class EditContentActivity extends AppCompatActivity implements View.OnTou
         String primaryContentAddressedLink = "empty";
         String primaryText = text;
         ContentItem ci = new ContentItem(publishedBy, title,
-                publishedDate, primaryText, primaryImageUrl, primaryHttpLink, primaryContentAddressedLink);
+                publishedDate, primaryText, primaryImageUrl, -1);
         return ci;
     }
 

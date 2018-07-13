@@ -4,12 +4,14 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -17,6 +19,8 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.activities.ViewContentActivity;
+import com.example.cameron.ethereumtest1.database.DBPublicationContentItem;
+import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.fragments.PublicationContentListFragment.OnListFragmentInteractionListener;
@@ -36,14 +40,67 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
 
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_ITEM = 1;
-    private final List<PublicationContentItem> mValues;
     private final Context mContext;
     private Spinner mTagSpinner;
     private Spinner mSortBySpinner;
+    private CursorAdapter mCursorAdapter;
 
-    public PublicationItemRecyclerViewAdapter(List<PublicationContentItem> items, Context context) {
-        mValues = items;
+    public PublicationItemRecyclerViewAdapter(Context context, Cursor cursor) {
         mContext = context;
+        mCursorAdapter = new CursorAdapter(mContext, cursor, 0) {
+            @Override
+            public View newView(Context context, Cursor cursor, ViewGroup parent) {
+                View view = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.fragment_content_item, parent, false);
+                return view;
+            }
+
+            @Override
+            public void bindView(View view, Context context, final Cursor cursor) {
+                final DBPublicationContentItem ci = DatabaseHelper.convertCursorToDBPublicationContentItem(cursor);
+                final ViewHolder holder = new ViewHolder(view);
+
+                //holder.mRevenueView.setText(DataUtils.formatAccountBalanceEther(pci.contentRevenue, 4));
+
+                if (!ci.imageIPFS.equals("empty")) {
+                    holder.mImageView.setVisibility(View.VISIBLE);
+                    //Loading image from url into imageView
+                    //holder.mImageView.setImageDrawable(mContext.getDrawable(R.drawable.ic_account));
+                    Glide.with(mContext)
+                            .load(EthereumConstants.IPFS_GATEWAY_URL + ci.imageIPFS)
+                            .into(holder.mImageView);
+                } else {
+                    holder.mImageView.setVisibility(View.GONE);
+                }
+
+                holder.mTitleView.setText(ci.title);
+                String textFromHtml = Jsoup.parse(ci.primaryText).text();
+                holder.mBodyView.setText(textFromHtml);
+                holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(ci.publishedDate)
+                        + " by " + ci.publishedByEthAddress);
+
+                holder.mView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        ActivityOptions options = null;
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                            Intent intent = new Intent(mContext, ViewContentActivity.class);
+                            ArrayList<DBPublicationContentItem> contentItems = new ArrayList<>();
+                            DBPublicationContentItem item = DatabaseHelper.convertCursorToDBPublicationContentItem(cursor);
+                            contentItems.add(item);
+                            intent.putParcelableArrayListExtra("content_items", contentItems);
+                            if (!ci.imageIPFS.equals("empty")) {
+                                options = ActivityOptions.makeSceneTransitionAnimation((Activity) mContext, holder.mImageView, mContext.getString(R.string.picture_transition_name));
+                                mContext.startActivity(intent, options.toBundle());
+                            } else {
+                                mContext.startActivity(intent);
+                            }
+                        }
+                    }
+                });
+            }
+        };
+
     }
 
     @Override
@@ -58,69 +115,31 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
 //            setTagSpinnerOptions();
 //            return new ViewHolder(view);
 //        } else {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.fragment_content_item, parent, false);
+            View view = mCursorAdapter.newView(mContext, mCursorAdapter.getCursor(), parent);
             return new ViewHolder(view);
 //        }
     }
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
+        mCursorAdapter.getCursor().moveToPosition(position);
+        mCursorAdapter.bindView(holder.mView, mContext, mCursorAdapter.getCursor());
+
 //        if (position == 0) {
 //
 //        } else {
-            PublicationContentItem pci = mValues.get(position);
-            ContentItem ci = pci.contentItem;
 
-            holder.mRevenueView.setText(DataUtils.formatAccountBalanceEther(pci.contentRevenue, 4));
-
-            if (!ci.primaryImageUrl.equals("empty")) {
-                holder.mImageView.setVisibility(View.VISIBLE);
-                //Loading image from url into imageView
-                //holder.mImageView.setImageDrawable(mContext.getDrawable(R.drawable.ic_account));
-                Glide.with(mContext)
-                        .load(EthereumConstants.IPFS_GATEWAY_URL + ci.primaryImageUrl)
-                        .into(holder.mImageView);
-            } else {
-                holder.mImageView.setVisibility(View.GONE);
-            }
-
-            holder.mItem = ci;
-            holder.mTitleView.setText(ci.title);
-            String textFromHtml = Jsoup.parse(ci.primaryText).text();
-            holder.mBodyView.setText(textFromHtml);
-            holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(ci.publishedDate)
-                    + " by " + ci.publishedBy);
-
-            holder.mView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    ActivityOptions options = null;
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                        Intent intent = new Intent(mContext, ViewContentActivity.class);
-                        ArrayList<ContentItem> contentItems = new ArrayList<>();
-                        contentItems.add(holder.mItem);
-                        intent.putParcelableArrayListExtra("content_items", contentItems);
-                        if (!holder.mItem.primaryImageUrl.equals("empty")) {
-                            options = ActivityOptions.makeSceneTransitionAnimation((Activity) mContext, holder.mImageView, mContext.getString(R.string.picture_transition_name));
-                            mContext.startActivity(intent, options.toBundle());
-                        } else {
-                            mContext.startActivity(intent);
-                        }
-                    }
-                }
-            });
     //    }
     }
 
     @Override
     public int getItemCount() {
-        return mValues.size();
+        return mCursorAdapter.getCount();
     }
 
-    private PublicationContentItem getItem(int position) {
-        return mValues.get(position);
-    }
+//    private PublicationContentItem getItem(int position) {
+//        return mCursorAdapter.getItem(position);
+//    }
 
     @Override
     public int getItemViewType(int position) {
@@ -137,7 +156,7 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
         public final TextView mDateAndAuthorView;
         public final ImageView mImageView;
         public final TextView mRevenueView;
-        public ContentItem mItem;
+        //public ContentItem mItem;
 
         public ViewHolder(View view) {
             super(view);

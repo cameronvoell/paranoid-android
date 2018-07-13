@@ -5,37 +5,28 @@ import com.example.cameron.ethereumtest1.model.ContentItem;
 public class DBUserContentItem {
 
     public String publishedByEthAddress;
-    public long publishedDate;
-    public String txId;
+    public int userContentIndex;
     public String contentIPFS;
     public String imageIPFS;
     public String json;
-    public int index;
+    public String title;
+    public String primaryText;
+    public long publishedDate;
     public boolean confirmed;
-    public ContentItem contentItem;
-    //ContentItem fields:
-//    public String publishedBy;
-//    public String title;
-//    public long publishedDate;
-//    public String primaryText;
-//    public String primaryImageUrl;
-//    public String primaryHttpLink;
-//    public String primaryContentAddressedLink;
 
 
-    public DBUserContentItem(String publishedByEthAddress, long publishedDate, String txId,
-                             String contentIPFS, String imageIPFS, String json,
-                             boolean confirmed, int index, ContentItem contentItem) {
+    public DBUserContentItem(String publishedByEthAddress, int userContentIndex, String contentIPFS,
+                             String imageIPFS, String json, String title, String primaryText,
+                             long publishedDate, boolean confirmed) {
         this.publishedByEthAddress = publishedByEthAddress;
-        this.publishedDate = publishedDate;
-        this.txId = txId;
+        this.userContentIndex = userContentIndex;
         this.contentIPFS = contentIPFS;
         this.imageIPFS = imageIPFS;
         this.json = json;
-        this.contentIPFS = contentIPFS;
+        this.title = title;
+        this.primaryText = primaryText;
+        this.publishedDate = publishedDate;
         this.confirmed = confirmed;
-        this.index = index;
-        this.contentItem = contentItem;
     }
 
 }

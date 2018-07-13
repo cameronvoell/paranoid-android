@@ -1,6 +1,7 @@
 package com.example.cameron.ethereumtest1.ethereum;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,6 +17,8 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.cameron.ethereumtest1.database.DBEthereumTransaction;
+import com.example.cameron.ethereumtest1.database.DBPublicationContentItem;
+import com.example.cameron.ethereumtest1.database.DBUserContentItem;
 import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.util.Convert;
@@ -282,15 +285,11 @@ public class EthereumClientService extends Service {
         try {
             OutputStreamWriter outputStreamWriter =
                     new OutputStreamWriter(new FileOutputStream(new File(getFilesDir() + ETH_DATA_DIRECTORY + "/GethDroid", "static-nodes.json")));
-            String string = "[" +
-                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS + "\"," +
-                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_2 + "\"," +
-                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_3 + "\"," +
-                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_4 + "\"," +
-                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_5 + "\"," +
-                    "  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_6 + "\"" +
-                    //"  \", enode://pubkey@ip:port\"\n" +
-                    "]";
+            String string = "[";
+            for (String s: EthereumConstants.LIGHT_SERVERS) { //fuck you string immutability interview questions
+                string = string + ("  \"" + s + "\",");
+            }
+            string = string + ("  \"" + EthereumConstants.LIGHT_SERV_PEER_NODE_ENODE_ADDRESS_4 + "\"]");
             outputStreamWriter.append(string);
             outputStreamWriter.close();
 
@@ -299,6 +298,10 @@ public class EthereumClientService extends Service {
             }
             mNode.start();
             mEthereumClient = mNode.getEthereumClient();
+            Log.e("PEER", "Node Info IP: " + mNode.getNodeInfo().getIP());
+            Log.e("PEER", "Node Info Listener Address: " + mNode.getNodeInfo().getListenerAddress());
+            Log.e("PEER", "Node Info Discovery Port: " + mNode.getNodeInfo().getDiscoveryPort());
+            Log.e("PEER", "Node Info Listener Port: " + mNode.getNodeInfo().getListenerPort());
             mEthereumClient.subscribeNewHead(mContext, mNewHeadHandler, 16);
         } catch (Exception e) {
             e.printStackTrace();
@@ -318,6 +321,10 @@ public class EthereumClientService extends Service {
             LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
             bm.sendBroadcast(intent);
             try {
+//                Log.e("PEER", "Node Info IP: " + mNode.getNodeInfo().getIP());
+//                Log.e("PEER", "Node Info Listener Address: " + mNode.getNodeInfo().getListenerAddress());
+//                Log.e("PEER", "Node Info Discovery Port: " + mNode.getNodeInfo().getDiscoveryPort());
+//                Log.e("PEER", "Node Info Listener Port: " + mNode.getNodeInfo().getListenerPort());
                 Log.e("PEER", "Num Peers: " + mNode.getPeersInfo().size());
                 for (int i = 0; i < mNode.getPeersInfo().size(); i++) {
                     Log.e("PEER", "Peer " + i + ": " + mNode.getPeersInfo().get(i).getID());
@@ -363,6 +370,7 @@ public class EthereumClientService extends Service {
 
     private void handleFetchUserContentList(String addressString) {
         String contentString = "";
+        int targetFetch = 10;
         while (!mIsReady) {
             try {
                 Thread.sleep(1000);
@@ -402,8 +410,9 @@ public class EthereumClientService extends Service {
             long numContent = returnData.get(2).getBigInt().getInt64();
 
             ArrayList<String> postJsonArray = new ArrayList<>();
+            ArrayList<DBUserContentItem> dbSaveList = new ArrayList<>();
 
-            long howFarBack = numContent > 5 ? numContent - 5 : 0;
+            long howFarBack = numContent > targetFetch ? numContent - targetFetch : 0;
 
             for (long i = numContent - 1; i >= 0 && i >= howFarBack; i--) {
                 callData = Geth.newInterfaces(2);
@@ -428,7 +437,28 @@ public class EthereumClientService extends Service {
                 }
 
                 postJsonArray.add(json);
+                ContentItem ci = convertJsonToContentItem(json);
+
+                DBUserContentItem dbuci = new DBUserContentItem(addressString, (int)i, contentString, ci.primaryImageUrl, json, ci.title, ci.primaryText, ci.publishedDate, true);
+                dbSaveList.add(dbuci);
+                String state = Environment.getExternalStorageState();
+                if (Environment.MEDIA_MOUNTED.equals(state)) {
+                    File ethercircusFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "ethercircus");
+                    if (!ethercircusFolder.exists()) ethercircusFolder.mkdirs();
+                    File addressFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/" + "ethercircus", addressString);
+                    if (!addressFolder.exists()) addressFolder.mkdirs();
+                    File contentFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/ethercircus/" + addressString + "/", "content_" + i);
+                    if (!contentFolder.exists()) contentFolder.mkdirs();
+                    FileOutputStream fo = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + File.separator + "ethercircus" + File.separator + addressString + File.separator + "content_" + i + File.separator + "content.json");
+                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fo);
+                    outputStreamWriter.write(json);
+                    outputStreamWriter.close();
+                    fo.close();
+                }
             }
+
+            DatabaseHelper db = new DatabaseHelper(getBaseContext());
+            db.saveUserContentItems(dbSaveList);
 
             Intent intent = new Intent(UI_UPDATE_USER_CONTENT_LIST);
             intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_STRING, postJsonArray);
@@ -492,6 +522,7 @@ public class EthereumClientService extends Service {
             ArrayList<String> postJsonArray = new ArrayList<>();
             ArrayList<Integer> postUniqueSupportersArray = new ArrayList<>();
             ArrayList<String> postRevenue = new ArrayList<>();
+            ArrayList<DBPublicationContentItem> dbSaveList = new ArrayList<>();
             int counter = 0;
             for (long i = numPublished - 1; i >= 10 && counter <= 15; i--) {
                 callData = Geth.newInterfaces(2);
@@ -547,8 +578,13 @@ public class EthereumClientService extends Service {
                 ci.publishedBy = userName;
                 postJsonArray.add(convertContentItemToJSON(ci));
 
+                DBPublicationContentItem dbpci = new DBPublicationContentItem(0, (int)i, ci.publishedBy, contentString, ci.primaryImageUrl, json, ci.title, ci.primaryText, ci.publishedDate);
+                dbSaveList.add(dbpci);
+
             }
 
+            DatabaseHelper db = new DatabaseHelper(getApplicationContext());
+            db.savePublicationContentItems(dbSaveList);
             Intent intent = new Intent(UI_UPDATE_PUBLICATION_CONTENT);
             intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_STRING, postJsonArray);
             intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_REVENUE_STRING, postRevenue);
@@ -788,6 +824,34 @@ public class EthereumClientService extends Service {
 
             Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
 
+
+            CallOpts callOpts = Geth.newCallOpts();
+            callOpts.setContext(mContext);
+            Interfaces callData;
+            Interfaces returnData;
+
+            //Find number of articles
+            callData = Geth.newInterfaces(1);
+            Interface addressParameter = Geth.newInterface();
+            addressParameter.setAddress(Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getApplicationContext())));
+            callData.set(0, addressParameter);
+
+            returnData = Geth.newInterfaces(3);
+            Interface userNameParam = Geth.newInterface();
+            userNameParam.setDefaultString();
+            Interface metaParam = Geth.newInterface();
+            metaParam.setDefaultString();
+            Interface numContentParam = Geth.newInterface();
+            numContentParam.setDefaultBigInt();
+            returnData.set(0, userNameParam);
+            returnData.set(1, metaParam);
+            returnData.set(2, numContentParam);
+
+            userContract.call(callOpts, returnData, "userIndex", callData);
+            long numContent = returnData.get(2).getBigInt().getInt64();
+            content.userContentIndex = (int)numContent;
+
+
             TransactOpts tOpts = new TransactOpts();
             tOpts.setContext(mContext);
             tOpts.setFrom(address);
@@ -811,6 +875,18 @@ public class EthereumClientService extends Service {
             String contentJson = convertContentItemToJSON(content);
 
             final String contentHash = new IPFS().getAdd().string(contentJson).getHash();
+
+            String state = Environment.getExternalStorageState();
+            if (Environment.MEDIA_MOUNTED.equals(state)) {
+                File ethercircusFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "ethercircus");
+                if (!ethercircusFolder.exists()) ethercircusFolder.mkdirs();
+                File addressFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/" + "ethercircus", content.publishedBy);
+                if (!addressFolder.exists()) addressFolder.mkdirs();
+                File contentFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/ethercircus/" + content.publishedBy, contentHash);
+                if (!addressFolder.exists()) contentFolder.mkdirs();
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(getApplicationContext().openFileOutput(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/ethercircus/" + content.publishedBy + "/" + contentHash + "/content.json", Context.MODE_WORLD_READABLE));
+                outputStreamWriter.write(contentJson);
+            }
 
             //publish to user feed
             Interfaces callParams = Geth.newInterfaces(1);

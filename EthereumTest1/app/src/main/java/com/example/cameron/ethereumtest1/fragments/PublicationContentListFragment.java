@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,6 +18,7 @@ import android.widget.Spinner;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.activities.MainActivity;
 import com.example.cameron.ethereumtest1.adapters.PublicationItemRecyclerViewAdapter;
+import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.model.PublicationContentItem;
@@ -41,6 +43,7 @@ public class PublicationContentListFragment extends Fragment {
     private Spinner mTagSpinner;
     private Spinner mSortBySpinner;
     private ArrayList<PublicationContentItem> mContentItems;
+    private DatabaseHelper mDatabaseHelper;
 
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -87,15 +90,12 @@ public class PublicationContentListFragment extends Fragment {
 
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recyclerView);
 
-        loadContentFeed();
-
         // Set the adapter
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
             mRecyclerView = (RecyclerView) view;
             mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
             if (mContentItems == null) mContentItems = new ArrayList<PublicationContentItem>();
-            mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(mContentItems, getContext()));
             mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
                 @Override
                 public void onScrolled(RecyclerView recyclerView, int dx, int dy){
@@ -107,6 +107,14 @@ public class PublicationContentListFragment extends Fragment {
             });
         }
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        mDatabaseHelper = new DatabaseHelper(getContext());
+        loadContentFeed();
+        mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(getContext(), mDatabaseHelper.getPublicationContentCursor(0, 20)));
     }
 
     private void loadContentFeed() {
@@ -125,7 +133,7 @@ public class PublicationContentListFragment extends Fragment {
         try {
             contentItem = gson.fromJson(json, ContentItem.class);
         } catch (Exception e) {
-            contentItem = new ContentItem("", "content not available", 0, "", "", "", "");
+            contentItem = new ContentItem("", "content not available", 0, "", "", 0);
         }
         return contentItem;
     }
@@ -139,7 +147,7 @@ public class PublicationContentListFragment extends Fragment {
             PublicationContentItem pci = new PublicationContentItem(i, ci, revenue, 0);
             mContentItems.add(pci);
         }
-        mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(mContentItems, getContext()));
+        mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(getContext(), mDatabaseHelper.getPublicationContentCursor(0, 12)));
     }
 
     @Override

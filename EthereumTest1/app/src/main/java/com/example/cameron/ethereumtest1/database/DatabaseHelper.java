@@ -20,7 +20,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     Context mContext;
 
     //Used for upgrading the database
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 4;
 
     //name of our database file
     private static final String DATABASE_NAME = "circus_droid";
@@ -60,30 +60,46 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     //User Content Table
     public static final String KEY_PUBLISHED_BY_ETH_ADDRESS = "KEY_PUBLISHED_BY_ETH_ADDRESS";
-    public static final String KEY_PUBLISHED_DATE= "KEY_PUBLISHED_DATE";
-    public static final String KEY_TX_ID = "KEY_TX_ID";
-    public static final String KEY_PRIMARY_CONTENT_IPFS = "KEY_PRIMARY_CONTENT_IPFS";
-    public static final String KEY_PRIMARY_IMAGE_IPFS = "KEY_PRIMARY_IMAGE_IPFS";
-    public static final String KEY_JSON = "KEY_JSON";
     public static final String KEY_USER_CONTENT_INDEX = "KEY_USER_CONTENT_INDEX";
+    public static final String KEY_CONTENT_IPFS = "KEY_PRIMARY_CONTENT_IPFS";
+    public static final String KEY_IMAGE_IPFS = "KEY_PRIMARY_IMAGE_IPFS";
+    public static final String KEY_JSON = "KEY_JSON";
     public static final String KEY_TITLE = "KEY_TITLE";
     public static final String KEY_PRIMARY_TEXT = "KEY_PRIMARY_TEXT";
-    public static final String KEY_HTTP_LINK = "KEY_HTTP_LINK";
+    public static final String KEY_PUBLISHED_DATE= "KEY_PUBLISHED_DATE";
 
     public static final String TABLE_USER_CONTENT = "table_user_content";
     public static final String CREATE_TABLE_USER_CONTENT = "CREATE TABLE " + TABLE_USER_CONTENT
             + "(" + KEY_ID + " INTEGER PRIMARY KEY, "
             + KEY_PUBLISHED_BY_ETH_ADDRESS + " TEXT,"
-            + KEY_PUBLISHED_DATE +  " TEXT,"
-            + KEY_TX_ID + " TEXT,"
-            + KEY_PRIMARY_CONTENT_IPFS + " TEXT,"
-            + KEY_PRIMARY_IMAGE_IPFS + " TEXT,"
-            + KEY_JSON + " TEXT,"
             + KEY_USER_CONTENT_INDEX + " INTEGER,"
+            + KEY_CONTENT_IPFS + " TEXT,"
+            + KEY_IMAGE_IPFS + " TEXT,"
+            + KEY_JSON + " TEXT,"
             + KEY_TITLE + " TEXT,"
             + KEY_PRIMARY_TEXT + " TEXT,"
-            + KEY_HTTP_LINK + " TEXT,"
-            + KEY_CONFIRMED + " BOOLEAN"
+            + KEY_PUBLISHED_DATE +  " TEXT,"
+            + KEY_CONFIRMED + " BOOLEAN,"
+            + "UNIQUE(" + KEY_CONTENT_IPFS + ") ON CONFLICT REPLACE"
+            + ")";
+
+    //Publication Content Table
+    public static final String KEY_PUBLICATION_INDEX = "KEY_PUBLICATION_INDEX";
+    public static final String KEY_PUBLICATION_CONTENT_INDEX = "KEY_USER_CONTENT_INDEX";
+
+    public static final String TABLE_PUBLICATION_CONTENT = "table_publication_content";
+    public static final String CREATE_TABLE_PUBLICATION_CONTENT = "CREATE TABLE " + TABLE_PUBLICATION_CONTENT
+            + "(" + KEY_ID + " INTEGER PRIMARY KEY, "
+            + KEY_PUBLICATION_INDEX + " INTEGER,"
+            + KEY_PUBLICATION_CONTENT_INDEX + " INTEGER,"
+            + KEY_PUBLISHED_BY_ETH_ADDRESS + " INTEGER,"
+            + KEY_CONTENT_IPFS + " TEXT,"
+            + KEY_IMAGE_IPFS + " TEXT,"
+            + KEY_JSON + " TEXT,"
+            + KEY_TITLE + " TEXT,"
+            + KEY_PRIMARY_TEXT + " TEXT,"
+            + KEY_PUBLISHED_DATE +  " TEXT,"
+            + "UNIQUE(" + KEY_CONTENT_IPFS + ") ON CONFLICT REPLACE"
             + ")";
 
     public DatabaseHelper(Context context) {
@@ -95,13 +111,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(CREATE_TABLE_ETH_TRANSACTIONS);
         db.execSQL(CREATE_TABLE_USER_CONTENT);
+        db.execSQL(CREATE_TABLE_PUBLICATION_CONTENT);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_ETH_TRANSACTIONS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_CONTENT);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PUBLICATION_CONTENT);
         db.execSQL(CREATE_TABLE_ETH_TRANSACTIONS);
         db.execSQL(CREATE_TABLE_USER_CONTENT);
+        db.execSQL(CREATE_TABLE_PUBLICATION_CONTENT);
     }
 
     public void saveTransactionInfo(DBEthereumTransaction tx) {
@@ -126,17 +146,34 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         for (DBUserContentItem userContent: userContentItems) {
             ContentValues values = new ContentValues(8);
             values.put(KEY_PUBLISHED_BY_ETH_ADDRESS, userContent.publishedByEthAddress);
-            values.put(KEY_PUBLISHED_DATE, userContent.publishedDate);
-            values.put(KEY_TX_ID, userContent.txId);
-            values.put(KEY_PRIMARY_CONTENT_IPFS, userContent.contentIPFS);
-            values.put(KEY_PRIMARY_IMAGE_IPFS, userContent.imageIPFS);
+            values.put(KEY_USER_CONTENT_INDEX, userContent.userContentIndex);
+            values.put(KEY_CONTENT_IPFS, userContent.contentIPFS);
+            values.put(KEY_IMAGE_IPFS, userContent.imageIPFS);
             values.put(KEY_JSON, userContent.json);
-            values.put(KEY_USER_CONTENT_INDEX, userContent.index);
-            values.put(KEY_TITLE, userContent.contentItem.title);
-            values.put(KEY_PRIMARY_TEXT, userContent.contentItem.primaryText);
-            values.put(KEY_HTTP_LINK, userContent.contentItem.primaryHttpLink);
+            values.put(KEY_TITLE, userContent.title);
+            values.put(KEY_PRIMARY_TEXT, userContent.primaryText);
+            values.put(KEY_PUBLISHED_DATE, userContent.publishedDate);
             values.put(KEY_CONFIRMED, userContent.confirmed);
-            db.insertWithOnConflict(TABLE_ETH_TRANSACTIONS, null, values, CONFLICT_IGNORE);
+            db.insertWithOnConflict(TABLE_USER_CONTENT, null, values, CONFLICT_IGNORE);
+        }
+        db.close();
+    }
+
+    public void savePublicationContentItems(List<DBPublicationContentItem> publicationContentItems) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        for (DBPublicationContentItem publicationContent: publicationContentItems) {
+            ContentValues values = new ContentValues(8);
+            values.put(KEY_PUBLICATION_INDEX, publicationContent.publicationIndex);
+            values.put(KEY_USER_CONTENT_INDEX, publicationContent.publicationContentIndex);
+            values.put(KEY_PUBLISHED_BY_ETH_ADDRESS, publicationContent.publishedByEthAddress);
+            values.put(KEY_CONTENT_IPFS, publicationContent.contentIPFS);
+            values.put(KEY_IMAGE_IPFS, publicationContent.imageIPFS);
+            values.put(KEY_JSON, publicationContent.json);
+            values.put(KEY_TITLE, publicationContent.title);
+            values.put(KEY_PRIMARY_TEXT, publicationContent.primaryText);
+            values.put(KEY_PUBLISHED_DATE, publicationContent.publishedDate);
+            db.insertWithOnConflict(TABLE_PUBLICATION_CONTENT, null, values, CONFLICT_IGNORE);
         }
         db.close();
     }
@@ -153,6 +190,43 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM " + TABLE_USER_CONTENT + " WHERE " + KEY_PUBLISHED_BY_ETH_ADDRESS +  " = " + "\"" + address + "\"" + ORDER_BY, null);
+    }
+
+    public Cursor getPublicationContentCursor(int publicationIndex, int quantity) {
+        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_CONTENT_INDEX + " DESC";
+
+        SQLiteDatabase db = getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + TABLE_PUBLICATION_CONTENT + " WHERE " + KEY_PUBLICATION_INDEX +  " = " + "\"" + 0 + "\"" + ORDER_BY, null);
+    }
+
+    public static DBUserContentItem convertCursorToDBUserContentItem(Cursor c) {
+        String address = c.getString(c.getColumnIndex(KEY_PUBLISHED_BY_ETH_ADDRESS));
+        int userContentIndex = c.getInt(c.getColumnIndex(KEY_USER_CONTENT_INDEX));
+        String contentIPFS = c.getString(c.getColumnIndex(KEY_CONTENT_IPFS));
+        String imageIPFS = c.getString(c.getColumnIndex(KEY_IMAGE_IPFS));
+        String json = c.getString(c.getColumnIndex(KEY_JSON));
+        String title = c.getString(c.getColumnIndex(KEY_TITLE));
+        String primaryText = c.getString(c.getColumnIndex(KEY_PRIMARY_TEXT));
+        long publishedDate = c.getLong(c.getColumnIndex(KEY_PUBLISHED_DATE));
+        boolean confirmed = c.getInt(c.getColumnIndex(KEY_CONFIRMED)) == 1;
+
+        return new DBUserContentItem(address, userContentIndex, contentIPFS, imageIPFS, json, title,
+                primaryText, publishedDate, confirmed);
+    }
+
+    public static DBPublicationContentItem convertCursorToDBPublicationContentItem(Cursor c) {
+        int publicationIndex = c.getInt(c.getColumnIndex(KEY_PUBLICATION_INDEX));
+        int publicationUserContentIndex = c.getInt(c.getColumnIndex(KEY_PUBLICATION_CONTENT_INDEX));
+        String address = c.getString(c.getColumnIndex(KEY_PUBLISHED_BY_ETH_ADDRESS));
+        String contentIPFS = c.getString(c.getColumnIndex(KEY_CONTENT_IPFS));
+        String imageIPFS = c.getString(c.getColumnIndex(KEY_IMAGE_IPFS));
+        String json = c.getString(c.getColumnIndex(KEY_JSON));
+        String title = c.getString(c.getColumnIndex(KEY_TITLE));
+        String primaryText = c.getString(c.getColumnIndex(KEY_PRIMARY_TEXT));
+        long publishedDate = c.getLong(c.getColumnIndex(KEY_PUBLISHED_DATE));
+
+        return new DBPublicationContentItem(publicationIndex, publicationUserContentIndex, address,
+                contentIPFS, imageIPFS, json, title, primaryText, publishedDate);
     }
 
 }

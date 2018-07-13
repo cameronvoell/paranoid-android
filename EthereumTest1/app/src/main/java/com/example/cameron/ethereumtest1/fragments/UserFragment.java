@@ -20,6 +20,8 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.adapters.UserFragmentContentItemRecyclerViewAdapter;
+import com.example.cameron.ethereumtest1.database.DBUserContentItem;
+import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.model.ContentItem;
@@ -124,11 +126,11 @@ public class UserFragment extends Fragment {
 
         mListInteractionListener = new OnListFragmentInteractionListener() {
             @Override
-            public void onListFragmentInteraction(final int position, ContentItem item) {
-                final int postIndex = mContentItems.size() - 1 - position;
+            public void onListFragmentInteraction(final int position, DBUserContentItem item) {
+                final int postIndex = item.userContentIndex;
                 final Dialog dialog = new Dialog(getActivity());
                 dialog.setContentView(R.layout.dialog_post_content_to_slush_pile);
-                dialog.setTitle("Publish post index " + postIndex + " to your slush feed");
+                dialog.setTitle("Publish post index " + postIndex + " to your slush feed?");
 
                 final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
                 Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
@@ -226,7 +228,7 @@ public class UserFragment extends Fragment {
         //mContentItems = new DatabaseHelper(getContext()).getUserFragmentContentItems(mSelectedAddress, 0, 1);
         mContentItems = new ArrayList<>();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(mContentItems, mListInteractionListener, getContext()));
+        mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(getContext(), new DatabaseHelper(getContext()).getUserContentCursor(mSelectedAddress, 10), mListInteractionListener));
 
         if ((PrefUtils.shouldUpdateAccountContentList(getActivity()))) {
             try {
@@ -244,7 +246,7 @@ public class UserFragment extends Fragment {
         try {
             contentItem = gson.fromJson(json, ContentItem.class);
         } catch (Exception e) {
-            contentItem = new ContentItem("", "", 0, "", "", "", "");
+            contentItem = new ContentItem("", "", 0, "", "", 0);
         }
         return contentItem;
     }
@@ -254,7 +256,7 @@ public class UserFragment extends Fragment {
             ContentItem ci = convertJsonToContentItem(json);
             mContentItems.add(new UserFragmentContentItem(0, ci, "", "", ""));
         }
-        mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(mContentItems, mListInteractionListener, getContext()));
+        mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(getContext(), new DatabaseHelper(getContext()).getUserContentCursor(mSelectedAddress, 10), mListInteractionListener));
     }
 
     @Override
@@ -266,6 +268,6 @@ public class UserFragment extends Fragment {
 
 
     public interface OnListFragmentInteractionListener {
-        void onListFragmentInteraction(int position, ContentItem item);
+        void onListFragmentInteraction(int position, DBUserContentItem item);
     }
 }

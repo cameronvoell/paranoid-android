@@ -815,6 +815,7 @@ public class EthereumClientService extends Service {
     private void handlePublishUserContent(ContentItem content, final String password) {
         Hash transactionHash = null;
         DBEthereumTransaction ethereumTransaction = null;
+        String addressString = PrefUtils.getSelectedAccountAddress(getApplicationContext());
         try {
             final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
 
@@ -822,7 +823,7 @@ public class EthereumClientService extends Service {
                     new Address(EthereumConstants.USER_CONTENT_REGISTER_ADDRESS_RINKEBY),
                     USER_CONTENT_REGISTER_ABI, mEthereumClient);
 
-            Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
+            Address address = Geth.newAddressFromHex(addressString);
 
 
             CallOpts callOpts = Geth.newCallOpts();
@@ -833,7 +834,7 @@ public class EthereumClientService extends Service {
             //Find number of articles
             callData = Geth.newInterfaces(1);
             Interface addressParameter = Geth.newInterface();
-            addressParameter.setAddress(Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getApplicationContext())));
+            addressParameter.setAddress(Geth.newAddressFromHex(addressString));
             callData.set(0, addressParameter);
 
             returnData = Geth.newInterfaces(3);
@@ -880,12 +881,15 @@ public class EthereumClientService extends Service {
             if (Environment.MEDIA_MOUNTED.equals(state)) {
                 File ethercircusFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "ethercircus");
                 if (!ethercircusFolder.exists()) ethercircusFolder.mkdirs();
-                File addressFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/" + "ethercircus", content.publishedBy);
+                File addressFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/" + "ethercircus", addressString);
                 if (!addressFolder.exists()) addressFolder.mkdirs();
-                File contentFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/ethercircus/" + content.publishedBy, contentHash);
-                if (!addressFolder.exists()) contentFolder.mkdirs();
-                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(getApplicationContext().openFileOutput(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/ethercircus/" + content.publishedBy + "/" + contentHash + "/content.json", Context.MODE_WORLD_READABLE));
+                File contentFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/ethercircus/" + addressString + "/", "content_" + numContent);
+                if (!contentFolder.exists()) contentFolder.mkdirs();
+                FileOutputStream fo = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + File.separator + "ethercircus" + File.separator + addressString + File.separator + "content_" + numContent + File.separator + "content.json");
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fo);
                 outputStreamWriter.write(contentJson);
+                outputStreamWriter.close();
+                fo.close();
             }
 
             //publish to user feed

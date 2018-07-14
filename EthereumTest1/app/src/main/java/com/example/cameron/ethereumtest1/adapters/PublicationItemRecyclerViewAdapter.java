@@ -86,8 +86,7 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                             Intent intent = new Intent(mContext, ViewContentActivity.class);
                             ArrayList<DBPublicationContentItem> contentItems = new ArrayList<>();
-                            DBPublicationContentItem item = DatabaseHelper.convertCursorToDBPublicationContentItem(cursor);
-                            contentItems.add(item);
+                            contentItems.add(ci);
                             intent.putParcelableArrayListExtra("content_items", contentItems);
                             if (!ci.imageIPFS.equals("empty")) {
                                 options = ActivityOptions.makeSceneTransitionAnimation((Activity) mContext, holder.mImageView, mContext.getString(R.string.picture_transition_name));

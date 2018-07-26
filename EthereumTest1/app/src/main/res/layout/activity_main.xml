@@ -177,6 +177,18 @@
             android:onClick="showContentList"/>
 
         <ImageButton
+            android:id="@+id/button_publications"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:tint="@android:color/darker_gray"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_publication"
+            android:scaleType="fitCenter"
+            android:onClick="showPublications"/>
+
+        <ImageButton
             android:id="@+id/user_fragment_button"
             android:layout_width="0dp"
             android:layout_height="32dp"
@@ -199,18 +211,6 @@
             android:src="@drawable/ic_ethereum_dark"
             android:scaleType="fitCenter"
             android:onClick="showEthereum"/>
-
-        <ImageButton
-            android:id="@+id/button_ipfs"
-            android:layout_width="0dp"
-            android:layout_height="32dp"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:tint="@android:color/darker_gray"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_ipfs_dark"
-            android:scaleType="fitCenter"
-            android:onClick="showIPFS"/>
 
     </LinearLayout>
 

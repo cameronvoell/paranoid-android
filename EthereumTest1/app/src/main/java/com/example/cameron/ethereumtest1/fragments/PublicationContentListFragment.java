@@ -42,7 +42,6 @@ public class PublicationContentListFragment extends Fragment {
     private Spinner mPublicationSpinner;
     private Spinner mTagSpinner;
     private Spinner mSortBySpinner;
-    private ArrayList<PublicationContentItem> mContentItems;
     private DatabaseHelper mDatabaseHelper;
 
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
@@ -51,11 +50,9 @@ public class PublicationContentListFragment extends Fragment {
             String action = intent.getAction();
             switch (action) {
                 case EthereumClientService.UI_UPDATE_PUBLICATION_CONTENT:
-                    ArrayList<String> jsonArray = intent.getStringArrayListExtra(
-                            EthereumClientService.PARAM_ARRAY_CONTENT_STRING);
                     ArrayList<String> revenueArray = intent.getStringArrayListExtra(
                             EthereumClientService.PARAM_ARRAY_CONTENT_REVENUE_STRING);
-                    reloadContentList(jsonArray, revenueArray);
+                    reloadContentList(revenueArray);
             }
         }
     };
@@ -95,7 +92,6 @@ public class PublicationContentListFragment extends Fragment {
             Context context = view.getContext();
             mRecyclerView = (RecyclerView) view;
             mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
-            if (mContentItems == null) mContentItems = new ArrayList<PublicationContentItem>();
             mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
                 @Override
                 public void onScrolled(RecyclerView recyclerView, int dx, int dy){
@@ -127,26 +123,12 @@ public class PublicationContentListFragment extends Fragment {
         }
     }
 
-    private ContentItem convertJsonToContentItem(String json) {
-        Gson gson = new Gson();
-        ContentItem contentItem;
-        try {
-            contentItem = gson.fromJson(json, ContentItem.class);
-        } catch (Exception e) {
-            contentItem = new ContentItem("", "content not available", 0, "", "", 0);
-        }
-        return contentItem;
+    @Override
+    public void onResume() {
+        super.onResume();
     }
 
-    private void reloadContentList(ArrayList<String> jsonArray, ArrayList<String> revenueArray) {
-        mContentItems = new ArrayList<PublicationContentItem>();
-        for (int i = 0; i < jsonArray.size(); i++) {
-            String json = jsonArray.get(i);
-            String revenue = revenueArray.get(i);
-            ContentItem ci = convertJsonToContentItem(json);
-            PublicationContentItem pci = new PublicationContentItem(i, ci, revenue, 0);
-            mContentItems.add(pci);
-        }
+    private void reloadContentList(ArrayList<String> revenueArray) {
         mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(getContext(), mDatabaseHelper.getPublicationContentCursor(0, 12)));
     }
 
@@ -168,6 +150,7 @@ public class PublicationContentListFragment extends Fragment {
     }
 
     public void scrollToTop() {
+        loadContentFeed();
         mRecyclerView.smoothScrollToPosition(0);
     }
 

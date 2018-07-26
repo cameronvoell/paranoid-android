@@ -52,7 +52,6 @@ public class UserFragment extends Fragment {
     private Button mRegisterButton;
 
     private String mSelectedAddress;
-    private List<UserFragmentContentItem> mContentItems;
 
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -105,7 +104,7 @@ public class UserFragment extends Fragment {
 
     public UserFragment() {}
 
-    public static UserFragment newInstance(String param1, String param2) {
+    public static UserFragment newInstance() {
         UserFragment fragment = new UserFragment();
         return fragment;
     }
@@ -226,7 +225,6 @@ public class UserFragment extends Fragment {
 
     private void loadContentList() {
         //mContentItems = new DatabaseHelper(getContext()).getUserFragmentContentItems(mSelectedAddress, 0, 1);
-        mContentItems = new ArrayList<>();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(getContext(), new DatabaseHelper(getContext()).getUserContentCursor(mSelectedAddress, 10), mListInteractionListener));
 
@@ -252,10 +250,6 @@ public class UserFragment extends Fragment {
     }
 
     private void reloadUserContentList(ArrayList<String> jsonArray) {
-        for (String json: jsonArray) {
-            ContentItem ci = convertJsonToContentItem(json);
-            mContentItems.add(new UserFragmentContentItem(0, ci, "", "", ""));
-        }
         mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(getContext(), new DatabaseHelper(getContext()).getUserContentCursor(mSelectedAddress, 10), mListInteractionListener));
     }
 

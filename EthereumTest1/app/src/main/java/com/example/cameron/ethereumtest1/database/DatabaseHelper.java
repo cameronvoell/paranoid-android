@@ -20,7 +20,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     Context mContext;
 
     //Used for upgrading the database
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 6;
 
     //name of our database file
     private static final String DATABASE_NAME = "circus_droid";
@@ -99,7 +99,34 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + KEY_TITLE + " TEXT,"
             + KEY_PRIMARY_TEXT + " TEXT,"
             + KEY_PUBLISHED_DATE +  " TEXT,"
-            + "UNIQUE(" + KEY_CONTENT_IPFS + ") ON CONFLICT REPLACE"
+            + "UNIQUE(" + KEY_PUBLICATION_CONTENT_INDEX + ") ON CONFLICT REPLACE"
+            + ")";
+
+    //Publications Table
+    public static final String KEY_PUBLICATION_ID = "KEY_PUBLICATION_ID";
+    public static final String KEY_PUBLICATION_NAME = "KEY_PUBLICATION_NAME";
+    public static final String KEY_PUBLICATION_META_DATA = "KEY_PUBLICATION_META_DATA";
+    public static final String KEY_PUBLICATION_ADMIN_ADDRESS= "KEY_PUBLICATION_ADMIN_ADDRESS";
+    //public static final String KEY_NUM_ACCESS_LIST_ADDRESSES = "KEY_PUBLICATION_ADMIN_ADDRESS";
+    public static final String KEY_PUBLICATION_NUM_PUBLISHED = "KEY_PUBLICATION_NUM_PUBLISHED";
+    public static final String KEY_PUBLICATION_MIN_SUPPORT_COST_WEI = "KEY_PUBLICATION_MIN_SUPPORT_COST_WEI";
+    public static final String KEY_PUBLICATION_ADMIN_PAYMENT_PERCENTAGE = "KEY_PUBLICATION_ADMIN_PAYMENT_PERCENTAGE";
+    public static final String KEY_PUBLICATION_UNIQUE_SUPPORTERS = "KEY_PUBLICATION_UNIQUE_SUPPORTERS";
+    public static final String KEY_PUBLICATION_SUBSCRIBED_LOCALLY = "KEY_PUBLICATION_SUBSCRIBED_LOCALLY";
+
+    public static final String TABLE_PUBLICATIONS = "table_publications";
+    public static final String CREATE_TABLE_PUBLICATIONS = "CREATE TABLE " + TABLE_PUBLICATIONS
+            + "(" + KEY_ID + " INTEGER PRIMARY KEY, "
+            + KEY_PUBLICATION_ID + " INTEGER,"
+            + KEY_PUBLICATION_NAME + " TEXT,"
+            + KEY_PUBLICATION_META_DATA + " TEXT,"
+            + KEY_PUBLICATION_ADMIN_ADDRESS + " TEXT,"
+            + KEY_PUBLICATION_NUM_PUBLISHED + " INTEGER,"
+            + KEY_PUBLICATION_MIN_SUPPORT_COST_WEI + " INTEGER,"
+            + KEY_PUBLICATION_ADMIN_PAYMENT_PERCENTAGE + " INTEGER,"
+            + KEY_PUBLICATION_UNIQUE_SUPPORTERS + " INTEGER,"
+            + KEY_PUBLICATION_SUBSCRIBED_LOCALLY + " BOOLEAN,"
+            + "UNIQUE(" + KEY_PUBLICATION_ID + ") ON CONFLICT IGNORE"
             + ")";
 
     public DatabaseHelper(Context context) {
@@ -112,6 +139,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_TABLE_ETH_TRANSACTIONS);
         db.execSQL(CREATE_TABLE_USER_CONTENT);
         db.execSQL(CREATE_TABLE_PUBLICATION_CONTENT);
+        db.execSQL(CREATE_TABLE_PUBLICATIONS);
     }
 
     @Override
@@ -119,9 +147,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_ETH_TRANSACTIONS);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_CONTENT);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_PUBLICATION_CONTENT);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PUBLICATIONS);
         db.execSQL(CREATE_TABLE_ETH_TRANSACTIONS);
         db.execSQL(CREATE_TABLE_USER_CONTENT);
         db.execSQL(CREATE_TABLE_PUBLICATION_CONTENT);
+        db.execSQL(CREATE_TABLE_PUBLICATIONS);
     }
 
     public void saveTransactionInfo(DBEthereumTransaction tx) {
@@ -199,6 +229,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return db.rawQuery("SELECT * FROM " + TABLE_PUBLICATION_CONTENT + " WHERE " + KEY_PUBLICATION_INDEX +  " = " + "\"" + 0 + "\"" + ORDER_BY, null);
     }
 
+    public Cursor getPublicationsCursor() {
+        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " DESC";
+
+        SQLiteDatabase db = getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + TABLE_PUBLICATIONS + ORDER_BY, null);
+
+    }
+
     public static DBUserContentItem convertCursorToDBUserContentItem(Cursor c) {
         String address = c.getString(c.getColumnIndex(KEY_PUBLISHED_BY_ETH_ADDRESS));
         int userContentIndex = c.getInt(c.getColumnIndex(KEY_USER_CONTENT_INDEX));
@@ -229,4 +267,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 contentIPFS, imageIPFS, json, title, primaryText, publishedDate);
     }
 
+    public static DBPublication convertCursorToDBPublication(Cursor c) {
+        int publicationID = c.getInt(c.getColumnIndex(KEY_PUBLICATION_ID));
+        String name = c.getString(c.getColumnIndex(KEY_PUBLICATION_NAME));
+        String metaData = c.getString(c.getColumnIndex(KEY_PUBLICATION_META_DATA));
+        String adminAddress = c.getString(c.getColumnIndex(KEY_PUBLICATION_ADMIN_ADDRESS));
+        int numPublished = c.getInt(c.getColumnIndex(KEY_PUBLICATION_NUM_PUBLISHED));
+        int minSupportCost = c.getInt(c.getColumnIndex(KEY_PUBLICATION_MIN_SUPPORT_COST_WEI));
+        int adminPayPercentage = c.getInt(c.getColumnIndex(KEY_PUBLICATION_ADMIN_PAYMENT_PERCENTAGE));
+        int uniqueSupporters = c.getInt(c.getColumnIndex(KEY_PUBLICATION_UNIQUE_SUPPORTERS));
+        boolean subscribed = c.getInt(c.getColumnIndex(KEY_PUBLICATION_SUBSCRIBED_LOCALLY)) == 1;
+
+        return new DBPublication(publicationID, name, metaData, adminAddress, numPublished,
+                minSupportCost, adminPayPercentage, uniqueSupporters, subscribed);
+    }
 }

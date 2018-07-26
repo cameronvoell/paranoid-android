@@ -59,6 +59,8 @@ public class EthereumConstants {
                                                   "enode://f251404ab66f10df6f541d69d735616a7d78e04673ec40cdfe6bf3d1fb5d84647ba627f22a1e8c5e2aa45629c88e33bc394cc1633a63fed11d84304892e51fe9@196.54.41.29:24900",
                                                   "enode://f8ff6758d6b9e5b239051f17648ef57d63b589353b22dd5b53d34b1340b29d55b481259252af7ae490510a3a7dbc1be47222c315033d66db320df8769a1bfdd9@109.232.77.10:30303",
                                                   "enode://a9ed8d7b0cafdc2a30813b0758febe6e94d2a3a625644b6b5854d4463083b060de0bfbf1681811432487c761064c13d854e33ce203b964e28fea3fb866345fde@138.197.108.157:30303",
+                                                  "enode://9a4e67ab6482ce584db01b79e19eab2b2f18ff8a65caf73eef69be5dd12be1d115496876b2504fa7f96f3bfac6cd5a4393d4d803c691dc481b9e7586689e312a@159.89.168.113:30303",
+                                                  "enode://c8f41b59efa6290df76324339778b95b86bacb2592eda71fc2ed3dc1f3c1f0f1f04fa162e31768f9ab345f0f1e40f2d6a74014b29e24d550153f1c17075467ab@188.166.216.1:30303",
                                                   "enode://b6b28890b006743680c52e64e0d16db57f28124885595fa03a562be1d2bf0f3a1da297d56b13da25fb992888fd556d4c1a27b1f39d531bde7de1921c90061cc6@159.89.28.211:30303"
     };
 

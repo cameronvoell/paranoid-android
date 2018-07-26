@@ -17,6 +17,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.cameron.ethereumtest1.database.DBEthereumTransaction;
+import com.example.cameron.ethereumtest1.database.DBPublication;
 import com.example.cameron.ethereumtest1.database.DBPublicationContentItem;
 import com.example.cameron.ethereumtest1.database.DBUserContentItem;
 import com.example.cameron.ethereumtest1.database.DatabaseHelper;
@@ -50,6 +51,8 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import io.ipfs.kotlin.IPFS;
+import io.ipfs.kotlin.commands.Get;
+
 import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.ETH_DATA_DIRECTORY;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.KEY_STORE;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.PUBLICATION_REGISTER_ABI;
@@ -111,6 +114,11 @@ public class EthereumClientService extends Service {
     public static final String ETH_SEND_ETH = "eth.send.eth";
     public static final String PARAM_RECIPIENT = "param.recipient";
     public static final String PARAM_AMOUNT = "param.amount";
+
+    public static final String ETH_FETCH_NUM_PUBLICATIONS = "eth.fetch.num.publications";
+    public static final String PARAM_NUM_PUBLICATIONS = "param.num.publications";
+
+    public static final String ETH_FETCH_PUBLICATION_LIST = "eth.fetch.publication.list";
 
     private EthereumClient mEthereumClient;
     private org.ethereum.geth.Context mContext;
@@ -176,6 +184,9 @@ public class EthereumClientService extends Service {
                 case IPFS_FETCH_DRAFT_IMAGE_URL:
                     String draftImagePath = b.getString(PARAM_DRAFT_PHOTO_URL);
                     handleFetchDraftImageURL(draftImagePath);
+                    break;
+                case ETH_FETCH_PUBLICATION_LIST:
+                    handleFetchPublicationList();
                     break;
                 case ETH_SEND_ETH:
                     String recipient = b.getString(PARAM_RECIPIENT);
@@ -430,6 +441,7 @@ public class EthereumClientService extends Service {
 
                 String json = "";
                 try {
+                    Get get = new IPFS().getGet();
                     json = new IPFS().getGet().cat(contentString);
 
                 } catch (Exception e) {
@@ -659,6 +671,123 @@ public class EthereumClientService extends Service {
         } catch (Exception e) {
             Log.e(TAG, "Error retrieving username: " + e.getMessage());
         }
+    }
+
+    private void handleFetchPublicationList() {
+        String contentString = "";
+        while (!mIsReady) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+//        try {
+//            BoundContract contract = Geth.bindContract(
+//                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
+//                    PUBLICATION_REGISTER_ABI, mEthereumClient);
+//
+//            CallOpts callOpts = Geth.newCallOpts();
+//            callOpts.setContext(mContext);
+//            Interfaces callData;
+//            Interfaces returnData;
+//
+//            //Find number of Publications
+//            callData = Geth.newInterfaces(0);
+//
+//            returnData = Geth.newInterfaces(1);
+//            Interface numPublicationsParam = Geth.newInterface();
+//            numPublicationsParam.setDefaultBigInt();
+//            returnData.set(0, numPublicationsParam);
+//
+//            contract.callFix(callOpts, returnData, "numPublications", callData);
+//            long numPublications = returnData.get(0).getBigInt().getInt64();
+//
+//            ////////////////////////////////
+//
+//            CallOpts callOpts2 = Geth.newCallOpts();
+//            callOpts.setContext(mContext);
+//            Interfaces callData2;
+//            Interfaces returnData2;
+//
+//            callData2 = Geth.newInterfaces(1);
+//            Interface paramWhichPublication = Geth.newInterface();
+//
+//            //////////////////////////////////
+//
+//            ArrayList<DBPublication> dbSaveList = new ArrayList<>();
+//            int counter = 0;
+//            for (long i = numPublications - 1; i >= 10 && counter <= 15; i--) {
+//                callData = Geth.newInterfaces(2);
+//                callData.set(0, publicationIndex);
+//                Interface contentIndex = Geth.newInterface();
+//                contentIndex.setBigInt(Geth.newBigInt(i));
+//                callData.set(1, contentIndex);
+//
+//                returnData = Geth.newInterfaces(1);
+//                Interface content = Geth.newInterface();
+//                content.setDefaultString();
+//                returnData.set(0, content);
+//
+//                contentString = contract.callForString(callOpts, "getContent", callData);
+//
+//                Interface revenue = Geth.newInterface();
+//                revenue.setDefaultBigInt();
+//                returnData.set(0, revenue);
+//
+//                contract.callFix(callOpts, returnData, "getContentRevenue", callData);
+//                String contentRevenue = returnData.get(0).getBigInt().getString(10);
+//                postRevenue.add(contentRevenue);
+//
+//
+//                String json = "";
+//                try {
+//                    json = new IPFS().getGet().cat(contentString);
+//                } catch (Exception e) {
+//                    json = "CONTENT CURRENTLY UNAVAILABLE";// + e.getMessage();
+//                    // Log.e("oops", e.getMessage());
+//                }
+//                ContentItem ci = convertJsonToContentItem(json);
+//                if (ci == null) continue;
+//                counter++;
+//                paramFetchUsernameCallParameter2.setAddress(new Address(ci.publishedBy));
+//                callData2.set(0, paramFetchUsernameCallParameter2);
+//
+//                returnData2 = Geth.newInterfaces(3);
+//                Interface userNameData2 = Geth.newInterface();
+//                Interface metaData2 = Geth.newInterface();
+//                Interface numContent2 = Geth.newInterface();
+//                userNameData2.setDefaultString();
+//                metaData2.setDefaultString();
+//                numContent2.setDefaultBigInt();
+//                returnData2.set(0, userNameData2);
+//                returnData2.set(1, metaData2);
+//                returnData2.set(2, numContent2);
+//
+//                contract2.call(callOpts2, returnData2, "userIndex", callData2);
+//                String userName = returnData2.get(0).getString();
+//                String metadataIconUrl = returnData2.get(1).getString();
+//
+//                ci.publishedBy = userName;
+//                postJsonArray.add(convertContentItemToJSON(ci));
+//
+//                DBPublicationContentItem dbpci = new DBPublicationContentItem(0, (int)i, ci.publishedBy, contentString, ci.primaryImageUrl, json, ci.title, ci.primaryText, ci.publishedDate);
+//                dbSaveList.add(dbpci);
+//
+//            }
+//
+//            DatabaseHelper db = new DatabaseHelper(getApplicationContext());
+//            db.savePublicationContentItems(dbSaveList);
+//            Intent intent = new Intent(UI_UPDATE_PUBLICATION_CONTENT);
+//            intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_STRING, postJsonArray);
+//            intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_REVENUE_STRING, postRevenue);
+//            LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+//            bm.sendBroadcast(intent);
+//
+//        } catch (Exception e) {
+//            Log.e(TAG, "Error retrieving contentList: " + e.getMessage());
+//        }
     }
 
     /*

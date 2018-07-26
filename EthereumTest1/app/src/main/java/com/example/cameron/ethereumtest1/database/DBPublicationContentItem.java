@@ -3,8 +3,6 @@ package com.example.cameron.ethereumtest1.database;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.example.cameron.ethereumtest1.model.ContentItem;
-
 public class DBPublicationContentItem implements Parcelable {
 
     public int publicationIndex;

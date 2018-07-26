@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.fragments.EthTransactionListFragment;
+import com.example.cameron.ethereumtest1.fragments.PublicationsFragment;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.fragments.PublicationContentListFragment;
@@ -75,13 +76,14 @@ public class MainActivity extends AppCompatActivity implements
     private ImageButton mSwitchAccountButton;
 
     private PublicationContentListFragment mPublicationContentListFragment;
+    private PublicationsFragment mPublicationsFragment;
     private UserFragment mUserFragment;
     private EthTransactionListFragment mEthTransactionListFragment;
 
     private ImageButton mContentListButton;
     private ImageButton mUserFragmentButton;
     private ImageButton mEthereumButton;
-    private ImageButton mIPFSButton;
+    private ImageButton mPublicationsButton;
 
     private FloatingActionButton mFloatingActionButton;
     private FloatingActionButton mFloatingActionButton1;
@@ -115,7 +117,6 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
     };
-
     /*
      * Lifecycle Methods
      */
@@ -131,12 +132,12 @@ public class MainActivity extends AppCompatActivity implements
         mContentListButton = (ImageButton) findViewById(R.id.button_content_list);
         mUserFragmentButton = (ImageButton) findViewById(R.id.user_fragment_button);
         mEthereumButton = (ImageButton) findViewById(R.id.button_ethereum);
-        mIPFSButton = (ImageButton) findViewById(R.id.button_ipfs);
+        mPublicationsButton = (ImageButton) findViewById(R.id.button_publications);
 
         mContentListButton.setColorFilter(Color.WHITE);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
         mEthereumButton.setColorFilter(Color.DKGRAY);
-        mIPFSButton.setColorFilter(Color.DKGRAY);
+        mPublicationsButton.setColorFilter(Color.DKGRAY);
         mFloatingActionButton = (FloatingActionButton) findViewById(R.id.fab);
         mFloatingActionButton1 = (FloatingActionButton) findViewById(R.id.fab1);
         mFloatingActionButton2 = (FloatingActionButton) findViewById(R.id.fab2);
@@ -493,23 +494,39 @@ public class MainActivity extends AppCompatActivity implements
         transaction.replace(R.id.fragment_container, mPublicationContentListFragment);
         transaction.commit();
         mContentListButton.setColorFilter(Color.WHITE);
+        mPublicationsButton.setColorFilter(Color.DKGRAY);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
         mEthereumButton.setColorFilter(Color.DKGRAY);
-        mIPFSButton.setColorFilter(Color.DKGRAY);
         PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_CONTENT_LIST);
         showFAB(true);
     }
 
+    public void showPublications(View view) {
+        if (mPublicationsFragment == null)
+            mPublicationsFragment = PublicationsFragment.newInstance();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, mPublicationsFragment);
+        transaction.commit();
+        mContentListButton.setColorFilter(Color.DKGRAY);
+        mPublicationsButton.setColorFilter(Color.WHITE);
+        mUserFragmentButton.setColorFilter(Color.DKGRAY);
+        mEthereumButton.setColorFilter(Color.DKGRAY);
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_TRANSACTION_FRAGMENT);
+        showFAB(true);
+    }
+
+
     public void showUserFragment(View view) {
         if (mUserFragment == null)
-            mUserFragment = UserFragment.newInstance("","");
+            mUserFragment = UserFragment.newInstance();
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, mUserFragment);
         transaction.commit();
         mContentListButton.setColorFilter(Color.DKGRAY);
+        mPublicationsButton.setColorFilter(Color.DKGRAY);
         mUserFragmentButton.setColorFilter(Color.WHITE);
         mEthereumButton.setColorFilter(Color.DKGRAY);
-        mIPFSButton.setColorFilter(Color.DKGRAY);
+
         PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_USER_FRAGMENT);
         showFAB(true);
     }
@@ -521,15 +538,11 @@ public class MainActivity extends AppCompatActivity implements
         transaction.replace(R.id.fragment_container, mEthTransactionListFragment);
         transaction.commit();
         mContentListButton.setColorFilter(Color.DKGRAY);
+        mPublicationsButton.setColorFilter(Color.DKGRAY);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
         mEthereumButton.setColorFilter(Color.WHITE);
-        mIPFSButton.setColorFilter(Color.DKGRAY);
-        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_TRANSACTION_FRAGMENT);
-        showFAB(true);
-    }
 
-    public void showIPFS(View view) {
-        //TODO: implement IPFS fragment
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_TRANSACTION_FRAGMENT);
         showFAB(true);
     }
 

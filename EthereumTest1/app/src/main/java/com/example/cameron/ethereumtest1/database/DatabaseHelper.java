@@ -44,6 +44,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final int TX_ACTION_ID_UPDATE_USER_PIC = 2;
     public static final int TX_ACTION_ID_PUBLISH_USER_CONTENT= 3;
     public static final int TX_ACTION_ID_PUBLISH_TO_PUBLICATION= 4;
+    public static final int TX_ACTION_ID_CREATE_PUBLICATION= 5;
 
     public static final String TABLE_ETH_TRANSACTIONS = "table_eth_transactions";
     public static final String CREATE_TABLE_ETH_TRANSACTIONS = "CREATE TABLE " + TABLE_ETH_TRANSACTIONS

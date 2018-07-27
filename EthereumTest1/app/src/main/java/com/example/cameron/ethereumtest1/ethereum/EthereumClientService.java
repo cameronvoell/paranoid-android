@@ -126,6 +126,7 @@ public class EthereumClientService extends Service {
     public static final String PARAM_PUB_META_DATA = "param.pub.meta.data";
     public static final String PARAM_PUB_MIN_COST_WEI = "param.pub.min.cost.wei";
     public static final String PARAM_PUB_ADMIN_PAY = "param.pub.admin.pay";
+    private static final String UI_CREATE_PUBLICATION_PENDING_CONFIRMATION = "ui.create.publication.pending.confirmation";
 
     private EthereumClient mEthereumClient;
     private org.ethereum.geth.Context mContext;
@@ -272,6 +273,13 @@ public class EthereumClientService extends Service {
                 case ETH_SEND_ETH:
                     b.putString(PARAM_RECIPIENT, intent.getStringExtra(PARAM_RECIPIENT));
                     b.putString(PARAM_AMOUNT, intent.getStringExtra(PARAM_AMOUNT));
+                    b.putString(PARAM_PASSWORD, intent.getStringExtra(PARAM_PASSWORD));
+                    break;
+                case ETH_CREATE_PUBLICATION:
+                    b.putString(PARAM_PUB_NAME, intent.getStringExtra(PARAM_PUB_NAME));
+                    b.putString(PARAM_PUB_META_DATA, intent.getStringExtra(PARAM_PUB_META_DATA));
+                    b.putString(PARAM_PUB_MIN_COST_WEI, intent.getStringExtra(PARAM_PUB_MIN_COST_WEI));
+                    b.putString(PARAM_PUB_ADMIN_PAY, intent.getStringExtra(PARAM_PUB_ADMIN_PAY));
                     b.putString(PARAM_PASSWORD, intent.getStringExtra(PARAM_PASSWORD));
                     break;
             }
@@ -1100,7 +1108,68 @@ public class EthereumClientService extends Service {
 
 
 
-    private void handleCreatePublication(String name, String meta, String minCost, String adminPay, String password) {
+    private void handleCreatePublication(String name, String meta, String minCost, String adminPay, final String password) {
+        Hash transactionHash = null;
+        DBEthereumTransaction ethereumTransaction = null;
+        try {
+            final KeyStore mKeyStore = new KeyStore(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)  + KEY_STORE, Geth.LightScryptN, Geth.LightScryptP);
+
+            BoundContract publicationContract = Geth.bindContract(
+                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
+                    PUBLICATION_REGISTER_ABI, mEthereumClient);
+
+            Address address = Geth.newAddressFromHex(PrefUtils.getSelectedAccountAddress(getBaseContext()));
+
+            TransactOpts tOpts = new TransactOpts();
+            tOpts.setContext(mContext);
+            tOpts.setFrom(address);
+            tOpts.setSigner(new Signer() {
+                @Override
+                public Transaction sign(Address address, Transaction transaction) throws Exception {
+                    Account account = mKeyStore.getAccounts().get(PrefUtils.getSelectedAccountNum(getBaseContext()));
+                    mKeyStore.unlock(account, password);
+                    Transaction signed = mKeyStore.signTx(account, transaction, new BigInt(4));
+                    mKeyStore.lock(account.getAddress());
+                    return signed;
+                }
+            });
+            tOpts.setValue(new BigInt(0));
+            long noncePending  = mEthereumClient.getPendingNonceAt(mContext, address);
+            tOpts.setNonce(noncePending);
+
+            // publish to slush pile
+            Interfaces callParams = Geth.newInterfaces(4);
+
+            Interface paramName = Geth.newInterface();
+            Interface paramMetaData = Geth.newInterface();
+            Interface paramMinUpvoteCost = Geth.newInterface();
+            Interface paramAdminPaymentPercentage = Geth.newInterface();
+
+            paramName.setString(name);
+            paramMetaData.setString(meta);
+            paramMinUpvoteCost.setBigInt(Geth.newBigInt(Long.valueOf(minCost)));
+            long adminPayLong = Long.valueOf(adminPay);
+            paramAdminPaymentPercentage.setUint8(Geth.newBigInt(adminPayLong));
+
+            callParams.set(0, paramName);
+            callParams.set(1, paramMetaData);
+            callParams.set(2, paramMinUpvoteCost);
+            callParams.set(3, paramAdminPaymentPercentage);
+
+            final Transaction txCreatePublication = publicationContract.transact(tOpts, "createPublication", callParams);
+
+            transactionHash = txCreatePublication.getHash();
+            ethereumTransaction = new DBEthereumTransaction(address.getHex().toString(), transactionHash.getHex().toString(), DatabaseHelper.TX_ACTION_ID_CREATE_PUBLICATION, name, System.currentTimeMillis(), 0, false, 0);
+            DatabaseHelper helper = new DatabaseHelper(getApplicationContext());
+            helper.saveTransactionInfo(ethereumTransaction);
+            mEthereumClient.sendTransaction(mContext, txCreatePublication);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Intent intent = new Intent(UI_CREATE_PUBLICATION_PENDING_CONFIRMATION);
+        LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+        bm.sendBroadcast(intent);
+        pollForTransactionConfirmation(transactionHash, ethereumTransaction);
     }
 
     private void pollForTransactionConfirmation(Hash txHash, DBEthereumTransaction tx) {

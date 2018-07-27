@@ -119,6 +119,13 @@ public class EthereumClientService extends Service {
     public static final String PARAM_NUM_PUBLICATIONS = "param.num.publications";
 
     public static final String ETH_FETCH_PUBLICATION_LIST = "eth.fetch.publication.list";
+    public static final String UI_UPDATE_PUBLICATION_LIST = "ui.update.publication.list";
+
+    public static final String ETH_CREATE_PUBLICATION = "eth.create.publication";
+    public static final String PARAM_PUB_NAME = "param.pub.name";
+    public static final String PARAM_PUB_META_DATA = "param.pub.meta.data";
+    public static final String PARAM_PUB_MIN_COST_WEI = "param.pub.min.cost.wei";
+    public static final String PARAM_PUB_ADMIN_PAY = "param.pub.admin.pay";
 
     private EthereumClient mEthereumClient;
     private org.ethereum.geth.Context mContext;
@@ -193,6 +200,14 @@ public class EthereumClientService extends Service {
                     String amount = b.getString(PARAM_AMOUNT);
                     password = b.getString(PARAM_PASSWORD);
                     handleSendEth(recipient, amount, password);
+                    break;
+                case ETH_CREATE_PUBLICATION:
+                    String name = b.getString(PARAM_PUB_NAME);
+                    String meta = b.getString(PARAM_PUB_META_DATA);
+                    String minCost = b.getString(PARAM_PUB_MIN_COST_WEI);
+                    String adminPay = b.getString(PARAM_PUB_ADMIN_PAY);
+                    password = b.getString(PARAM_PASSWORD);
+                    handleCreatePublication(name, meta, minCost, adminPay, password);
                     break;
                 default:
                     break;
@@ -683,111 +698,97 @@ public class EthereumClientService extends Service {
             }
         }
 
-//        try {
-//            BoundContract contract = Geth.bindContract(
-//                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
-//                    PUBLICATION_REGISTER_ABI, mEthereumClient);
-//
-//            CallOpts callOpts = Geth.newCallOpts();
-//            callOpts.setContext(mContext);
-//            Interfaces callData;
-//            Interfaces returnData;
-//
-//            //Find number of Publications
-//            callData = Geth.newInterfaces(0);
-//
-//            returnData = Geth.newInterfaces(1);
-//            Interface numPublicationsParam = Geth.newInterface();
-//            numPublicationsParam.setDefaultBigInt();
-//            returnData.set(0, numPublicationsParam);
-//
-//            contract.callFix(callOpts, returnData, "numPublications", callData);
-//            long numPublications = returnData.get(0).getBigInt().getInt64();
-//
-//            ////////////////////////////////
-//
-//            CallOpts callOpts2 = Geth.newCallOpts();
-//            callOpts.setContext(mContext);
-//            Interfaces callData2;
-//            Interfaces returnData2;
-//
-//            callData2 = Geth.newInterfaces(1);
-//            Interface paramWhichPublication = Geth.newInterface();
-//
-//            //////////////////////////////////
-//
-//            ArrayList<DBPublication> dbSaveList = new ArrayList<>();
-//            int counter = 0;
-//            for (long i = numPublications - 1; i >= 10 && counter <= 15; i--) {
-//                callData = Geth.newInterfaces(2);
-//                callData.set(0, publicationIndex);
-//                Interface contentIndex = Geth.newInterface();
-//                contentIndex.setBigInt(Geth.newBigInt(i));
-//                callData.set(1, contentIndex);
-//
-//                returnData = Geth.newInterfaces(1);
-//                Interface content = Geth.newInterface();
-//                content.setDefaultString();
-//                returnData.set(0, content);
-//
-//                contentString = contract.callForString(callOpts, "getContent", callData);
-//
-//                Interface revenue = Geth.newInterface();
-//                revenue.setDefaultBigInt();
-//                returnData.set(0, revenue);
-//
-//                contract.callFix(callOpts, returnData, "getContentRevenue", callData);
-//                String contentRevenue = returnData.get(0).getBigInt().getString(10);
-//                postRevenue.add(contentRevenue);
-//
-//
-//                String json = "";
-//                try {
-//                    json = new IPFS().getGet().cat(contentString);
-//                } catch (Exception e) {
-//                    json = "CONTENT CURRENTLY UNAVAILABLE";// + e.getMessage();
-//                    // Log.e("oops", e.getMessage());
-//                }
-//                ContentItem ci = convertJsonToContentItem(json);
-//                if (ci == null) continue;
-//                counter++;
-//                paramFetchUsernameCallParameter2.setAddress(new Address(ci.publishedBy));
-//                callData2.set(0, paramFetchUsernameCallParameter2);
-//
-//                returnData2 = Geth.newInterfaces(3);
-//                Interface userNameData2 = Geth.newInterface();
-//                Interface metaData2 = Geth.newInterface();
-//                Interface numContent2 = Geth.newInterface();
-//                userNameData2.setDefaultString();
-//                metaData2.setDefaultString();
-//                numContent2.setDefaultBigInt();
-//                returnData2.set(0, userNameData2);
-//                returnData2.set(1, metaData2);
-//                returnData2.set(2, numContent2);
-//
-//                contract2.call(callOpts2, returnData2, "userIndex", callData2);
-//                String userName = returnData2.get(0).getString();
-//                String metadataIconUrl = returnData2.get(1).getString();
-//
-//                ci.publishedBy = userName;
-//                postJsonArray.add(convertContentItemToJSON(ci));
-//
-//                DBPublicationContentItem dbpci = new DBPublicationContentItem(0, (int)i, ci.publishedBy, contentString, ci.primaryImageUrl, json, ci.title, ci.primaryText, ci.publishedDate);
-//                dbSaveList.add(dbpci);
-//
-//            }
-//
-//            DatabaseHelper db = new DatabaseHelper(getApplicationContext());
-//            db.savePublicationContentItems(dbSaveList);
-//            Intent intent = new Intent(UI_UPDATE_PUBLICATION_CONTENT);
-//            intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_STRING, postJsonArray);
-//            intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_REVENUE_STRING, postRevenue);
-//            LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
-//            bm.sendBroadcast(intent);
-//
-//        } catch (Exception e) {
-//            Log.e(TAG, "Error retrieving contentList: " + e.getMessage());
-//        }
+        try {
+            BoundContract contract = Geth.bindContract(
+                    new Address(EthereumConstants.PUBLICATION_REGISTER_ADDRESS_RINKEBY),
+                    PUBLICATION_REGISTER_ABI, mEthereumClient);
+
+            CallOpts callOpts = Geth.newCallOpts();
+            callOpts.setContext(mContext);
+            Interfaces callData;
+            Interfaces returnData;
+
+            //Find number of Publications
+            callData = Geth.newInterfaces(0);
+
+            returnData = Geth.newInterfaces(1);
+            Interface numPublicationsParam = Geth.newInterface();
+            numPublicationsParam.setDefaultBigInt();
+            returnData.set(0, numPublicationsParam);
+
+            contract.callFix(callOpts, returnData, "numPublications", callData);
+            long numPublications = returnData.get(0).getBigInt().getInt64();
+
+            ////////////////////////////////
+
+            Interfaces callData2;
+            Interfaces returnData2;
+
+            callData2 = Geth.newInterfaces(1);
+            Interface paramWhichPublication = Geth.newInterface();
+
+            //////////////////////////////////
+
+            ArrayList<DBPublication> dbSaveList = new ArrayList<>();
+            int counter = 0;
+            for (long i = numPublications - 1; i >= 0 && counter <= 15; i--) {
+                paramWhichPublication.setBigInt(new BigInt(i));
+                callData2.set(0, paramWhichPublication);
+                returnData2 = Geth.newInterfaces(9);
+
+                Interface name = Geth.newInterface();
+                Interface metadata = Geth.newInterface();
+                Interface adminAddress = Geth.newInterface();
+                Interface open = Geth.newInterface();
+                Interface numPublished = Geth.newInterface();
+                Interface minCost = Geth.newInterface();
+                Interface adminPercentage = Geth.newInterface();
+                Interface supporters = Geth.newInterface();
+                Interface adminClaimsOwed = Geth.newInterface();
+
+                name.setDefaultString();
+                metadata.setDefaultString();
+                adminAddress.setDefaultAddress();
+                open.setDefaultBool();
+
+                numPublished.setDefaultBigInt();
+                minCost.setDefaultBigInt();
+                adminPercentage.setDefaultUint8();
+                supporters.setDefaultBigInt();
+                adminClaimsOwed.setDefaultBigInt();
+
+                returnData2.set(0, name);
+                returnData2.set(1, metadata);
+                returnData2.set(2, adminAddress);
+                returnData2.set(3, open);
+                returnData2.set(4, numPublished);
+                returnData2.set(5, minCost);
+                returnData2.set(6, adminPercentage);
+                returnData2.set(7, supporters);
+                returnData2.set(8, adminClaimsOwed);
+
+                contract.call(callOpts, returnData2, "publicationIndex", callData2);
+
+                String nameString = returnData2.get(0).getString();
+                String metaDataString = returnData2.get(1).getString();
+                String adminString = returnData2.get(2).getAddress().getHex();
+                long numPublishedLong = returnData2.get(4).getBigInt().getInt64();
+
+
+                DBPublication dbPub = new DBPublication((int)i, nameString, metaDataString, adminString, (int)numPublishedLong, 0, 0, 0, false);
+                dbSaveList.add(dbPub);
+
+            }
+
+            DatabaseHelper db = new DatabaseHelper(getApplicationContext());
+            db.savePublications(dbSaveList);
+            Intent intent = new Intent(UI_UPDATE_PUBLICATION_LIST);
+            LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
+            bm.sendBroadcast(intent);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error retrieving publication list: " + e.getMessage());
+        }
     }
 
     /*
@@ -1095,6 +1096,11 @@ public class EthereumClientService extends Service {
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
         bm.sendBroadcast(intent);
         pollForTransactionConfirmation(transactionHash, ethereumTransaction);
+    }
+
+
+
+    private void handleCreatePublication(String name, String meta, String minCost, String adminPay, String password) {
     }
 
     private void pollForTransactionConfirmation(Hash txHash, DBEthereumTransaction tx) {

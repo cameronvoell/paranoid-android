@@ -1,6 +1,7 @@
 package com.example.cameron.ethereumtest1.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -10,6 +11,7 @@ import android.widget.CursorAdapter;
 import android.widget.TextView;
 
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.activities.ViewPublicationActivity;
 import com.example.cameron.ethereumtest1.database.DBPublication;
 import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 
@@ -24,7 +26,7 @@ public class PublicationsRecyclerViewAdapter extends RecyclerView.Adapter<Public
             @Override
             public View newView(Context context, Cursor cursor, ViewGroup parent) {
                 View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.fragment_content_item, parent, false);
+                        .inflate(R.layout.list_item_publication, parent, false);
                 return view;
             }
 
@@ -36,6 +38,13 @@ public class PublicationsRecyclerViewAdapter extends RecyclerView.Adapter<Public
                 holder.mNameView.setText(pub.name);
                 holder.mPostCountView.setText("articles: " + pub.numPublished);
                 holder.mSupportersView.setText("supporters: " + pub.uniqueSupporters);
+
+                holder.mView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(mContext, ViewPublicationActivity.class);
+                    }
+                });
             }
         };
     }

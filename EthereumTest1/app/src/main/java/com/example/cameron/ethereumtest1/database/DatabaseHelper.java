@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE;
@@ -204,6 +205,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_PRIMARY_TEXT, publicationContent.primaryText);
             values.put(KEY_PUBLISHED_DATE, publicationContent.publishedDate);
             db.insertWithOnConflict(TABLE_PUBLICATION_CONTENT, null, values, CONFLICT_IGNORE);
+        }
+        db.close();
+    }
+
+
+
+    public void savePublications(ArrayList<DBPublication> dbSaveList) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        for (DBPublication pub: dbSaveList) {
+            ContentValues values = new ContentValues(8);
+            values.put(KEY_PUBLICATION_ID, pub.publicationID);
+            values.put(KEY_PUBLICATION_NAME, pub.name);
+            values.put(KEY_PUBLICATION_META_DATA, pub.metaData);
+            values.put(KEY_PUBLICATION_ADMIN_ADDRESS, pub.adminAddress);
+            values.put(KEY_PUBLICATION_NUM_PUBLISHED, pub.numPublished);
+            values.put(KEY_PUBLICATION_MIN_SUPPORT_COST_WEI, pub.minSupportCostWei);
+            values.put(KEY_PUBLICATION_ADMIN_PAYMENT_PERCENTAGE, pub.adminPaymentPercentage);
+            values.put(KEY_PUBLICATION_UNIQUE_SUPPORTERS, pub.uniqueSupporters);
+            values.put(KEY_PUBLICATION_SUBSCRIBED_LOCALLY, pub.subscribedLocally);
+
+            db.insertWithOnConflict(TABLE_PUBLICATIONS, null, values, CONFLICT_REPLACE);
         }
         db.close();
     }

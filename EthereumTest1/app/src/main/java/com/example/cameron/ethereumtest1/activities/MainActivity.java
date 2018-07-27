@@ -52,6 +52,10 @@ import kotlin.jvm.functions.Function0;
 
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_SEND_ETH;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_AMOUNT;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PUB_ADMIN_PAY;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PUB_META_DATA;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PUB_MIN_COST_WEI;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PUB_NAME;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_RECIPIENT;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumConstants.KEY_STORE;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_REGISTER_USER;
@@ -60,6 +64,7 @@ import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.P
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_IMAGE_PATH;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_NAME;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_CONTENT_LIST;
+import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_PUBLICATION_LIST;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_TRANSACTION_FRAGMENT;
 import static com.example.cameron.ethereumtest1.util.PrefUtils.SELECTED_USER_FRAGMENT;
 
@@ -170,6 +175,9 @@ public class MainActivity extends AppCompatActivity implements
         switch (selectedFragment) {
             case SELECTED_CONTENT_LIST:
                 showContentList(null);
+                break;
+            case SELECTED_PUBLICATION_LIST:
+                showPublications(null);
                 break;
             case SELECTED_USER_FRAGMENT:
                 showUserFragment(null);
@@ -402,37 +410,65 @@ public class MainActivity extends AppCompatActivity implements
 
     public void updateMetaData(View view) {
         final Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_upload_profile_pic);
+        dialog.setContentView(R.layout.dialog_create_publication);
 
+        final EditText nameEditText = (EditText) dialog.findViewById(R.id.editName);
+        final EditText metaEditText = (EditText) dialog.findViewById(R.id.editMetaData);
+        final EditText minCostEditText = (EditText) dialog.findViewById(R.id.editMinSupportCost);
+        final EditText adminPayEditText = (EditText) dialog.findViewById(R.id.editAdminPayPercentage);
         final EditText passwordEditText = (EditText) dialog.findViewById(R.id.editPassword);
 
-        Button dialogUploadButton = (Button) dialog.findViewById(R.id.dialogUploadButton);
-        dialogUploadButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent();
-                // Show only images, no videos or anything else
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                // Always show the chooser (if there are multiple options available)
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
-            }
-        });
-
-        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonSubmit);
-        dialogButton.setOnClickListener(new View.OnClickListener() {
+        Button dialogSubmitButton = (Button) dialog.findViewById(R.id.dialogButtonSubmit);
+        dialogSubmitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startService(new Intent(MainActivity.this, EthereumClientService.class)
-                        .putExtra(PARAM_USER_IMAGE_PATH, mUri)
+                        .putExtra(PARAM_PUB_NAME, nameEditText.getText().toString())
+                        .putExtra(PARAM_PUB_META_DATA, metaEditText.getText().toString())
+                        .putExtra(PARAM_PUB_MIN_COST_WEI, minCostEditText.getText().toString())
+                        .putExtra(PARAM_PUB_ADMIN_PAY, adminPayEditText.getText().toString())
                         .putExtra(PARAM_PASSWORD, passwordEditText.getText().toString())
-                        .setAction(ETH_UPDATE_USER_PIC));
+                        .setAction(EthereumClientService.ETH_CREATE_PUBLICATION));
                 dialog.dismiss();
                 animateFabMenu(null);
             }
         });
         dialog.show();
     }
+
+//    public void updateMetaData(View view) {
+//        final Dialog dialog = new Dialog(this);
+//        dialog.setContentView(R.layout.dialog_upload_profile_pic);
+//
+//        final EditText passwordEditText = (EditText) dialog.findViewById(R.id.editPassword);
+//
+//        Button dialogUploadButton = (Button) dialog.findViewById(R.id.dialogUploadButton);
+//        dialogUploadButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent intent = new Intent();
+//                // Show only images, no videos or anything else
+//                intent.setType("image/*");
+//                intent.setAction(Intent.ACTION_GET_CONTENT);
+//                // Always show the chooser (if there are multiple options available)
+//                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+//            }
+//        });
+//
+//        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonSubmit);
+//        dialogButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                startService(new Intent(MainActivity.this, EthereumClientService.class)
+//                        .putExtra(PARAM_USER_IMAGE_PATH, mUri)
+//                        .putExtra(PARAM_PASSWORD, passwordEditText.getText().toString())
+//                        .setAction(ETH_UPDATE_USER_PIC));
+//                dialog.dismiss();
+//                animateFabMenu(null);
+//            }
+//        });
+//        dialog.show();
+//    }
 
     /*
      * Code used for selecting a photo to upload
@@ -511,7 +547,7 @@ public class MainActivity extends AppCompatActivity implements
         mPublicationsButton.setColorFilter(Color.WHITE);
         mUserFragmentButton.setColorFilter(Color.DKGRAY);
         mEthereumButton.setColorFilter(Color.DKGRAY);
-        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_TRANSACTION_FRAGMENT);
+        PrefUtils.saveSelectedFragment(getBaseContext(), SELECTED_PUBLICATION_LIST);
         showFAB(true);
     }
 

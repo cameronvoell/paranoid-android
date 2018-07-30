@@ -6,6 +6,8 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -20,6 +22,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.adapters.UserFragmentContentItemRecyclerViewAdapter;
+import com.example.cameron.ethereumtest1.adapters.UserFragmentPagerAdapter;
 import com.example.cameron.ethereumtest1.database.DBUserContentItem;
 import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
@@ -42,14 +45,13 @@ import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.P
 public class UserFragment extends Fragment {
 
     private final static String TAG = UserFragment.class.getName();
-    private OnListFragmentInteractionListener mListInteractionListener;
 
     private ImageView mUserIconImageView;
     private TextView mUsernameTextView;
     private TextView mEthAddressTextView;
     private TextView mEthBalanceTextView;
-    private RecyclerView mRecyclerView;
     private Button mRegisterButton;
+    private ViewPager mViewPager;
 
     private String mSelectedAddress;
 
@@ -84,8 +86,7 @@ public class UserFragment extends Fragment {
                     mEthBalanceTextView.setText(DataUtils.formatAccountBalanceEther(accountBalance, 6));
                     break;
                 case EthereumClientService.UI_UPDATE_USER_CONTENT_LIST:
-                    ArrayList<String> jsonArray = intent.getStringArrayListExtra(EthereumClientService.PARAM_ARRAY_CONTENT_STRING);
-                    reloadUserContentList(jsonArray);
+                    reloadUserContentList();
                     break;
                 case EthereumClientService.UI_REGISTER_USER_PENDING_CONFIRMATION:
                     String username = intent.getStringExtra(EthereumClientService.PARAM_USER_NAME);
@@ -123,47 +124,28 @@ public class UserFragment extends Fragment {
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(getContext());
         bm.registerReceiver(mBroadcastReceiver, filter);
 
-        mListInteractionListener = new OnListFragmentInteractionListener() {
-            @Override
-            public void onListFragmentInteraction(final int position, DBUserContentItem item) {
-                final int postIndex = item.userContentIndex;
-                final Dialog dialog = new Dialog(getActivity());
-                dialog.setContentView(R.layout.dialog_post_content_to_slush_pile);
-                dialog.setTitle("Publish post index " + postIndex + " to your slush feed?");
 
-                final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
-                Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
-                dialogButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        String s = password.getText().toString();
-                        getActivity().startService(new Intent(getActivity(), EthereumClientService.class)
-                                .putExtra(PARAM_USER_CONTENT_INDEX, postIndex)
-                                .putExtra(PARAM_PASSWORD, s)
-                                .setAction(ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION));
-                        dialog.dismiss();
-                    }
-                });
-                dialog.show();
-            }
-        };
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_user, container, false);
-
         mUserIconImageView = (ImageView)v.findViewById(R.id.userIcon);
         mUsernameTextView = (TextView)v.findViewById(R.id.userName);
         mEthAddressTextView = (TextView)v.findViewById(R.id.ethAddress);
         mEthBalanceTextView = (TextView)v.findViewById(R.id.ethBalance);
-        mRecyclerView = (RecyclerView)v.findViewById(R.id.userFragmentContentItemList);
         mRegisterButton = (Button) v.findViewById(R.id.registerButton);
+        mViewPager = (ViewPager) v.findViewById(R.id.pager);
+
 
         reloadUserInfo();
-
+        mViewPager.setAdapter(buildAdapter());
         return v;
+    }
+
+    private PagerAdapter buildAdapter() {
+        return new UserFragmentPagerAdapter(getChildFragmentManager(), mSelectedAddress);
     }
 
     public void reloadUserInfo() {
@@ -224,33 +206,11 @@ public class UserFragment extends Fragment {
     }
 
     private void loadContentList() {
-        //mContentItems = new DatabaseHelper(getContext()).getUserFragmentContentItems(mSelectedAddress, 0, 1);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(getContext(), new DatabaseHelper(getContext()).getUserContentCursor(mSelectedAddress, 10), mListInteractionListener));
 
-        if ((PrefUtils.shouldUpdateAccountContentList(getActivity()))) {
-            try {
-                getActivity().startService(new Intent(getContext(), EthereumClientService.class)
-                        .putExtra(PARAM_ADDRESS_STRING, mSelectedAddress).setAction(ETH_FETCH_USER_CONTENT_LIST));
-            } catch (Exception e) {
-                Log.e(TAG, "Error updating account balance: " + e.getMessage());
-            }
-        }
     }
 
-    private ContentItem convertJsonToContentItem(String json) {
-        Gson gson = new Gson();
-        ContentItem contentItem;
-        try {
-            contentItem = gson.fromJson(json, ContentItem.class);
-        } catch (Exception e) {
-            contentItem = new ContentItem("", "", 0, "", "", 0);
-        }
-        return contentItem;
-    }
-
-    private void reloadUserContentList(ArrayList<String> jsonArray) {
-        mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(getContext(), new DatabaseHelper(getContext()).getUserContentCursor(mSelectedAddress, 10), mListInteractionListener));
+    private void reloadUserContentList() {
+//        mRecyclerView.setAdapter(new UserFragmentContentItemRecyclerViewAdapter(getContext(), new DatabaseHelper(getContext()).getUserContentCursor(mSelectedAddress, 10), mListInteractionListener));
     }
 
     @Override

@@ -5,6 +5,7 @@ import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,13 +20,14 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.activities.ViewContentActivity;
+import com.example.cameron.ethereumtest1.database.DBPublication;
 import com.example.cameron.ethereumtest1.database.DBPublicationContentItem;
 import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.fragments.PublicationContentListFragment.OnListFragmentInteractionListener;
-import com.example.cameron.ethereumtest1.model.PublicationContentItem;
 import com.example.cameron.ethereumtest1.util.DataUtils;
+import com.example.cameron.ethereumtest1.util.PrefUtils;
 
 import org.jsoup.Jsoup;
 
@@ -42,7 +44,7 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
     private static final int TYPE_ITEM = 1;
     private final Context mContext;
     private Spinner mTagSpinner;
-    private Spinner mSortBySpinner;
+    //private Spinner mSortBySpinner;
     private CursorAdapter mCursorAdapter;
 
     public PublicationItemRecyclerViewAdapter(Context context, Cursor cursor) {
@@ -105,103 +107,109 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-//        if (viewType == TYPE_HEADER) {
-//            View view = LayoutInflater.from(parent.getContext())
-//                    .inflate(R.layout.header_content_list, parent, false);
-//            mTagSpinner = (Spinner) view.findViewById(R.id.tag);
-//            mSortBySpinner = (Spinner) view.findViewById(R.id.sortBy);
-//            setSortBySpinnerOptions();
-//            setTagSpinnerOptions();
-//            return new ViewHolder(view);
-//        } else {
+        if (viewType == TYPE_HEADER) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.header_content_list, parent, false);
+            mTagSpinner = (Spinner) view.findViewById(R.id.tag);
+            //mSortBySpinner = (Spinner) view.findViewById(R.id.sortBy);
+            //setSortBySpinnerOptions();
+            setTagSpinnerOptions();
+            return new ViewHolder(view);
+        } else {
             View view = mCursorAdapter.newView(mContext, mCursorAdapter.getCursor(), parent);
             return new ViewHolder(view);
-//        }
+        }
     }
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        mCursorAdapter.getCursor().moveToPosition(position);
-        mCursorAdapter.bindView(holder.mView, mContext, mCursorAdapter.getCursor());
 
-//        if (position == 0) {
-//
-//        } else {
 
-    //    }
+        if (position == 0) {
+                  
+        } else {
+            mCursorAdapter.getCursor().moveToPosition(position - 1);
+            mCursorAdapter.bindView(holder.mView, mContext, mCursorAdapter.getCursor());
+        }
     }
 
     @Override
     public int getItemCount() {
-        return mCursorAdapter.getCount();
+        return mCursorAdapter.getCount() + 1;
     }
-
-//    private PublicationContentItem getItem(int position) {
-//        return mCursorAdapter.getItem(position);
-//    }
 
     @Override
     public int getItemViewType(int position) {
-//        if (position == 0)
-//            return TYPE_HEADER;
+        if (position == 0)
+            return TYPE_HEADER;
 
         return TYPE_ITEM;
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
-        public final View mView;
-        public final TextView mTitleView;
-        public final TextView mBodyView;
-        public final TextView mDateAndAuthorView;
-        public final ImageView mImageView;
-        public final TextView mRevenueView;
-        //public ContentItem mItem;
-
-        public ViewHolder(View view) {
-            super(view);
-            mView = view;
-            mTitleView = (TextView) view.findViewById(R.id.title);
-            mBodyView = (TextView) view.findViewById(R.id.body);
-            mDateAndAuthorView = (TextView) view.findViewById(R.id.dateAndAuthor);
-            mImageView = (ImageView) view.findViewById(R.id.contentImage);
-            mRevenueView = (TextView) view.findViewById(R.id.revenue);
-        }
-
-        @Override
-        public String toString() {
-            return super.toString() + " '" + mTitleView.getText() + "'";
-        }
-    }
-
-    private AdapterView.OnItemSelectedListener mPublicationSpinnerItemSelectedListener = new AdapterView.OnItemSelectedListener() {
-        @Override
-        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-        }
-        @Override
-        public void onNothingSelected(AdapterView<?> parent) {
-
-        }
-    };
-
     private void setTagSpinnerOptions() {
         ArrayList<String> tagOptions = new ArrayList<>();
-        tagOptions.add("tag");
-        tagOptions.add("tag options");
+        final ArrayList<DBPublication> pubs = new DatabaseHelper(mContext).getPublicationsToView();
+        for (DBPublication pub: pubs) {
+            tagOptions.add(pub.name);
+        }
+//        tagOptions.add("publication");
+//        tagOptions.add("tag options");
         ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(mContext, R.layout.spinner_dropdown_content_list, tagOptions);
         mTagSpinner.setAdapter(spinnerArrayAdapter);
-        mTagSpinner.setOnItemSelectedListener(mPublicationSpinnerItemSelectedListener);
-        mTagSpinner.setSelection(0);
+        int selection = PrefUtils.getSelectedPublication(mContext);
+        mTagSpinner.setSelection(selection, false);
+        mTagSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                DBPublication pub = pubs.get(position);
+                Intent i = new Intent();
+                i.setAction("refresh-list");
+                i.putExtra("whichPub", pub.publicationID);
+                LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(mContext);
+                lbm.sendBroadcast(i);
+                PrefUtils.saveSelectedPublication(mContext, position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
     }
-    private void setSortBySpinnerOptions() {
-        ArrayList<String> sortByOptions = new ArrayList<>();
-        sortByOptions.add("date  ↓");
-        sortByOptions.add("date  ↑");
-        sortByOptions.add("upvotes  ↓");
-        sortByOptions.add("upvotes  ↑ ");
-        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(mContext, R.layout.spinner_dropdown_content_list, sortByOptions);
-        mSortBySpinner.setAdapter(spinnerArrayAdapter);
-        mSortBySpinner.setOnItemSelectedListener(mPublicationSpinnerItemSelectedListener);
-        mSortBySpinner.setSelection(0);
-    }
+//    private void setSortBySpinnerOptions() {
+//        ArrayList<String> sortByOptions = new ArrayList<>();
+//        sortByOptions.add("date  ↓");
+//        sortByOptions.add("date  ↑");
+//        sortByOptions.add("upvotes  ↓");
+//        sortByOptions.add("upvotes  ↑ ");
+//        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(mContext, R.layout.spinner_dropdown_content_list, sortByOptions);
+//        mSortBySpinner.setAdapter(spinnerArrayAdapter);
+//        mSortBySpinner.setOnItemSelectedListener(mPublicationSpinnerItemSelectedListener);
+//        mSortBySpinner.setSelection(0);
+//    }
+
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            public final View mView;
+            public final TextView mTitleView;
+            public final TextView mBodyView;
+            public final TextView mDateAndAuthorView;
+            public final ImageView mImageView;
+            public final TextView mRevenueView;
+            //public ContentItem mItem;
+
+            public ViewHolder(View view) {
+                super(view);
+                mView = view;
+                mTitleView = (TextView) view.findViewById(R.id.title);
+                mBodyView = (TextView) view.findViewById(R.id.body);
+                mDateAndAuthorView = (TextView) view.findViewById(R.id.dateAndAuthor);
+                mImageView = (ImageView) view.findViewById(R.id.contentImage);
+                mRevenueView = (TextView) view.findViewById(R.id.revenue);
+            }
+
+            @Override
+            public String toString() {
+                return super.toString() + " '" + mTitleView.getText() + "'";
+            }
+        }
 }

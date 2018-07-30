@@ -32,6 +32,8 @@ public class PrefUtils {
     private static final String PREF_SELECTED_ACCOUNT_CONTENT_LIST_LAST_CHECKED = "pref_selected_account_content_list_last_checked";
     private static final String PREF_SELECTED_ACCOUNT_BALANCE_STRING = "pref.selected.account.balance.string";
 
+    private static final String PREF_SELECTED_PUBLICATION = "pref.selected.publication";
+
     private static SharedPreferences sp(Context baseContext) {
         return baseContext.getSharedPreferences(SHARED_PREFERENCES, PREF_MODE);
     }
@@ -96,5 +98,13 @@ public class PrefUtils {
 
     public static void saveSelectedAccountUserIconImageURLContext (Context ctx, String userIconImageUrl) {
         sp(ctx).edit().putString(PREF_SELECTED_ACCOUNT_USER_ICON_URL + getSelectedAccountAddress(ctx), userIconImageUrl).commit();
+    }
+
+    public static void saveSelectedPublication(Context ctx, int position) {
+        sp(ctx).edit().putInt(PREF_SELECTED_PUBLICATION, position).commit();
+    }
+
+    public static int getSelectedPublication(Context ctx) {
+        return sp(ctx).getInt(PREF_SELECTED_PUBLICATION, 0);
     }
 }

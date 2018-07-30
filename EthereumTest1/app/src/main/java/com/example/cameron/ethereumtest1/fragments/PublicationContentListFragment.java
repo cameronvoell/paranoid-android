@@ -52,7 +52,12 @@ public class PublicationContentListFragment extends Fragment {
                 case EthereumClientService.UI_UPDATE_PUBLICATION_CONTENT:
                     ArrayList<String> revenueArray = intent.getStringArrayListExtra(
                             EthereumClientService.PARAM_ARRAY_CONTENT_REVENUE_STRING);
-                    reloadContentList(revenueArray);
+                    int whichPub = intent.getIntExtra("whichPub", 0);
+                    reloadContentList(whichPub, revenueArray);
+                    break;
+                case "refresh-list":
+                    reloadContentList(intent.getIntExtra("whichPub", 0), null);
+                    loadContentFeed(intent.getIntExtra("whichPub", 0));
             }
         }
     };
@@ -75,6 +80,7 @@ public class PublicationContentListFragment extends Fragment {
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(EthereumClientService.UI_UPDATE_PUBLICATION_CONTENT);
+        filter.addAction("refresh-list");
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(getContext());
         bm.registerReceiver(mBroadcastReceiver, filter);
 
@@ -109,14 +115,14 @@ public class PublicationContentListFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mDatabaseHelper = new DatabaseHelper(getContext());
-        loadContentFeed();
+        loadContentFeed(0);
         mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(getContext(), mDatabaseHelper.getPublicationContentCursor(0, 20)));
     }
 
-    private void loadContentFeed() {
+    private void loadContentFeed(int whichPub) {
         try {
             getActivity().startService(new Intent(getContext(), EthereumClientService.class)
-                    .putExtra(PARAM_PUBLICATION_INDEX, 0)
+                    .putExtra(PARAM_PUBLICATION_INDEX, whichPub)
                     .setAction(ETH_FETCH_PUBLICATION_CONTENT));
         } catch (Exception e) {
             Log.e(TAG, "Error updating content feed: " + e.getMessage());
@@ -128,8 +134,8 @@ public class PublicationContentListFragment extends Fragment {
         super.onResume();
     }
 
-    private void reloadContentList(ArrayList<String> revenueArray) {
-        mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(getContext(), mDatabaseHelper.getPublicationContentCursor(0, 12)));
+    private void reloadContentList(int whichPub, ArrayList<String> revenueArray) {
+        mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(getContext(), mDatabaseHelper.getPublicationContentCursor(whichPub, 12)));
     }
 
     @Override
@@ -150,7 +156,7 @@ public class PublicationContentListFragment extends Fragment {
     }
 
     public void scrollToTop() {
-        loadContentFeed();
+        loadContentFeed(0);
         mRecyclerView.smoothScrollToPosition(0);
     }
 

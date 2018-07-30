@@ -21,7 +21,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     Context mContext;
 
     //Used for upgrading the database
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 7;
 
     //name of our database file
     private static final String DATABASE_NAME = "circus_droid";
@@ -101,7 +101,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + KEY_TITLE + " TEXT,"
             + KEY_PRIMARY_TEXT + " TEXT,"
             + KEY_PUBLISHED_DATE +  " TEXT,"
-            + "UNIQUE(" + KEY_PUBLICATION_CONTENT_INDEX + ") ON CONFLICT REPLACE"
+            + "UNIQUE(" + KEY_PUBLICATION_INDEX + " , " + KEY_PUBLICATION_CONTENT_INDEX + ") ON CONFLICT REPLACE"
             + ")";
 
     //Publications Table
@@ -250,19 +250,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_CONTENT_INDEX + " DESC";
 
         SQLiteDatabase db = getReadableDatabase();
-        return db.rawQuery("SELECT * FROM " + TABLE_PUBLICATION_CONTENT + " WHERE " + KEY_PUBLICATION_INDEX +  " = " + "\"" + 0 + "\"" + ORDER_BY, null);
+        return db.rawQuery("SELECT * FROM " + TABLE_PUBLICATION_CONTENT + " WHERE " + KEY_PUBLICATION_INDEX +  " = " + "\"" + publicationIndex + "\"" + ORDER_BY, null);
     }
 
     public Cursor getPublicationsCursor() {
-        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " DESC";
+        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " ASC";
 
         SQLiteDatabase db = getReadableDatabase();
         return db.rawQuery("SELECT * FROM " + TABLE_PUBLICATIONS + ORDER_BY, null);
 
     }
 
+    public Cursor getPublicationsToViewCursor() {
+        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " ASC";
+        String WHERE = " WHERE " + KEY_PUBLICATION_NUM_PUBLISHED + " > 0";
+
+        SQLiteDatabase db = getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + TABLE_PUBLICATIONS + WHERE + ORDER_BY, null);
+
+    }
+
     public Cursor getPublicationsOfAddressCursor(String address) {
-        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " DESC";
+        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " ASC";
         String WHERE = " WHERE " + KEY_PUBLICATION_ADMIN_ADDRESS + "= \"" + address + "\"";
 
         SQLiteDatabase db = getReadableDatabase();
@@ -271,7 +280,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public Cursor getPublicationsWeCanPublishToCursor(String address) {
-        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " DESC";
+        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " ASC";
         String WHERE = " WHERE " + KEY_PUBLICATION_ADMIN_ADDRESS + "= \"" + address + "\"";
         WHERE += " OR " + KEY_PUBLICATION_ID + " = 0";
 
@@ -323,5 +332,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         return new DBPublication(publicationID, name, metaData, adminAddress, numPublished,
                 minSupportCost, adminPayPercentage, uniqueSupporters, subscribed);
+    }
+
+    public ArrayList<DBPublication> getPublicationsWeCanPublishTo(String selectedAddress) {
+        ArrayList<DBPublication> pubs = new ArrayList<>();
+        Cursor c = getPublicationsWeCanPublishToCursor(selectedAddress);
+        while (c.moveToNext()) {
+            pubs.add(convertCursorToDBPublication(c));
+        }
+        return pubs;
+    }
+
+    public ArrayList<DBPublication> getPublicationsToView() {
+        ArrayList<DBPublication> pubs = new ArrayList<>();
+        Cursor c = getPublicationsToViewCursor();
+        while (c.moveToNext()) {
+            pubs.add(convertCursorToDBPublication(c));
+        }
+        return pubs;
     }
 }

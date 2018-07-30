@@ -8,17 +8,23 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.PopupMenu;
+import android.widget.TextView;
 
 import com.example.cameron.ethereumtest1.R;
 import com.example.cameron.ethereumtest1.adapters.UserFragmentContentItemRecyclerViewAdapter;
+import com.example.cameron.ethereumtest1.database.DBPublication;
 import com.example.cameron.ethereumtest1.database.DBUserContentItem;
 import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
+
+import java.util.ArrayList;
 
 import static android.content.ContentValues.TAG;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_USER_CONTENT_LIST;
@@ -26,6 +32,7 @@ import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.E
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_ADDRESS_STRING;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_PASSWORD;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_USER_CONTENT_INDEX;
+import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_WHICH_PUBLICATION;
 
 public class UserContentRecyclerViewFragment extends Fragment{
 
@@ -53,17 +60,43 @@ public class UserContentRecyclerViewFragment extends Fragment{
             @Override
             public void onListFragmentInteraction(final int position, DBUserContentItem item) {
                 final int postIndex = item.userContentIndex;
+
+                final ArrayList<DBPublication> pubsToPublishTo = new ArrayList<>();
                 final Dialog dialog = new Dialog(getActivity());
                 dialog.setContentView(R.layout.dialog_post_content_to_slush_pile);
-                dialog.setTitle("Publish post index " + postIndex + " to your slush feed?");
+                final TextView pubInstruction = (TextView)dialog.findViewById(R.id.publishInstruction);
+                final Button selectPublicationButton = (Button) dialog.findViewById(R.id.selectPublicationButton);
+
+                selectPublicationButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        PopupMenu popupMenu = new PopupMenu(getContext(), selectPublicationButton);
+                        final ArrayList<DBPublication> pubs = new DatabaseHelper(getContext()).getPublicationsWeCanPublishTo(mSelectedAddress);
+                        for (int i = 0; i < pubs.size(); i++) {
+                            popupMenu.getMenu().add(i, i, i, pubs.get(i).name);
+                        }
+                        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem item) {
+                                DBPublication pub = pubs.get(item.getItemId());
+                                pubInstruction.setText("publish to " + pub.name);
+                                pubsToPublishTo.add(pub);
+                                return false;
+                            }
+                        });
+                        popupMenu.show();
+                    }
+                });
 
                 final EditText password = (EditText) dialog.findViewById(R.id.editPassword);
                 Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonPost);
                 dialogButton.setOnClickListener(new View.OnClickListener() {
+
                     @Override
                     public void onClick(View v) {
                         String s = password.getText().toString();
                         getActivity().startService(new Intent(getActivity(), EthereumClientService.class)
+                                .putExtra(PARAM_WHICH_PUBLICATION, pubsToPublishTo.get(0).publicationID)
                                 .putExtra(PARAM_USER_CONTENT_INDEX, postIndex)
                                 .putExtra(PARAM_PASSWORD, s)
                                 .setAction(ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION));

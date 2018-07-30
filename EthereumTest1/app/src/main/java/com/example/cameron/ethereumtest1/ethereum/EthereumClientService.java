@@ -106,6 +106,7 @@ public class EthereumClientService extends Service {
     public static final String ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION = "eth.publish.user.content.to.publication";
     public static final String UI_PUBLISH_USER_CONTENT_TO_PUBLICATION_PENDING_CONFIRMATION = "ui.publish.user.content.to.publication..pending.confirmation";
     public static final String PARAM_USER_CONTENT_INDEX = "param.user.content.index";
+    public static final String PARAM_WHICH_PUBLICATION = "param.which.publication";
 
     public static final String IPFS_FETCH_DRAFT_IMAGE_URL = "eth.update.draft.photo.url";
     public static final String UI_UPDATE_DRAFT_PHOTO_URL = "ui.update.draft.photo.url";
@@ -180,9 +181,10 @@ public class EthereumClientService extends Service {
                     handleFetchPublicationContent(index);
                     break;
                 case ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION:
+                    int whichPub = b.getInt(PARAM_WHICH_PUBLICATION);
                     index = b.getInt(PARAM_USER_CONTENT_INDEX);
                     password = b.getString(PARAM_PASSWORD);
-                    handlePublishUserContentToPublication(index, password);
+                    handlePublishUserContentToPublication(whichPub, index, password);
                     break;
                 case ETH_UPDATE_USER_PIC:
                     String picPath = b.getString(PARAM_USER_IMAGE_PATH);
@@ -260,6 +262,7 @@ public class EthereumClientService extends Service {
                     b.putInt(PARAM_PUBLICATION_INDEX, intent.getIntExtra(PARAM_PUBLICATION_INDEX, 0));
                     break;
                 case ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION:
+                    b.putInt(PARAM_WHICH_PUBLICATION, intent.getIntExtra(PARAM_WHICH_PUBLICATION, 0));
                     b.putInt(PARAM_USER_CONTENT_INDEX, intent.getIntExtra(PARAM_USER_CONTENT_INDEX, 0));
                     b.putString(PARAM_PASSWORD, intent.getStringExtra(PARAM_PASSWORD));
                     break;
@@ -559,7 +562,7 @@ public class EthereumClientService extends Service {
             ArrayList<String> postRevenue = new ArrayList<>();
             ArrayList<DBPublicationContentItem> dbSaveList = new ArrayList<>();
             int counter = 0;
-            for (long i = numPublished - 1; i >= 10 && counter <= 15; i--) {
+            for (long i = numPublished - 1; i >= 0 && counter <= 15; i--) {
                 callData = Geth.newInterfaces(2);
                 callData.set(0, publicationIndex);
                 Interface contentIndex = Geth.newInterface();
@@ -613,7 +616,7 @@ public class EthereumClientService extends Service {
                 ci.publishedBy = userName;
                 postJsonArray.add(convertContentItemToJSON(ci));
 
-                DBPublicationContentItem dbpci = new DBPublicationContentItem(0, (int)i, ci.publishedBy, contentString, ci.primaryImageUrl, json, ci.title, ci.primaryText, ci.publishedDate);
+                DBPublicationContentItem dbpci = new DBPublicationContentItem(index, (int)i, ci.publishedBy, contentString, ci.primaryImageUrl, json, ci.title, ci.primaryText, ci.publishedDate);
                 dbSaveList.add(dbpci);
 
             }
@@ -623,6 +626,7 @@ public class EthereumClientService extends Service {
             Intent intent = new Intent(UI_UPDATE_PUBLICATION_CONTENT);
             intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_STRING, postJsonArray);
             intent.putStringArrayListExtra(PARAM_ARRAY_CONTENT_REVENUE_STRING, postRevenue);
+            intent.putExtra("whichPub", index);
             LocalBroadcastManager bm = LocalBroadcastManager.getInstance(EthereumClientService.this);
             bm.sendBroadcast(intent);
 
@@ -1053,7 +1057,7 @@ public class EthereumClientService extends Service {
         pollForTransactionConfirmation(transactionHash, ethereumTransaction);
     }
 
-    private void handlePublishUserContentToPublication(int index, final String password) {
+    private void handlePublishUserContentToPublication(int whichPublication, int index, final String password) {
         Hash transactionHash = null;
         DBEthereumTransaction ethereumTransaction = null;
         try {
@@ -1085,7 +1089,7 @@ public class EthereumClientService extends Service {
             // publish to slush pile
             Interfaces callParams = Geth.newInterfaces(2);
             Interface paramWhichPublication = Geth.newInterface();
-            paramWhichPublication.setBigInt(new BigInt(0));
+            paramWhichPublication.setBigInt(new BigInt(whichPublication));
             Interface paramUserContentIndex = Geth.newInterface();
             paramUserContentIndex.setBigInt(Geth.newBigInt(index));
             callParams.set(0, paramWhichPublication);

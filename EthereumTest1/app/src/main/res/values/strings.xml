@@ -15,4 +15,5 @@
     <string name="picture_transition_name">content_image</string>
     <string name="subscribed_publications">subscribed:</string>
     <string name="all_publications">all pubs:</string>
+    <string name="selectPublication">select publication</string>
 </resources>

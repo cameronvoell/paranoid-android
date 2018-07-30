@@ -3,11 +3,19 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content" >
 
+
+    <Button
+        android:id="@+id/selectPublicationButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/selectPublication"/>
+
     <TextView
         android:id="@+id/publishInstruction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="publish to slush pile?"/>
+        android:text="no publication selected"
+        android:layout_below="@id/selectPublicationButton"/>
 
     <EditText
         android:id="@+id/editPassword"
@@ -17,7 +25,7 @@
         android:focusableInTouchMode="true"
         android:hint="password"
         android:inputType="textPassword"
-        android:layout_below="@id/editBody"/>
+        android:layout_below="@id/publishInstruction"/>
 
     <Button
         android:id="@+id/dialogButtonPreview"

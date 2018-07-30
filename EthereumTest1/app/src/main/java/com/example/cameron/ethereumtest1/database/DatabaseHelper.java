@@ -261,6 +261,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     }
 
+    public Cursor getPublicationsOfAddressCursor(String address) {
+        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " DESC";
+        String WHERE = " WHERE " + KEY_PUBLICATION_ADMIN_ADDRESS + "= \"" + address + "\"";
+
+        SQLiteDatabase db = getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + TABLE_PUBLICATIONS + WHERE + ORDER_BY, null);
+
+    }
+
+    public Cursor getPublicationsWeCanPublishToCursor(String address) {
+        String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " DESC";
+        String WHERE = " WHERE " + KEY_PUBLICATION_ADMIN_ADDRESS + "= \"" + address + "\"";
+        WHERE += " OR " + KEY_PUBLICATION_ID + " = 0";
+
+        SQLiteDatabase db = getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + TABLE_PUBLICATIONS + WHERE + ORDER_BY, null);
+
+    }
+
     public static DBUserContentItem convertCursorToDBUserContentItem(Cursor c) {
         String address = c.getString(c.getColumnIndex(KEY_PUBLISHED_BY_ETH_ADDRESS));
         int userContentIndex = c.getInt(c.getColumnIndex(KEY_USER_CONTENT_INDEX));

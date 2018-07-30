@@ -23,7 +23,7 @@ public class UserFragmentPagerAdapter extends FragmentPagerAdapter {
                 return UserContentRecyclerViewFragment.newInstance(mSelectedAddress);
             default:
             case 1:
-                return UserPublicationsRecyclerViewFragment.newInstance();
+                return UserPublicationsRecyclerViewFragment.newInstance(mSelectedAddress);
         }
     }
 

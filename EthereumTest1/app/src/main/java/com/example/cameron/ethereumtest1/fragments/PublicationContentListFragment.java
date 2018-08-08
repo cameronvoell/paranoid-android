@@ -22,6 +22,7 @@ import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.model.PublicationContentItem;
+import com.example.cameron.ethereumtest1.util.PrefUtils;
 import com.google.gson.Gson;
 import java.util.ArrayList;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_FETCH_PUBLICATION_CONTENT;
@@ -39,9 +40,6 @@ public class PublicationContentListFragment extends Fragment {
 
     private OnListFragmentInteractionListener mListener;
     private RecyclerView mRecyclerView;
-    private Spinner mPublicationSpinner;
-    private Spinner mTagSpinner;
-    private Spinner mSortBySpinner;
     private DatabaseHelper mDatabaseHelper;
 
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
@@ -115,8 +113,8 @@ public class PublicationContentListFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mDatabaseHelper = new DatabaseHelper(getContext());
-        loadContentFeed(0);
-        mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(getContext(), mDatabaseHelper.getPublicationContentCursor(0, 20)));
+        loadContentFeed(PrefUtils.getSelectedPublication(getContext()));
+        mRecyclerView.setAdapter(new PublicationItemRecyclerViewAdapter(getContext(), mDatabaseHelper.getPublicationContentCursor(PrefUtils.getSelectedPublication(getContext()), 20)));
     }
 
     private void loadContentFeed(int whichPub) {

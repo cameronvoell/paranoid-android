@@ -263,7 +263,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Cursor getPublicationsToViewCursor() {
         String ORDER_BY = " ORDER BY " + KEY_PUBLICATION_ID + " ASC";
-        String WHERE = " WHERE " + KEY_PUBLICATION_NUM_PUBLISHED + " > 0";
+        String WHERE = ""; //" WHERE " + KEY_PUBLICATION_NUM_PUBLISHED + " > 0";
 
         SQLiteDatabase db = getReadableDatabase();
         return db.rawQuery("SELECT * FROM " + TABLE_PUBLICATIONS + WHERE + ORDER_BY, null);

@@ -44,7 +44,6 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
     private static final int TYPE_ITEM = 1;
     private final Context mContext;
     private Spinner mTagSpinner;
-    //private Spinner mSortBySpinner;
     private CursorAdapter mCursorAdapter;
 
     public PublicationItemRecyclerViewAdapter(Context context, Cursor cursor) {
@@ -66,8 +65,6 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
 
                 if (!ci.imageIPFS.equals("empty")) {
                     holder.mImageView.setVisibility(View.VISIBLE);
-                    //Loading image from url into imageView
-                    //holder.mImageView.setImageDrawable(mContext.getDrawable(R.drawable.ic_account));
                     Glide.with(mContext)
                             .load(EthereumConstants.IPFS_GATEWAY_URL + ci.imageIPFS)
                             .into(holder.mImageView);
@@ -111,8 +108,6 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
             View view = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.header_content_list, parent, false);
             mTagSpinner = (Spinner) view.findViewById(R.id.tag);
-            //mSortBySpinner = (Spinner) view.findViewById(R.id.sortBy);
-            //setSortBySpinnerOptions();
             setTagSpinnerOptions();
             return new ViewHolder(view);
         } else {
@@ -123,11 +118,7 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-
-
-        if (position == 0) {
-                  
-        } else {
+        if (position != 0) {
             mCursorAdapter.getCursor().moveToPosition(position - 1);
             mCursorAdapter.bindView(holder.mView, mContext, mCursorAdapter.getCursor());
         }
@@ -140,10 +131,7 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
 
     @Override
     public int getItemViewType(int position) {
-        if (position == 0)
-            return TYPE_HEADER;
-
-        return TYPE_ITEM;
+        return position == 0 ? TYPE_HEADER : TYPE_ITEM;
     }
 
     private void setTagSpinnerOptions() {
@@ -152,8 +140,7 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
         for (DBPublication pub: pubs) {
             tagOptions.add(pub.name);
         }
-//        tagOptions.add("publication");
-//        tagOptions.add("tag options");
+
         ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(mContext, R.layout.spinner_dropdown_content_list, tagOptions);
         mTagSpinner.setAdapter(spinnerArrayAdapter);
         int selection = PrefUtils.getSelectedPublication(mContext);
@@ -167,7 +154,7 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
                 i.putExtra("whichPub", pub.publicationID);
                 LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(mContext);
                 lbm.sendBroadcast(i);
-                PrefUtils.saveSelectedPublication(mContext, position);
+                PrefUtils.saveSelectedPublication(mContext, pub.publicationID);
             }
 
             @Override
@@ -176,18 +163,6 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
             }
         });
     }
-//    private void setSortBySpinnerOptions() {
-//        ArrayList<String> sortByOptions = new ArrayList<>();
-//        sortByOptions.add("date  ↓");
-//        sortByOptions.add("date  ↑");
-//        sortByOptions.add("upvotes  ↓");
-//        sortByOptions.add("upvotes  ↑ ");
-//        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(mContext, R.layout.spinner_dropdown_content_list, sortByOptions);
-//        mSortBySpinner.setAdapter(spinnerArrayAdapter);
-//        mSortBySpinner.setOnItemSelectedListener(mPublicationSpinnerItemSelectedListener);
-//        mSortBySpinner.setSelection(0);
-//    }
-
         public class ViewHolder extends RecyclerView.ViewHolder {
             public final View mView;
             public final TextView mTitleView;
@@ -195,7 +170,6 @@ public class PublicationItemRecyclerViewAdapter extends RecyclerView.Adapter<Pub
             public final TextView mDateAndAuthorView;
             public final ImageView mImageView;
             public final TextView mRevenueView;
-            //public ContentItem mItem;
 
             public ViewHolder(View view) {
                 super(view);

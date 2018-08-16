@@ -17,6 +17,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.activities.MainActivity;
 import com.example.cameron.ethereumtest1.adapters.UserFragmentContentItemRecyclerViewAdapter;
 import com.example.cameron.ethereumtest1.database.DBPublication;
 import com.example.cameron.ethereumtest1.database.DBUserContentItem;
@@ -111,6 +112,14 @@ public class UserContentRecyclerViewFragment extends Fragment{
                         int itemIndex = item.userContentIndex;
                         String user = item.publishedByEthAddress;
                         new DatabaseHelper(getContext()).deleteUserItem(user, itemIndex);
+                        dialog.dismiss();
+                    }
+                });
+                editButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        ((MainActivity)getActivity()).editContent(item);
+                        dialog.dismiss();
                     }
                 });
                 dialog.show();

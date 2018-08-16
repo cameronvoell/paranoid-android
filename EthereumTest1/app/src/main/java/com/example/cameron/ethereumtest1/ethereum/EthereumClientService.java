@@ -1016,8 +1016,8 @@ public class EthereumClientService extends Service {
             tOpts.setNonce(noncePending);
 
             // if (content.primaryImageUrl != "empty")
-            final String imageHash = new IPFS().getAdd().file(new File(content.primaryImageUrl)).getHash();
-            content.primaryImageUrl = imageHash;
+//            final String imageHash = new IPFS().getAdd().file(new File(content.primaryImageUrl)).getHash();
+//            content.primaryImageUrl = imageHash;
             String contentJson = convertContentItemToJSON(content);
 
             final String contentHash = new IPFS().getAdd().string(contentJson).getHash();

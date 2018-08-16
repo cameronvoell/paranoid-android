@@ -31,6 +31,8 @@ import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
 import com.google.gson.Gson;
 
+import org.jsoup.Jsoup;
+
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_ITEM;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_DRAFT_PHOTO_URL;
@@ -54,6 +56,7 @@ public class EditContentActivity extends AppCompatActivity implements View.OnTou
     TextView mBodyTextView;
     WebView mBodyWebView;
     String mBodyText = null;
+    DBUserContentItem mDbUserContentItem;
 
     public DatabaseHelper mDatabaseHelper;
 
@@ -75,6 +78,10 @@ public class EditContentActivity extends AppCompatActivity implements View.OnTou
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Intent intent = getIntent();
+        mDbUserContentItem = (DBUserContentItem)intent.getParcelableExtra("dbItem");
+
         setContentView(R.layout.activity_edit_content);
         mImageView = (ImageView) findViewById(R.id.image_content);
 
@@ -84,6 +91,17 @@ public class EditContentActivity extends AppCompatActivity implements View.OnTou
 
         mBodyTextView = (TextView) findViewById(R.id.contentBody);
         mBodyWebView = (WebView) findViewById(R.id.bodyWeb);
+
+        if (mDbUserContentItem != null) {
+            mImageURL = mDbUserContentItem.imageIPFS;
+            String textFromHtml = Jsoup.parse(mDbUserContentItem.primaryText == null ? "" : mDbUserContentItem.primaryText).text();
+            mBodyText = textFromHtml;
+            mBodyTextView.setVisibility(View.GONE);
+            mBodyWebView.setVisibility(View.VISIBLE);
+            mBodyWebView.loadData(mDbUserContentItem.primaryText, "text/html; charset=UTF-8", null);
+            mTitleText = mDbUserContentItem.title;
+            mTitleTextView.setText(mDbUserContentItem.title);
+        }
 
         mBodyWebView.setOnTouchListener(this);
 
@@ -193,8 +211,8 @@ public class EditContentActivity extends AppCompatActivity implements View.OnTou
         Gson gson = new Gson();
         String json = gson.toJson(contentItem);
         String address = PrefUtils.getSelectedAccountAddress(this);
-        DBUserContentItem dbContentItem = new DBUserContentItem(address,
-                mDatabaseHelper.getNumContentItemsForUser(this, address), "not yet published", mImageURL,
+        DBUserContentItem dbContentItem = new DBUserContentItem(address, mDbUserContentItem == null ?
+                mDatabaseHelper.getNumContentItemsForUser(this, address) : mDbUserContentItem.userContentIndex, "not yet published", mImageURL,
                 json, contentItem.title, contentItem.primaryText, System.currentTimeMillis(), false, true);
         mDatabaseHelper.saveUserContentItem(dbContentItem);
         finish();
@@ -214,12 +232,13 @@ public class EditContentActivity extends AppCompatActivity implements View.OnTou
                 AndDown andDown = new AndDown();
                 String html = andDown.markdownToHtml(mBodyText);
                 html = "<style>div{font-size: 20px;font-family: \"Roboto\";font-weight: 400;}</style> <div>" + html + "</div>";
-                ContentItem contentItem = convertDialogInputToContentItem(mTitleTextView.getText().toString(), html, mUri);
+                ContentItem contentItem = convertDialogInputToContentItem(mTitleTextView.getText().toString(), html, mImageURL);
                 startService(new Intent(EditContentActivity.this, EthereumClientService.class)
                         .putExtra(PARAM_CONTENT_ITEM, contentItem)
                         .putExtra(PARAM_PASSWORD, password.getText().toString())
                         .setAction(ETH_PUBLISH_USER_CONTENT));
                 dialog.dismiss();
+                finish();
             }
         });
         dialog.show();

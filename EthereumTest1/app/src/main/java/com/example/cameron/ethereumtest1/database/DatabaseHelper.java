@@ -195,7 +195,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_PUBLISHED_DATE, userContent.publishedDate);
             values.put(KEY_CONFIRMED, userContent.confirmed);
             values.put(KEY_DRAFT, userContent.draft);
-            db.insertWithOnConflict(TABLE_USER_CONTENT, null, values, CONFLICT_IGNORE);
+            db.insertWithOnConflict(TABLE_USER_CONTENT, null, values, CONFLICT_REPLACE);
         }
         db.close();
     }
@@ -224,8 +224,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void deleteUserItem(String user, int itemIndex) {
         SQLiteDatabase db = this.getWritableDatabase();
         String WHERE = KEY_PUBLISHED_BY_ETH_ADDRESS + "=? and "
+                + KEY_DRAFT + "=? and "
                 + KEY_USER_CONTENT_INDEX + "=?";
-        String[] WHERE_ARGS = new String[] {user, String.valueOf(itemIndex)};
+        String[] WHERE_ARGS = new String[] {user, "1", String.valueOf(itemIndex)};
         db.delete(TABLE_USER_CONTENT, WHERE, WHERE_ARGS);
         db.close();
     }

@@ -61,7 +61,7 @@ public class UserFragmentContentItemRecyclerViewAdapter extends RecyclerView.Ada
 
                 String title = ci.draft ? "<DRAFT> " + ci.title : ci.title;
                 holder.mTitleView.setText(title);
-                String textFromHtml = Jsoup.parse(ci.primaryText).text();
+                String textFromHtml = Jsoup.parse(ci.primaryText == null ? "" : ci.primaryText).text();
                 holder.mBodyView.setText(textFromHtml);
                 holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(ci.publishedDate)
                         + " by " + ci.publishedByEthAddress);

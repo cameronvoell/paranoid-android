@@ -14,6 +14,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Parcelable;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
@@ -32,6 +33,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.database.DBUserContentItem;
 import com.example.cameron.ethereumtest1.fragments.EthTransactionListFragment;
 import com.example.cameron.ethereumtest1.fragments.PublicationsFragment;
 import com.example.cameron.ethereumtest1.model.ContentItem;
@@ -373,6 +375,12 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
         dialog.show();
+    }
+
+    public void editContent(DBUserContentItem dbUserContentItem) {
+        Intent intent = new Intent(this, EditContentActivity.class);
+        intent.putExtra("dbItem", dbUserContentItem);
+        startActivity(intent);
     }
 
     public void createNewContent(View view) {

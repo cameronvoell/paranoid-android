@@ -14,6 +14,9 @@ public class DBPublicationContentItem implements Parcelable {
     public String title;
     public String primaryText;
     public long publishedDate;
+    public int uniqueSupporters;
+    public String revenueWei;
+    public int numComments;
 
 
     public DBPublicationContentItem (int publicationIndex, int publicationContentIndex,

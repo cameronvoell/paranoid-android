@@ -49,7 +49,7 @@ public class UserFragmentContentItemRecyclerViewAdapter extends RecyclerView.Ada
                 final DBUserContentItem ci = DatabaseHelper.convertCursorToDBUserContentItem(cursor);
                 ViewHolder holder = new ViewHolder(view);
 
-                if (!ci.imageIPFS.equals("empty")) {
+                if (ci.imageIPFS == null || !ci.imageIPFS.equals("empty")) {
                     holder.mImageView.setVisibility(View.VISIBLE);
                     //Loading image from url into imageView
                     Glide.with(mContext)
@@ -59,7 +59,8 @@ public class UserFragmentContentItemRecyclerViewAdapter extends RecyclerView.Ada
                     holder.mImageView.setVisibility(View.GONE);
                 }
 
-                holder.mTitleView.setText(ci.title);
+                String title = ci.draft ? "<DRAFT> " + ci.title : ci.title;
+                holder.mTitleView.setText(title);
                 String textFromHtml = Jsoup.parse(ci.primaryText).text();
                 holder.mBodyView.setText(textFromHtml);
                 holder.mDateAndAuthorView.setText("Published " + DataUtils.convertTimeStampToDateString(ci.publishedDate)

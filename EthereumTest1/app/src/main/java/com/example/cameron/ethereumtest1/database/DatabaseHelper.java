@@ -21,7 +21,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     Context mContext;
 
     //Used for upgrading the database
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 10;
 
     //name of our database file
     private static final String DATABASE_NAME = "circus_droid";
@@ -69,6 +69,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String KEY_TITLE = "KEY_TITLE";
     public static final String KEY_PRIMARY_TEXT = "KEY_PRIMARY_TEXT";
     public static final String KEY_PUBLISHED_DATE= "KEY_PUBLISHED_DATE";
+    private static final String KEY_DRAFT = "KEY_DRAFT";
 
     public static final String TABLE_USER_CONTENT = "table_user_content";
     public static final String CREATE_TABLE_USER_CONTENT = "CREATE TABLE " + TABLE_USER_CONTENT
@@ -82,7 +83,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + KEY_PRIMARY_TEXT + " TEXT,"
             + KEY_PUBLISHED_DATE +  " TEXT,"
             + KEY_CONFIRMED + " BOOLEAN,"
-            + "UNIQUE(" + KEY_CONTENT_IPFS + ") ON CONFLICT REPLACE"
+            + KEY_DRAFT + " BOOLEAN,"
+            + "UNIQUE(" + KEY_PUBLISHED_BY_ETH_ADDRESS + " , " + KEY_DRAFT + ", " + KEY_USER_CONTENT_INDEX + ") ON CONFLICT REPLACE"
             + ")";
 
     //Publication Content Table
@@ -172,6 +174,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void saveUserContentItem(DBUserContentItem userContentItem) {
+        ArrayList<DBUserContentItem> items = new ArrayList<>();
+        items.add(userContentItem);
+        saveUserContentItems(items);
+    }
+
     public void saveUserContentItems(List<DBUserContentItem> userContentItems) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -186,6 +194,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_PRIMARY_TEXT, userContent.primaryText);
             values.put(KEY_PUBLISHED_DATE, userContent.publishedDate);
             values.put(KEY_CONFIRMED, userContent.confirmed);
+            values.put(KEY_DRAFT, userContent.draft);
             db.insertWithOnConflict(TABLE_USER_CONTENT, null, values, CONFLICT_IGNORE);
         }
         db.close();
@@ -207,6 +216,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_PUBLISHED_DATE, publicationContent.publishedDate);
             db.insertWithOnConflict(TABLE_PUBLICATION_CONTENT, null, values, CONFLICT_IGNORE);
         }
+        db.close();
+    }
+
+
+
+    public void deleteUserItem(String user, int itemIndex) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String WHERE = KEY_PUBLISHED_BY_ETH_ADDRESS + "=? and "
+                + KEY_USER_CONTENT_INDEX + "=?";
+        String[] WHERE_ARGS = new String[] {user, String.valueOf(itemIndex)};
+        db.delete(TABLE_USER_CONTENT, WHERE, WHERE_ARGS);
         db.close();
     }
 
@@ -244,6 +264,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM " + TABLE_USER_CONTENT + " WHERE " + KEY_PUBLISHED_BY_ETH_ADDRESS +  " = " + "\"" + address + "\"" + ORDER_BY, null);
+    }
+
+
+
+    public int getNumContentItemsForUser(Context context, String address) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String WHERE = " WHERE " + KEY_PUBLISHED_BY_ETH_ADDRESS + "= \"" + address + "\"";
+
+        Cursor c = db.rawQuery("SELECT * FROM " + TABLE_USER_CONTENT + WHERE, null);
+        return c.getCount();
     }
 
     public Cursor getPublicationContentCursor(int publicationIndex, int quantity) {
@@ -299,9 +329,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String primaryText = c.getString(c.getColumnIndex(KEY_PRIMARY_TEXT));
         long publishedDate = c.getLong(c.getColumnIndex(KEY_PUBLISHED_DATE));
         boolean confirmed = c.getInt(c.getColumnIndex(KEY_CONFIRMED)) == 1;
+        boolean draft = c.getInt(c.getColumnIndex(KEY_DRAFT)) == 1;
 
         return new DBUserContentItem(address, userContentIndex, contentIPFS, imageIPFS, json, title,
-                primaryText, publishedDate, confirmed);
+                primaryText, publishedDate, confirmed, draft);
     }
 
     public static DBPublicationContentItem convertCursorToDBPublicationContentItem(Cursor c) {

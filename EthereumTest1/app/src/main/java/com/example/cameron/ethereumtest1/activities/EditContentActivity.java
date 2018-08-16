@@ -23,10 +23,13 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.commonsware.cwac.anddown.AndDown;
 import com.example.cameron.ethereumtest1.R;
+import com.example.cameron.ethereumtest1.database.DBUserContentItem;
+import com.example.cameron.ethereumtest1.database.DatabaseHelper;
 import com.example.cameron.ethereumtest1.ethereum.EthereumConstants;
 import com.example.cameron.ethereumtest1.ethereum.EthereumClientService;
 import com.example.cameron.ethereumtest1.model.ContentItem;
 import com.example.cameron.ethereumtest1.util.PrefUtils;
+import com.google.gson.Gson;
 
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.ETH_PUBLISH_USER_CONTENT;
 import static com.example.cameron.ethereumtest1.ethereum.EthereumClientService.PARAM_CONTENT_ITEM;
@@ -51,6 +54,8 @@ public class EditContentActivity extends AppCompatActivity implements View.OnTou
     TextView mBodyTextView;
     WebView mBodyWebView;
     String mBodyText = null;
+
+    public DatabaseHelper mDatabaseHelper;
 
     // handler for received data from service
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
@@ -92,10 +97,7 @@ public class EditContentActivity extends AppCompatActivity implements View.OnTou
         filter.addAction(EthereumClientService.UI_UPDATE_DRAFT_PHOTO_URL);
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(this);
         bm.registerReceiver(mBroadcastReceiver, filter);
-    }
-
-    public void close(View view) {
-        onBackPressed();
+        mDatabaseHelper = new DatabaseHelper(this);
     }
 
     private String mUri;
@@ -184,6 +186,20 @@ public class EditContentActivity extends AppCompatActivity implements View.OnTou
         startActivityForResult(intent, DRAFT_BODY_MARKDOWN_REQUEST);
     }
 
+    public void saveDraft(View view) {
+        String html = new AndDown().markdownToHtml(mBodyText == null ? "" : mBodyText);
+        html = "<style>div{font-size: 20px;font-family: \"Roboto\";font-weight: 400;}</style> <div>" + html + "</div>";
+        ContentItem contentItem = convertDialogInputToContentItem(mTitleTextView.getText().toString(), html, mUri);
+        Gson gson = new Gson();
+        String json = gson.toJson(contentItem);
+        String address = PrefUtils.getSelectedAccountAddress(this);
+        DBUserContentItem dbContentItem = new DBUserContentItem(address,
+                mDatabaseHelper.getNumContentItemsForUser(this, address), "not yet published", mImageURL,
+                json, contentItem.title, contentItem.primaryText, System.currentTimeMillis(), false, true);
+        mDatabaseHelper.saveUserContentItem(dbContentItem);
+        finish();
+    }
+
     public void publishPost(View view) {
         final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_post_content_to_feed);
@@ -229,12 +245,9 @@ public class EditContentActivity extends AppCompatActivity implements View.OnTou
         return true;
     }
 
-    @Override
-    public void onBackPressed() {
-        //super.onBackPressed();
-    }
-
-    public void saveDraft(View view) {
+    public void close(View view) {
         finish();
     }
+
+
 }

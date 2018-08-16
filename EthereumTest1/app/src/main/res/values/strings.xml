@@ -16,4 +16,6 @@
     <string name="subscribed_publications">subscribed:</string>
     <string name="all_publications">all pubs:</string>
     <string name="selectPublication">select publication</string>
+    <string name="delete">delete</string>
+    <string name="edit">edit</string>
 </resources>

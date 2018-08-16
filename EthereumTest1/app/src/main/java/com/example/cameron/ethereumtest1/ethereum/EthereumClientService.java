@@ -316,9 +316,11 @@ public class EthereumClientService extends Service {
 
         final NodeConfig config = new NodeConfig();
         config.setEthereumEnabled(true);
-        config.setEthereumGenesis(getRinkebyGenesis(getBaseContext()));
-        config.setEthereumNetworkID(RINKEBY_NETWORK_ID);
         config.setBootstrapNodes(EthereumConstants.getRinkebyBootNodes());
+        config.setEthereumNetworkID(RINKEBY_NETWORK_ID);
+        config.setEthereumGenesis(getRinkebyGenesis(getBaseContext()));
+
+
         try {
             OutputStreamWriter outputStreamWriter =
                     new OutputStreamWriter(new FileOutputStream(new File(getFilesDir() + ETH_DATA_DIRECTORY + "/GethDroid", "static-nodes.json")));
@@ -477,7 +479,8 @@ public class EthereumClientService extends Service {
                 postJsonArray.add(json);
                 ContentItem ci = convertJsonToContentItem(json);
 
-                DBUserContentItem dbuci = new DBUserContentItem(addressString, (int)i, contentString, ci.primaryImageUrl, json, ci.title, ci.primaryText, ci.publishedDate, true);
+                DBUserContentItem dbuci = new DBUserContentItem(addressString, (int)i, contentString, ci.primaryImageUrl,
+                        json, ci.title, ci.primaryText, ci.publishedDate, true, false);
                 dbSaveList.add(dbuci);
                 String state = Environment.getExternalStorageState();
                 if (Environment.MEDIA_MOUNTED.equals(state)) {

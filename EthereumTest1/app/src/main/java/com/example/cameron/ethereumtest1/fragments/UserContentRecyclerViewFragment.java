@@ -58,7 +58,7 @@ public class UserContentRecyclerViewFragment extends Fragment{
         mSelectedAddress = b.getString("selected_address");
         mListInteractionListener = new UserFragment.OnListFragmentInteractionListener() {
             @Override
-            public void onListFragmentInteraction(final int position, DBUserContentItem item) {
+            public void onListFragmentInteraction(final int position, final DBUserContentItem item) {
                 final int postIndex = item.userContentIndex;
 
                 final ArrayList<DBPublication> pubsToPublishTo = new ArrayList<>();
@@ -101,6 +101,16 @@ public class UserContentRecyclerViewFragment extends Fragment{
                                 .putExtra(PARAM_PASSWORD, s)
                                 .setAction(ETH_PUBLISH_USER_CONTENT_TO_PUBLICATION));
                         dialog.dismiss();
+                    }
+                });
+                Button deleteButton = (Button) dialog.findViewById(R.id.deleteButton);
+                Button editButton = (Button) dialog.findViewById(R.id.editButton);
+                deleteButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        int itemIndex = item.userContentIndex;
+                        String user = item.publishedByEthAddress;
+                        new DatabaseHelper(getContext()).deleteUserItem(user, itemIndex);
                     }
                 });
                 dialog.show();

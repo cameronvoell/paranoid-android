@@ -5,10 +5,24 @@
 
 
     <Button
+        android:id="@+id/deleteButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/delete"/>
+
+    <Button
+        android:id="@+id/editButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/edit"
+        android:layout_below="@id/deleteButton"/>
+
+    <Button
         android:id="@+id/selectPublicationButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/selectPublication"/>
+        android:text="@string/selectPublication"
+        android:layout_below="@id/editButton"/>
 
     <TextView
         android:id="@+id/publishInstruction"
